@@ -1,0 +1,73 @@
+[
+  {
+    "id": "el_maldito",
+    "nombre": "El maldito",
+    "descripcion": "Comienza la aventura con el amuleto maldito.",
+    "ajustes": {}
+  },
+  {
+    "id": "el_conformista",
+    "nombre": "El conformista",
+    "descripcion": "Solo necesita conseguir 8 puntos de fama para ganar.",
+    "ajustes": {
+      "famaObjetivo": -2
+    }
+  },
+  {
+    "id": "el_nativo",
+    "nombre": "El nativo",
+    "descripcion": "Puede descansar gratis en aldeas y obtiene +1 en las tiradas de audiencia en ellas.",
+    "ajustes": {}
+  },
+  {
+    "id": "el_fuerte",
+    "nombre": "El fuerte",
+    "descripcion": "Comienza con +1 de fuerza y 2 espacios adicionales de inventario.",
+    "ajustes": {
+      "fuerza": 1,
+      "capacidadInventario": 2
+    }
+  },
+  {
+    "id": "el_navegante",
+    "nombre": "El navegante",
+    "descripcion": "Puede desplazarse 2 hexágonos por mar.",
+    "ajustes": {}
+  },
+  {
+    "id": "el_superviviente",
+    "nombre": "El superviviente",
+    "descripcion": "No necesita comida en la jungla densa y puede desplazarse 2 hexágonos.",
+    "ajustes": {}
+  },
+  {
+    "id": "el_influyente",
+    "nombre": "El influyente",
+    "descripcion": "Obtiene +1 al buscar información y +1 en las tiradas de audiencia en puertos y guaridas piratas.",
+    "ajustes": {}
+  },
+  {
+    "id": "el_afortunado",
+    "nombre": "El afortunado",
+    "descripcion": "Puede evitar la muerte una vez durante la aventura.",
+    "ajustes": {}
+  },
+  {
+    "id": "el_contable",
+    "nombre": "El contable",
+    "descripcion": "Cada vez que consigue oro, obtiene además 2d6 de oro.",
+    "ajustes": {}
+  },
+  {
+    "id": "el_hermano",
+    "nombre": "El hermano",
+    "descripcion": "Comienza con un seguidor aleatorio gratuito. Si este muere, pierde la partida.",
+    "ajustes": {}
+  },
+  {
+    "id": "el_heredero",
+    "nombre": "El heredero",
+    "descripcion": "Comienza con un objeto mágico.",
+    "ajustes": {}
+  }
+]

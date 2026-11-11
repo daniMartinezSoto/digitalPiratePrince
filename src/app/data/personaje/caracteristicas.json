@@ -1,0 +1,20 @@
+[
+  {
+    "id": "fuerte",
+    "nombre": "Fuerte",
+    "ingenio": 2,
+    "fuerza": 4
+  },
+  {
+    "id": "equilibrado",
+    "nombre": "Equilibrado",
+    "ingenio": 3,
+    "fuerza": 3
+  },
+  {
+    "id": "inteligente",
+    "nombre": "Inteligente",
+    "ingenio": 4,
+    "fuerza": 2
+  }
+]

@@ -6,7 +6,7 @@
 
 ## 0. Estado actual del proyecto
 
-**Fase:** Sprint 0 (preparación). El proyecto Angular está creado y funciona; todavía no se ha escrito lógica del juego.
+**Fase:** Sprint 2
 
 **Entorno**
 - Windows 11 · Node `v26.13.0` · npm `11.20.0` · Angular CLI `22.2.6`.
@@ -409,3 +409,16 @@ Hasta el punto 8 no hace falta ni mapa ni libro de eventos. El 9 necesita el `.w
 - **Libro de eventos**, empezando por 3-4 muestras variadas (tirada, decisión, combinado, con llamada y vuelta, y una con regla especial como el mapa del tesoro).
 - Tabla de objetos mágicos (E037), lista de objetos y estadísticas de enemigos y barcos.
 - Decidir qué hacer con "Meditar" y el diseño del minijuego naval (más adelante).
+
+
+
+**Progreso**
+- Sprint 0: completado (proyecto, tests, estructura `core/ data/ store/ ui/`).
+- Sprint 1: completado. `core/dados/` contiene `Generador` (mulberry32), `tirar(expresion, generador)`,
+  `ResultadoTirada { dados, total }` y la clase `Dados` (envuelve un `Generador`, expone `tirar()` y
+  `obtenerEstado()`). Soporta `1d6`, `2d6`, `3d6` y `1d6x5`. 13 tests pasan.
+- `Dados` NO es un signal ni forma parte del estado serializable: se guarda solo su número
+  interno (`obtenerEstado()`), que el store copiará al estado del mundo. Pendiente de decidir
+  dónde exactamente (Sprint 2).
+- Aún no existen: `elegirPonderado` ni `entero` en `Dados` (se añaden en el sprint de tablas).
+- Siguiente: Sprint 2 (estado y creación de personaje).
