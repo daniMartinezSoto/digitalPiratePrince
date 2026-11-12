@@ -3,6 +3,7 @@ import { Habilidad } from './habilidad';
 
 // Representa a un personaje que acompaña al jugador durante la aventura.
 export interface Seguidor {
+  id: string;   
   // Tipo de seguidor (cocinero, nativo, forzudo, etc.).
   tipo: string;
 
