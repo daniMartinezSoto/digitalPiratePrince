@@ -115,4 +115,63 @@ describe('validarTabla', () => {
       expect(validarTabla(tabla)).toHaveLength(2);
     });
   });
+
+  describe('operaciones, destinos y fin de partida', () => {
+    function conEfectos(efectos: unknown[]): Tabla {
+      const tabla = tablaBuena();
+      tabla.filas[1].efectos = efectos as never;
+      return tabla;
+    }
+
+    it('acepta todas las formas correctas', () => {
+      const tabla = conEfectos([
+        { tipo: 'oro', operacion: 'mitad' },
+        { tipo: 'vida', operacion: 'maximo', destino: 'todos' },
+        { tipo: 'comida', operacion: 'todo' },
+        { tipo: 'vida', operacion: 'fijar', cantidad: 1 },
+        { tipo: 'vida', cantidad: '-1d6', destino: 'seguidor_azar' },
+        { tipo: 'vida', cantidad: -2, destino: 'seguidor_elegido' },
+        { tipo: 'oro', cantidad: '1d6x10+5' },
+        { tipo: 'ganar_partida' },
+        { tipo: 'perder_partida' },
+      ]);
+      expect(validarTabla(tabla)).toEqual([]);
+    });
+
+    it('detecta una operación que no existe', () => {
+      expect(validarTabla(conEfectos([{ tipo: 'oro', operacion: 'doble' }])).join()).toMatch(/operación "doble" no existe/);
+    });
+
+    it('detecta que falta la cantidad al sumar o fijar', () => {
+      expect(validarTabla(conEfectos([{ tipo: 'oro', operacion: 'fijar' }])).join()).toMatch(/cantidad de "oro" no es válida/);
+    });
+
+    it('detecta una cantidad en mitad, maximo o todo', () => {
+      expect(validarTabla(conEfectos([{ tipo: 'oro', operacion: 'mitad', cantidad: 5 }])).join()).toMatch(/"mitad" no lleva cantidad/);
+    });
+
+    it('detecta "maximo" en un recurso sin máximo (oro, fama)', () => {
+      expect(validarTabla(conEfectos([{ tipo: 'oro', operacion: 'maximo' }])).join()).toMatch(/"oro" no tiene máximo/);
+    });
+
+    it('detecta fijar en negativo', () => {
+      expect(validarTabla(conEfectos([{ tipo: 'vida', operacion: 'fijar', cantidad: -1 }])).join()).toMatch(/número negativo/);
+    });
+
+    it('detecta un destino que no existe', () => {
+      expect(validarTabla(conEfectos([{ tipo: 'vida', cantidad: -1, destino: 'barco' }])).join()).toMatch(/destino "barco" no existe/);
+    });
+
+    it('detecta un destino de seguidores en algo que no es la vida', () => {
+      expect(validarTabla(conEfectos([{ tipo: 'oro', cantidad: 5, destino: 'todos' }])).join()).toMatch(/solo la vida/);
+    });
+
+    it('detecta ganar o perder la partida con cosas de más', () => {
+      expect(validarTabla(conEfectos([{ tipo: 'perder_partida', cantidad: 1 }])).join()).toMatch(/"perder_partida" no lleva/);
+    });
+
+    it('el tipo antiguo "perder_mitad_oro" ya no existe', () => {
+      expect(validarTabla(conEfectos([{ tipo: 'perder_mitad_oro' }])).join()).toMatch(/"perder_mitad_oro" no existe/);
+    });
+  });
 });

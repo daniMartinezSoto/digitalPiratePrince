@@ -1,5 +1,6 @@
 
-import { Articulo } from './articulo';
+import { ArticuloLlevado } from './articulo-llevado';
+import { CondicionActiva } from './condicion-activa';
 import { Seguidor } from './seguidor';
 
 // Datos y recursos del protagonista.
@@ -25,10 +26,18 @@ export interface Jugador {
   // Días consecutivos que lleva sin comer.
   diasSinComer: number;
 
-  // Artículos que lleva el jugador y capacidad máxima de su inventario.
-  inventario: Articulo[];
+  // Objetos que lleva (solo id y usos; el resto, en el catálogo) y huecos del inventario.
+  // Un objeto puede ocupar varios huecos (campo "espacios" del catálogo).
+  inventario: ArticuloLlevado[];
   capacidadInventario: number;
 
-  // Seguidores que acompañan al jugador.
+  // Seguidores que acompañan al jugador (máximo 3).
   seguidores: Seguidor[];
+
+  // Maldiciones, bendiciones, enfermedades, tormenta... que le afectan ahora.
+  condiciones: CondicionActiva[];
+
+  // Turnos en los que perderá la fase de acción (E006, E007, E009...).
+  // Ese turno no hay acción, pero se come igual.
+  fasesAccionPerdidas: number;
 }

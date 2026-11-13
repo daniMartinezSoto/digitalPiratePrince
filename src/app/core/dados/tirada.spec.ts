@@ -56,4 +56,44 @@ it('rangoDeTirada rechaza expresiones no válidas', () => {
   expect(() => rangoDeTirada('tres dados')).toThrow();
 });
 
+
+it('debe sumar el número indicado con +N ("1d6+1")', () => {
+  const generador = new Generador(12345);
+
+  const resultado = tirar('1d6+1', generador);
+
+  expect(resultado.dados).toHaveLength(1);
+  expect(resultado.total).toBe(resultado.dados[0] + 1);
+});
+
+it('con multiplicador y suma, primero multiplica y luego suma ("1d6x10+5")', () => {
+  const generador = new Generador(12345);
+
+  const resultado = tirar('1d6x10+5', generador);
+
+  expect(resultado.total).toBe(resultado.dados[0] * 10 + 5);
+});
+
+it('+N no gasta números del generador (solo los dados)', () => {
+  const a = new Generador(99);
+  const b = new Generador(99);
+
+  tirar('2d6+3', a);
+  tirar('2d6', b);
+
+  expect(a.obtenerEstado()).toBe(b.obtenerEstado());
+});
+
+it('rangoDeTirada tiene en cuenta el +N', () => {
+  expect(rangoDeTirada('1d6+1')).toEqual({ min: 2, max: 7 });
+  expect(rangoDeTirada('1d6x10+5')).toEqual({ min: 15, max: 65 });
+});
+
+it('debe rechazar sumas mal escritas', () => {
+  const generador = new Generador(12345);
+
+  expect(() => tirar('1d6+', generador)).toThrow();
+  expect(() => tirar('1d6-1', generador)).toThrow();
+});
+
 });

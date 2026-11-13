@@ -31,7 +31,10 @@ describe('crearPersonaje', () => {
       inventario: [],
       capacidadInventario: 5,
 
-      seguidores: []
+      seguidores: [],
+
+      condiciones: [],
+      fasesAccionPerdidas: 0
     });
   });
 

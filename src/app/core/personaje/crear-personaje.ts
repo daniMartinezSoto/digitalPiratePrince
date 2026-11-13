@@ -38,7 +38,10 @@ export function crearPersonaje(
     inventario: [],
     capacidadInventario: 5 + (sobrenombre.ajustes.capacidadInventario ?? 0),
 
-    seguidores: []
+    seguidores: [],
+
+    condiciones: [],
+    fasesAccionPerdidas: 0
   };
 
   return jugador;

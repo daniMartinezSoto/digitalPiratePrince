@@ -1,9 +1,7 @@
 
-import { Habilidad } from './habilidad';
-
 // Representa a un personaje que acompaña al jugador durante la aventura.
 export interface Seguidor {
-  id: string;   
+  id: string;
   // Tipo de seguidor (cocinero, nativo, forzudo, etc.).
   tipo: string;
 
@@ -16,6 +14,7 @@ export interface Seguidor {
   resistencia: number;
   resistenciaMaxima: number;
 
-  // Habilidades pasivas y activas propias de este seguidor.
-  habilidades: Habilidad[];
+  // Ids de sus habilidades en el catálogo (p. ej. ["cirujano"]).
+  // El nombre, la descripción y los bonificadores se buscan en el catálogo.
+  habilidades: string[];
 }

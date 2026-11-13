@@ -52,13 +52,17 @@ function buscarFila(tabla: Tabla, total: number): Fila {
   return fila;
 }
 
-/** Convierte un efecto del JSON en un efecto con cantidad numérica. */
+/**
+ * Convierte un efecto del JSON en un efecto con cantidad numérica.
+ * Copia el efecto tal cual (operación, destino...) y SOLO cambia la cantidad.
+ * Los que no llevan cantidad (mitad, maximo, todo, ganar/perder la partida)
+ * salen como entraron: los resuelve aplicarEfectos, que sí conoce el estado.
+ */
 function resolverEfecto(definicion: EfectoDefinicion, dados: Dados): Efecto {
-  // Los que no llevan cantidad (perder_mitad_oro) se devuelven tal cual.
   if (!('cantidad' in definicion)) {
-    return { tipo: definicion.tipo };
+    return { ...definicion };
   }
-  return { tipo: definicion.tipo, cantidad: resolverCantidad(definicion.cantidad, dados) };
+  return { ...definicion, cantidad: resolverCantidad(definicion.cantidad, dados) };
 }
 
 /** 8 → 8 · "2d6" → lo que salga · "-1d6" → lo que salga, en negativo. */

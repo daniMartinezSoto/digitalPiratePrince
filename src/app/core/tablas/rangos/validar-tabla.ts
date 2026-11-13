@@ -1,11 +1,17 @@
 import { rangoDeTirada } from '../../dados/tirada';
-import { RECURSOS } from '../efecto';
+import { DESTINOS, FINES_DE_PARTIDA, OPERACIONES, RECURSOS, RECURSOS_CON_MAXIMO } from '../efecto';
 import type { Fila, Tabla } from './tabla';
 
 // Formatos válidos.
 const FORMATO_ID = /^[a-z][a-z0-9_]*$/;              // minúsculas, números y guiones bajos: "taberna_clandestina"
-const FORMATO_CANTIDAD = /^-?\d+d\d+(x\d+)?$/;        // "2d6", "1d6x10", "-1d6"
-const TIPOS_EFECTO: readonly string[] = [...RECURSOS, 'perder_mitad_oro'];
+const FORMATO_CANTIDAD = /^-?\d+d\d+(x\d+)?(\+\d+)?$/; // "2d6", "1d6x10", "1d6+1", "-1d6"
+const FINES_TEXTO: readonly string[] = FINES_DE_PARTIDA;
+const OPERACIONES_TEXTO: readonly string[] = OPERACIONES;
+const DESTINOS_TEXTO: readonly string[] = DESTINOS;
+const CON_MAXIMO_TEXTO: readonly string[] = RECURSOS_CON_MAXIMO;
+const TIPOS_EFECTO: readonly string[] = [...RECURSOS, ...FINES_DE_PARTIDA];
+// Operaciones que llevan cantidad; las demás (mitad, maximo, todo) no.
+const OPERACIONES_CON_CANTIDAD = ['sumar', 'fijar'];
 
 /**
  * Revisa una tabla y devuelve la lista de errores encontrados, explicados en castellano.
@@ -85,28 +91,66 @@ function validarFila(fila: Fila, nombre: string): string[] {
   }
 
   for (const efecto of fila.efectos ?? []) {
-    // Lo miramos como objeto genérico: en el JSON puede venir cualquier cosa.
-    const e = efecto as { tipo: string; cantidad?: unknown };
+    errores.push(...validarEfecto(efecto, donde));
+  }
 
-    if (!TIPOS_EFECTO.includes(e.tipo)) {
-      errores.push(`${donde}: el tipo de efecto "${e.tipo}" no existe (válidos: ${TIPOS_EFECTO.join(', ')}).`);
-      continue;
+  return errores;
+}
+
+/** Revisa un efecto suelto. Lo mira como objeto genérico: en el JSON puede venir cualquier cosa. */
+function validarEfecto(efecto: unknown, donde: string): string[] {
+  const errores: string[] = [];
+  const e = efecto as { tipo: string; cantidad?: unknown; operacion?: string; destino?: string };
+
+  if (!TIPOS_EFECTO.includes(e.tipo)) {
+    return [`${donde}: el tipo de efecto "${e.tipo}" no existe (válidos: ${TIPOS_EFECTO.join(', ')}).`];
+  }
+
+  // Ganar o perder la partida: solo el tipo, nada más.
+  if (FINES_TEXTO.includes(e.tipo)) {
+    if (e.cantidad !== undefined || e.operacion !== undefined || e.destino !== undefined) {
+      errores.push(`${donde}: "${e.tipo}" no lleva cantidad, operación ni destino.`);
     }
-    if (e.tipo === 'perder_mitad_oro') {
-      if (e.cantidad !== undefined) {
-        errores.push(`${donde}: "perder_mitad_oro" no lleva cantidad.`);
-      }
-      continue;
-    }
+    return errores;
+  }
+
+  // A partir de aquí es un recurso (oro, comida, tripulacion, vida, fama).
+  const operacion = e.operacion ?? 'sumar';
+  if (!OPERACIONES_TEXTO.includes(operacion)) {
+    errores.push(`${donde}: la operación "${operacion}" no existe (válidas: ${OPERACIONES.join(', ')}).`);
+    return errores;
+  }
+
+  if (OPERACIONES_CON_CANTIDAD.includes(operacion)) {
     const cantidadValida =
       (typeof e.cantidad === 'number' && Number.isInteger(e.cantidad)) ||
       (typeof e.cantidad === 'string' && FORMATO_CANTIDAD.test(e.cantidad));
     if (!cantidadValida) {
-      errores.push(`${donde}: la cantidad de "${e.tipo}" no es válida (ejemplos: 8, -1, "2d6", "-1d6").`);
+      errores.push(`${donde}: la cantidad de "${e.tipo}" no es válida (ejemplos: 8, -1, "2d6", "1d6+1", "-1d6").`);
+    } else if (operacion === 'fijar' && esNegativa(e.cantidad)) {
+      errores.push(`${donde}: no se puede fijar "${e.tipo}" en un número negativo (ningún recurso baja de 0).`);
+    }
+  } else if (e.cantidad !== undefined) {
+    errores.push(`${donde}: la operación "${operacion}" no lleva cantidad.`);
+  }
+
+  if (operacion === 'maximo' && !CON_MAXIMO_TEXTO.includes(e.tipo)) {
+    errores.push(`${donde}: "${e.tipo}" no tiene máximo, así que no admite "maximo" (solo ${RECURSOS_CON_MAXIMO.join(', ')}).`);
+  }
+
+  if (e.destino !== undefined) {
+    if (!DESTINOS_TEXTO.includes(e.destino)) {
+      errores.push(`${donde}: el destino "${e.destino}" no existe (válidos: ${DESTINOS.join(', ')}).`);
+    } else if (e.destino !== 'jugador' && e.tipo !== 'vida') {
+      errores.push(`${donde}: solo la vida puede afectar a seguidores; "${e.tipo}" es siempre del jugador.`);
     }
   }
 
   return errores;
+}
+
+function esNegativa(cantidad: unknown): boolean {
+  return (typeof cantidad === 'number' && cantidad < 0) || (typeof cantidad === 'string' && cantidad.startsWith('-'));
 }
 
 function rangoTexto(fila: Fila): string {

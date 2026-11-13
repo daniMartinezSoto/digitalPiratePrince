@@ -233,12 +233,54 @@ describe('resolverTabla', () => {
       expect(() => resolverTabla(tabla, 0, new Dados(1))).toThrow();
     });
 
-    it('perder_mitad_oro se devuelve tal cual (lo resolverá aplicarEfectos)', () => {
-      const tabla = tablaUnaFila([{ tipo: 'perder_mitad_oro' }]);
+    it('mitad, maximo y todo se devuelven tal cual (los resolverá aplicarEfectos)', () => {
+      const tabla = tablaUnaFila([
+        { tipo: 'oro', operacion: 'mitad' },
+        { tipo: 'vida', operacion: 'maximo', destino: 'todos' },
+        { tipo: 'comida', operacion: 'todo' },
+      ]);
 
       const r = resolverTabla(tabla, 0, new Dados(1));
 
-      expect(r.efectos).toEqual([{ tipo: 'perder_mitad_oro' }]);
+      expect(r.efectos).toEqual([
+        { tipo: 'oro', operacion: 'mitad' },
+        { tipo: 'vida', operacion: 'maximo', destino: 'todos' },
+        { tipo: 'comida', operacion: 'todo' },
+      ]);
+    });
+
+    it('ganar y perder la partida se devuelven tal cual', () => {
+      const r = resolverTabla(tablaUnaFila([{ tipo: 'ganar_partida' }, { tipo: 'perder_partida' }]), 0, new Dados(1));
+      expect(r.efectos).toEqual([{ tipo: 'ganar_partida' }, { tipo: 'perder_partida' }]);
+    });
+
+    it('copia la operación y el destino y solo convierte la cantidad', () => {
+      const tabla = tablaUnaFila([
+        { tipo: 'vida', operacion: 'fijar', cantidad: 1 },
+        { tipo: 'vida', cantidad: '-1d6', destino: 'seguidor_azar' },
+      ]);
+      const gemelo = new Dados(5);
+      gemelo.tirar('1d6'); // el dado de la tabla
+      const danio = gemelo.tirar('1d6').total;
+
+      const r = resolverTabla(tabla, 0, new Dados(5));
+
+      expect(r.efectos).toEqual([
+        { tipo: 'vida', operacion: 'fijar', cantidad: 1 },
+        { tipo: 'vida', cantidad: -danio, destino: 'seguidor_azar' },
+      ]);
+    });
+
+    it('acepta cantidades con suma ("1d6+1")', () => {
+      const tabla = tablaUnaFila([{ tipo: 'oro', cantidad: '1d6+1' }]);
+
+      for (let semilla = 1; semilla <= 50; semilla++) {
+        const [efecto] = resolverTabla(tabla, 0, new Dados(semilla)).efectos;
+        const cantidad = (efecto as { cantidad: number }).cantidad;
+
+        expect(cantidad).toBeGreaterThanOrEqual(2);
+        expect(cantidad).toBeLessThanOrEqual(7);
+      }
     });
   });
 
