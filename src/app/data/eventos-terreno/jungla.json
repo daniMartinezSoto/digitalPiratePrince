@@ -1,0 +1,31 @@
+{
+  "id": "jungla",
+  "eventos": [
+    { "evento": "campamento", "peso": 3, "libro": "E063" },
+    { "evento": "nativos", "peso": 3, "libro": "E055" },
+    { "evento": "manantial", "peso": 2, "libro": "E048" },
+    { "evento": "piratas_esqueleto", "peso": 2, "libro": "E085" },
+    { "evento": "explorador", "peso": 2, "libro": "E051" },
+    { "evento": "ermitano", "peso": 2, "libro": "E075" },
+    { "evento": "guarida_pirata", "peso": 2, "libro": "E038" },
+    { "evento": "cabana", "peso": 2, "libro": "E058" },
+    { "evento": "misioneros", "peso": 1, "libro": "E080" },
+    { "evento": "carruaje", "peso": 1, "libro": "E087" },
+    { "evento": "pescador", "peso": 1, "libro": "E071" },
+    { "evento": "nido", "peso": 1, "libro": "E039" },
+    { "evento": "esqueleto", "peso": 1, "libro": "E053" },
+    { "evento": "aldea", "peso": 1, "libro": "E004" },
+    { "evento": "picadura", "peso": 1, "libro": "E059" },
+    { "evento": "bruja_vudu", "peso": 1, "libro": "E066" },
+    { "evento": "tesoro_enterrado", "peso": 1, "libro": "E074" },
+    { "evento": "arenas_movedizas", "peso": 1, "libro": "E062" },
+    { "evento": "jaguar", "peso": 1, "libro": "E061" },
+    { "evento": "sol", "peso": 1, "libro": "E070" },
+    { "evento": "pantano", "peso": 1, "libro": "E069" },
+    { "evento": "ruinas", "peso": 1, "libro": "E040" },
+    { "evento": "cartografo", "peso": 1, "libro": "E079" },
+    { "evento": "fugitivo", "peso": 1, "libro": "E086" },
+    { "evento": "puente", "peso": 1, "libro": "E067" },
+    { "evento": "taberna_clandestina", "peso": 1, "libro": "E081" }
+  ]
+}

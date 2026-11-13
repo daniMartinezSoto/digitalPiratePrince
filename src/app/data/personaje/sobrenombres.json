@@ -3,7 +3,8 @@
     "id": "el_maldito",
     "nombre": "El maldito",
     "descripcion": "Comienza la aventura con el amuleto maldito.",
-    "ajustes": {}
+    "ajustes": {},
+    "modificadores": {}
   },
   {
     "id": "el_conformista",
@@ -11,13 +12,18 @@
     "descripcion": "Solo necesita conseguir 8 puntos de fama para ganar.",
     "ajustes": {
       "famaObjetivo": -2
-    }
+    },
+    "modificadores": {}
   },
   {
     "id": "el_nativo",
     "nombre": "El nativo",
     "descripcion": "Puede descansar gratis en aldeas y obtiene +1 en las tiradas de audiencia en ellas.",
-    "ajustes": {}
+    "ajustes": {},
+    "modificadores": {
+      "buscar_info_aldea": 1,
+      "audiencia_aldea": 1
+    }
   },
   {
     "id": "el_fuerte",
@@ -26,48 +32,60 @@
     "ajustes": {
       "fuerza": 1,
       "capacidadInventario": 2
-    }
+    },
+    "modificadores": {}
   },
   {
     "id": "el_navegante",
     "nombre": "El navegante",
     "descripcion": "Puede desplazarse 2 hexágonos por mar.",
-    "ajustes": {}
+    "ajustes": {},
+    "modificadores": {}
   },
   {
     "id": "el_superviviente",
     "nombre": "El superviviente",
     "descripcion": "No necesita comida en la jungla densa y puede desplazarse 2 hexágonos.",
-    "ajustes": {}
+    "ajustes": {},
+    "modificadores": {}
   },
   {
     "id": "el_influyente",
     "nombre": "El influyente",
     "descripcion": "Obtiene +1 al buscar información y +1 en las tiradas de audiencia en puertos y guaridas piratas.",
-    "ajustes": {}
+    "ajustes": {},
+    "modificadores": {
+      "buscar_info_puerto": 1,
+      "audiencia_puerto": 1,
+      "audiencia_guarida": 1
+    }
   },
   {
     "id": "el_afortunado",
     "nombre": "El afortunado",
     "descripcion": "Puede evitar la muerte una vez durante la aventura.",
-    "ajustes": {}
+    "ajustes": {},
+    "modificadores": {}
   },
   {
     "id": "el_contable",
     "nombre": "El contable",
     "descripcion": "Cada vez que consigue oro, obtiene además 2d6 de oro.",
-    "ajustes": {}
+    "ajustes": {},
+    "modificadores": {}
   },
   {
     "id": "el_hermano",
     "nombre": "El hermano",
     "descripcion": "Comienza con un seguidor aleatorio gratuito. Si este muere, pierde la partida.",
-    "ajustes": {}
+    "ajustes": {},
+    "modificadores": {}
   },
   {
     "id": "el_heredero",
     "nombre": "El heredero",
     "descripcion": "Comienza con un objeto mágico.",
-    "ajustes": {}
+    "ajustes": {},
+    "modificadores": {}
   }
 ]

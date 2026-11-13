@@ -1,4 +1,4 @@
-import type { EfectoDefinicion } from './efecto';
+import type { EfectoDefinicion } from '../efecto';
 
 // Una fila cubre un rango de resultados del dado, ambos extremos incluidos.
 export interface Fila {
@@ -14,6 +14,9 @@ export interface Fila {
   // Id del evento al que lleva esta fila, con nombre (p. ej. "taberna_clandestina").
   // Es un salto del motor de eventos, no un efecto sobre el estado.
   evento?: string;
+
+  // Solo para cotejar con el PDF mientras se pasan los eventos (p. ej. "E081"). Se borrará.
+  libro?: string;
 }
 
 export interface Tabla {

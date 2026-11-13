@@ -1,0 +1,10 @@
+{
+  "id": "caza",
+  "dado": "1d6",
+  "filas": [
+    { "min": 1, "max": 1, "texto": "No cazas nada." },
+    { "min": 2, "max": 3, "texto": "Cazas algo, pero te hieres.", "efectos": [{ "tipo": "comida", "cantidad": 10 }, { "tipo": "vida", "cantidad": -1 }] },
+    { "min": 4, "max": 5, "texto": "Buena caza.", "efectos": [{ "tipo": "comida", "cantidad": 10 }] },
+    { "min": 6, "max": 6, "texto": "¡Gran pieza!", "efectos": [{ "tipo": "comida", "cantidad": 15 }] }
+  ]
+}

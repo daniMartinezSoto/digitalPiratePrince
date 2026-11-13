@@ -1,0 +1,25 @@
+{
+  "id": "playa",
+  "eventos": [
+    { "evento": "cangrejo", "peso": 3, "libro": "E089" },
+    { "evento": "tesoro_enterrado", "peso": 3, "libro": "E074" },
+    { "evento": "nativos", "peso": 3, "libro": "E055" },
+    { "evento": "pescador", "peso": 3, "libro": "E071" },
+    { "evento": "sol", "peso": 2, "libro": "E070" },
+    { "evento": "cabana", "peso": 2, "libro": "E058" },
+    { "evento": "guarida_pirata", "peso": 2, "libro": "E038" },
+    { "evento": "piratas_perdidos", "peso": 2, "libro": "E072" },
+    { "evento": "piratas_esqueleto", "peso": 2, "libro": "E085" },
+    { "evento": "lluvias", "peso": 2, "libro": "E068" },
+    { "evento": "cueva", "peso": 2, "libro": "E088" },
+    { "evento": "campamento", "peso": 2, "libro": "E063" },
+    { "evento": "cartografo", "peso": 1, "libro": "E079" },
+    { "evento": "ermitano", "peso": 1, "libro": "E075" },
+    { "evento": "pirata_maldito", "peso": 1, "libro": "E078" },
+    { "evento": "dinosaurio", "peso": 1, "libro": "E064" },
+    { "evento": "marina", "peso": 1, "libro": "E065" },
+    { "evento": "esqueleto", "peso": 1, "libro": "E053" },
+    { "evento": "explorador", "peso": 1, "libro": "E051" },
+    { "evento": "ruinas", "peso": 1, "libro": "E040" }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": "alta_mar",
+  "eventos": [
+    { "evento": "barco", "peso": 6, "libro": "E008" },
+    { "evento": "tormenta", "peso": 4, "libro": "E034" },
+    { "evento": "perdidos", "peso": 3, "libro": "E013" },
+    { "evento": "rocas", "peso": 2, "libro": "E012" },
+    { "evento": "motin", "peso": 2, "libro": "E019" },
+    { "evento": "monstruo", "peso": 2, "libro": "E026" },
+    { "evento": "escorbuto", "peso": 2, "libro": "E033" },
+    { "evento": "islote", "peso": 2, "libro": "E002" },
+    { "evento": "imprevisto", "peso": 2, "libro": "E011" },
+    { "evento": "sirenas", "peso": 2, "libro": "E015" },
+    { "evento": "el_mal", "peso": 1, "libro": "E018" },
+    { "evento": "pandemia", "peso": 1, "libro": "E020" },
+    { "evento": "polizon", "peso": 1, "libro": "E016" },
+    { "evento": "objeto", "peso": 1, "libro": "E014" },
+    { "evento": "piratas_perdidos", "peso": 1, "libro": "E072" },
+    { "evento": "tierra", "peso": 1, "libro": "E028" },
+    { "evento": "vientos_favorables", "peso": 1, "libro": "E010" },
+    { "evento": "traicion", "peso": 1, "libro": "E030" },
+    { "evento": "vientos_fuertes", "peso": 1, "libro": "E009" }
+  ]
+}

@@ -1,5 +1,5 @@
 import { Generador } from './generador';
-import { tirar } from './tirada';
+import { rangoDeTirada, tirar } from './tirada';
 
 describe('tirar', () => {
   it('debe generar un resultado válido para 1d6', () => {
@@ -43,5 +43,17 @@ it('debe rechazar un multiplicador igual a cero', () => {
   expect(() => tirar('1d6x0', generador)).toThrow();
 });
 
+
+
+it('rangoDeTirada calcula lo mínimo y lo máximo sin tirar', () => {
+  expect(rangoDeTirada('1d6')).toEqual({ min: 1, max: 6 });
+  expect(rangoDeTirada('3d6')).toEqual({ min: 3, max: 18 });
+  expect(rangoDeTirada('1d7')).toEqual({ min: 1, max: 7 });
+  expect(rangoDeTirada('1d6x10')).toEqual({ min: 10, max: 60 });
+});
+
+it('rangoDeTirada rechaza expresiones no válidas', () => {
+  expect(() => rangoDeTirada('tres dados')).toThrow();
+});
 
 });

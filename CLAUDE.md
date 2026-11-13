@@ -14,14 +14,16 @@
 - **Sprint 0: completado.** Proyecto, tests, Git/GitHub y estructura `core/ data/ store/ ui/`.
 - **Sprint 1: completado (dados).** `core/dados/` contiene `Generador` (mulberry32: `siguiente()`, `obtenerEstado()`), `tirar(expresion, generador)` y `ResultadoTirada { dados, total }` (admite cualquier número de dados y caras con multiplicador opcional: `1d6`, `2d6`, `1d6x5`, `1d11`...) y la clase `Dados` (envuelve un `Generador`; **una única instancia por partida**). `Dados` **no es un signal ni forma parte del estado**: solo se guarda su número interno en `mundo.estadoDados`.
 - **Sprint 2: completado (estado y personaje).** Interfaces en `core/estado/`, datos en `data/personaje/`, `crearPersonaje(nombre, dados)` en `core/personaje/` y `crearPartida(semilla, nombre)` en `core/partida/crear-partida.ts`, que devuelve `{ estado, dados }` y guarda `dados.obtenerEstado()` en `mundo.estadoDados` DESPUÉS de crear el personaje. Constante `VERSION_ESTADO = 1`.
-- **Sprint 3: en curso (tablas, listas ponderadas y modificadores).** Las funciones devuelven resultados y efectos; **no modifican el estado** (eso es `aplicarEfectos`, Sprint 4).
+- **Sprint 3: completado (tablas, listas ponderadas y modificadores).** Las funciones devuelven resultados y efectos; **no modifican el estado** (eso es `aplicarEfectos`, Sprint 4).
   - ✅ Paso 1: `Dados` ya tiene `entero(min, max)`, `probabilidad(p)` y `elegirPonderado(lista)`. Cada uno consume **exactamente un** número del generador (protege la reproducibilidad).
-  - ✅ Paso 2: tipos en `core/tablas/`: `efecto.ts` (`RECURSOS`, `TipoRecurso`, `CantidadDefinicion`, `EfectoDefinicion`, `Efecto`), `tabla.ts` (`Fila` con `min`, `max`, `texto?`, `efectos?`, `evento?`; `Tabla` con `id`, `dado`, `filas`) y `resultado-tabla.ts` (`ResultadoTabla`, ver sección 7).
-  - ⏳ **Siguiente, paso 3:** `resolverTabla(tabla, modificador, dados): ResultadoTabla` con sus tests (primero los tests).
-  - Pendientes después: paso 4 `calcularModificador(jugador, idTirada)` (solo sobrenombres por ahora), paso 5 primeras tablas en `data/tablas/` (buscar información, pesca, caza) con cargador único y test de validación, y el formato de las listas ponderadas de eventos por terreno.
-- **Tests:** 34 pasan en 5 archivos (`generador` 3, `tirada` 5, `dados` 15, `crear-personaje` 5, `crear-partida` 6).
+  - ✅ Paso 2: tipos: `core/tablas/efecto.ts` (`RECURSOS`, `TipoRecurso`, `CantidadDefinicion`, `EfectoDefinicion`, `Efecto`; compartido con los futuros eventos), `core/tablas/rangos/tabla.ts` (`Fila` con `min`, `max`, `texto?`, `efectos?`, `evento?`, `libro?`; `Tabla` con `id`, `dado`, `filas`) y `rangos/resultado-tabla.ts` (`ResultadoTabla`, ver sección 7).
+  - ✅ Paso 3: `resolverTabla(tabla, modificador, dados): ResultadoTabla` en `core/tablas/rangos/resolver-tabla.ts`, con 22 tests. Tira `tabla.dado`, suma el modificador, recorta al rango de la tabla, lanza error si hay hueco y resuelve las cantidades (`8`, `"2d6"`, `"1d6x10"`, `"-1d6"`). Orden fijo de consumo del generador: primero el dado de la tabla, luego cada efecto con dados en orden.
+  - ✅ Paso 4: `calcularModificador(jugador, idTirada)` en `core/modificadores/` (solo sobrenombres por ahora), con 10 tests. `id-tirada.ts` define `IDS_TIRADA`, `IdTirada` y `Modificadores`. Cada sobrenombre de `sobrenombres.json` tiene un campo `modificadores` (`{}` si no da nada); influyente y nativo lo tienen relleno. Los tests también validan el JSON (tiradas existentes, bonificadores enteros).
+  - ✅ Paso 5a: tablas reales en `data/tablas/` (`buscar-informacion.json`, `pesca.json`, `caza.json`). Cargador `rangos/cargar-tablas.ts` (`TABLAS`, `obtenerTabla(id)`) y revisor `rangos/validar-tabla.ts` (`validarTabla(tabla): string[]`, errores en castellano, todos a la vez: huecos, solapes, filas que no cubren exactamente lo que saca el dado, tipos/cantidades/ids mal escritos, filas vacías). `core/dados/tirada.ts` exporta `rangoDeTirada("3d6") → { min: 3, max: 18 }`.
+  - ✅ Paso 5b: listas de eventos con pesos en `data/eventos-terreno/` (`alta-mar`, `costa`, `jungla`, `jungla-profunda`, `playa`, `nocturnos`), sacadas de las cuadrículas del papel (repeticiones = peso; cada lista suma 36). Código en `core/tablas/listas-eventos/`: `lista-eventos.ts`, `elegirEvento(lista, dados)`, `eventoAleatorio(lista, porcentaje, dados): string | null`, revisor y cargador (`LISTAS_EVENTOS`, `obtenerListaEventos(id)`). `data/ajustes.json` + `core/ajustes/ajustes.ts`: números equilibrables sin tocar código (de momento `probabilidadEventoAlViajar: 50`).
+- **Tests:** 115 pasan en 13 archivos (`generador` 3, `tirada` 7, `dados` 15, `crear-personaje` 5, `crear-partida` 6, `resolver-tabla` 22, `validar-tabla` 16, `cargar-tablas` 7, `calcular-modificador` 10, `elegir-evento` 7, `validar-lista-eventos` 6, `cargar-listas-eventos` 10, `ajustes` 1).
 
-**Siguiente:** terminar el Sprint 3 (pasos 3, 4 y 5). Decisiones detalladas en la sección 7. El plan detallado por sprints lo mantiene el autor en un documento aparte.
+**Siguiente:** Sprint 4 (efectos y `aplicarEfectos`). Decisiones detalladas en la sección 7. El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
 ---
 
@@ -40,7 +42,7 @@ En `docs/`: el PDF de reglas (24 páginas; **no incluye el libro de eventos**) y
 ## 2. Sobre el autor y cómo trabajar con él
 
 - Programador web junior; nunca ha hecho aplicaciones ni juegos. Trabaja con **Angular** y PHP en backend; quiere aprender **Spring** más adelante.
-- Idioma: español. **Quiere entender y controlar cada pieza del proyecto**: explicar el porqué de cada decisión, con ejemplos de su juego, en pasos pequeños y sin jerga innecesaria.
+- Idioma: español. **Quiere entender y controlar cada pieza del proyecto**: explicar el porqué de cada decisión, con ejemplos de su juego, en pasos pequeños y sin jerga innecesaria. Si algo no se entiende, reformularlo más simple (con ejemplos del juego, sin código) en vez de añadir detalle técnico, y no seguir hasta que lo haya entendido.
 - Proponer antes de construir (plan del paso antes de escribir código; tests primero cuando se acuerde así). Si una regla del PDF es ambigua o parece un error, **preguntar** en vez de decidir en silencio.
 - **Convención de nombres:** código y carpetas en español (`pescar`, `estado`, `jugador`, `mundo`, `core`...). Los nombres propios de Angular (`signal`, `Injectable`...) quedan en inglés.
 - Ir de uno en uno: un paso, `ng test --watch=false`, y solo entonces el siguiente. No adelantar sprints.
@@ -69,7 +71,8 @@ src/app/
 
 - **Aquí `core/` significa "lógica del juego", no "servicios globales de Angular".**
 - Reglas de oro: **`core/` no importa Angular** y **`ui/` no contiene reglas del juego.**
-- Los tests (`.spec.ts`) van junto al código. Las subcarpetas de `core/` se crean cuando toca su sprint. Existen ya: `core/dados/`, `core/estado/`, `core/personaje/`, `core/partida/`, `core/tablas/`; datos en `data/personaje/`.
+- Los tests (`.spec.ts`) van junto al código. Las subcarpetas de `core/` se crean cuando toca su sprint. Existen ya: `core/dados/`, `core/estado/`, `core/personaje/`, `core/partida/`, `core/tablas/` (con `rangos/` y `listas-eventos/`), `core/modificadores/`, `core/ajustes/`; datos en `data/personaje/`, `data/tablas/`, `data/eventos-terreno/` y `data/ajustes.json`.
+- **Para añadir contenido:** cada cargador (`cargar-tablas.ts`, `cargar-listas-eventos.ts`) explica arriba cómo añadir un JSON nuevo (crearlo, importarlo, añadirlo a la lista). Los tests de los cargadores pasan el revisor por **todo** el contenido automáticamente.
 
 ### 3.3 Flujo de una acción
 
@@ -379,15 +382,19 @@ Casi todas las acciones son **tablas de dados**, y deben ser **datos, no código
 { "terreno": "jungla", "eventos": [
     { "evento": "cabana_en_la_jungla", "peso": 3 }, { "evento": "cueva", "peso": 1 } ] }
 ```
-Al ser una lista, se puede evitar el mismo evento dos veces seguidas, retirar los de una sola vez, o exigir condiciones.
+Al ser una lista, se puede evitar el mismo evento dos veces seguidas, retirar los de una sola vez, o exigir condiciones (aún no implementado; el formato lo permite).
 
-### Implementado en `core/tablas/` (Sprint 3)
+**Formato real** (`data/eventos-terreno/<terreno>.json`): `{ "id": "jungla", "eventos": [{ "evento": "cabana", "peso": 2, "libro": "E058" }, ...] }`. El mismo evento escrito dos veces es un **error** (se sube el peso). `eventoAleatorio(lista, porcentaje, dados)` decide primero si pasa algo (gasta 1 número) y, si pasa, elige con pesos (gasta otro). Al **viajar** se usa la lista del **terreno de destino** con `AJUSTES.probabilidadEventoAlViajar` (Sprint 9). Servirá también para descansar en el barco y dormir a la intemperie.
+
+**Ids de eventos ya asignados** (código del libro → id): E002 `islote`, E003 `piratas_hostiles`, E004 `aldea`, E008 `barco`, E009 `vientos_fuertes`, E010 `vientos_favorables`, E011 `imprevisto`, E012 `rocas`, E013 `perdidos`, E014 `objeto`, E015 `sirenas`, E016 `polizon`, E017 `bob_vendedor_ambulante`, E018 `el_mal`, E019 `motin`, E020 `pandemia`, E024 `rumores`, E026 `monstruo`, E028 `tierra`, E030 `traicion`, E031 `escondite`, E033 `escorbuto`, E034 `tormenta`, E035 `botella`, E038 `guarida_pirata`, E039 `nido`, E040 `ruinas`, E042 `alguacil`, E046 `nativos_hostiles`, E047 `bloqueado`, E048 `manantial`, E051 `explorador`, E052 `plantas_carnivoras`, E053 `esqueleto`, E054 `ritual`, E055 `nativos`, E056 `golem`, E058 `cabana`, E059 `picadura`, E061 `jaguar`, E062 `arenas_movedizas`, E063 `campamento`, E064 `dinosaurio`, E065 `marina`, E066 `bruja_vudu`, E067 `puente`, E068 `lluvias`, E069 `pantano`, E070 `sol`, E071 `pescador`, E072 `piratas_perdidos` (en barco: bote a la deriva; en tierra: deambulando; es el mismo evento), E074 `tesoro_enterrado`, E075 `ermitano`, E078 `pirata_maldito`, E079 `cartografo`, E080 `misioneros`, E081 `taberna_clandestina`, E082 `mercado_de_esclavos`, E083 `contrabandista`, E084 `subasta_secreta`, E085 `piratas_esqueleto`, E086 `fugitivo`, E087 `carruaje`, E088 `cueva`, E089 `cangrejo`, E090 `volcan`. Las listas son orientativas: faltan eventos y están sin equilibrar.
+
+### Implementado en `core/tablas/` (Sprint 3; tipos de tablas en `rangos/`, `efecto.ts` en la raíz)
 
 ```ts
 // efecto.ts
 export const RECURSOS = ['oro', 'comida', 'tripulacion', 'vida', 'fama'] as const;   // array para recorrerlo en el test de validación
 export type TipoRecurso = (typeof RECURSOS)[number];
-export type CantidadDefinicion = number | string;          // 8  o  "2d6" / "1d6x10"
+export type CantidadDefinicion = number | string;          // 8, -1  o  "2d6" / "1d6x10" / "-1d6" (el signo menos = se resta)
 export type EfectoDefinicion =                             // tal como se escribe en el JSON
   | { tipo: TipoRecurso; cantidad: CantidadDefinicion }
   | { tipo: 'perder_mitad_oro' };                          // depende del estado: lo resuelve aplicarEfectos (Sprint 4)
@@ -429,14 +436,22 @@ Una fila puede llevar efectos, un evento o ambas cosas: `{ "min": 9, "max": 12, 
 5. **Efectos con dados salen ya resueltos** (números concretos). Los que dependen del estado (`perder_mitad_oro`) se devuelven tal cual y los resuelve el Sprint 4.
 6. **Los JSON pierden los tipos al importarse** (`"tipo": "oro"` es un `string`). Se convierte con `as` en **un único cargador de tablas**, y un **test valida todas las tablas**: sin huecos ni solapes, tipos de efecto conocidos (los de `RECURSOS` + `perder_mitad_oro`) e ids de evento con formato válido (minúsculas y guiones bajos). Aún no se puede exigir que el evento exista.
 7. **Ids de evento con nombre**, no con el número del libro. Opcional mientras se pasan los eventos: un campo `"libro": "E081"` solo para cotejar con el PDF, que se borra después.
-8. **Dados del papel:** sumar dados cambia las probabilidades (los extremos son raros, a propósito). Mantener el dado de papel en tablas con resultados "normales" y "raros"; usar pesos o dado único donde todo es igual de probable.
+8. **Dados del papel:** sumar dados cambia las probabilidades (los extremos son raros, a propósito). Mantener el dado de papel en tablas con resultados "normales" y "raros"; para resultados igual de probables, dado único (`1d7`, `1d8`...). **Las tablas siempre son con dado y rangos** (los bonificadores necesitan rangos); **los pesos son solo para las listas de eventos**. Añadir un resultado = partir una fila o cambiar `1d7` → `1d8` y añadir la fila; el revisor avisa si las filas no cubren exactamente lo que saca el dado.
 9. **Pesca y caza:** 1d6 por defecto, con las cantidades del papel por ahora.
 10. **Sin mensajes en efectos ni tablas** (ver 3.5), salvo el `texto` descriptivo de la fila.
+11. **Perder se escribe con signo menos**, también con dados: `{ "tipo": "vida", "cantidad": -1 }` (caza) o `{ "tipo": "oro", "cantidad": "-1d6" }` (multa del discurso). `resolverTabla` quita el `-`, tira y devuelve la cantidad en negativo; `tirar()` no se toca. El código solo suma: **el JSON decide si se gana o se pierde**.
 
 Si un evento referenciado todavía no existe, el juego muestra "evento X pendiente" para poder probar el flujo antes de tener el libro.
 
 ### Modificadores por identificador
-Sobrenombres, seguidores y objetos suman bonificadores (nativo, barbero-cirujano, influyente, navegante...). Para evitar `if`s sueltos: **cada tirada tiene un identificador** y cada sobrenombre/seguidor/objeto **declara sus modificadores sobre esos identificadores**. Añadir un objeto es añadir datos.
+Sobrenombres, seguidores y objetos suman bonificadores (nativo, barbero-cirujano, influyente...). Para evitar `if`s sueltos: **cada tirada tiene un identificador** y cada sobrenombre/seguidor/objeto **declara sus modificadores sobre esos identificadores**. Añadir un objeto es añadir datos.
+
+```json
+{ "id": "el_influyente", "modificadores": { "buscar_info_puerto": 1, "audiencia_puerto": 1, "audiencia_guarida": 1 } }
+```
+- Van ligados a **tiradas, no a tablas**: la misma tabla (buscar información) tiene bonificadores distintos en puerto y en aldea, y habrá tiradas que no son tablas (huida, chequeos).
+- **No todo es un modificador de tirada.** El navegante y el superviviente cambian el alcance del movimiento: tendrán su propio campo (p. ej. `"movimiento": { "mar": 2 }`) en el Sprint 9. Muchas reglas concretas de sobrenombres, seguidores y eventos se irán resolviendo una a una cuando toque.
+- **Duda abierta:** la descripción del influyente dice "+1 al buscar información" sin especificar dónde; ahora está programado solo en puertos (decisión 3). Confirmar con el autor.
 
 ---
 
@@ -493,7 +508,7 @@ Buen caso de prueba: junta decisión, chequeo y tirada, y llama a otros eventos.
 Los eventos van **después** del núcleo (detalle en el documento de sprints del autor):
 1. ✅ Dados con semilla.
 2. ✅ Estado serializable y creación de personaje/partida.
-3. 🔄 Resolvedor de tablas por rangos, listas ponderadas y modificadores por identificador.
+3. ✅ Resolvedor de tablas por rangos, listas ponderadas y modificadores por identificador.
 4. Efectos y `aplicarEfectos`.
 5. Ciclo de turno: comida (hambre, deserción, motín) y alojamiento.
 6. Seguidores, objetos y acciones sin eventos (pescar, cazar, comida, reclutar, descansar, enterrar tesoro).
@@ -510,7 +525,7 @@ Hasta el punto 8 no hace falta ni mapa ni libro de eventos. El 9 necesita el `.w
 - Archivo **`.wxx`** del mapa prototipo y confirmar el icono de calavera.
 - Confirmar **pesca y caza en 1d6** y, más adelante, reequilibrar cantidades y precio de la comida.
 - Rehacer la habilidad del **cocinero** (o quitarlo) y decidir la **capacidad de carga** en la inanición.
-- Asignar **eventos (con id con nombre) a cada terreno y a los nocturnos**, con pesos o iguales.
+- Completar y equilibrar las **listas de eventos por terreno** (ya pasadas del papel, faltan algunos eventos).
 - **Libro de eventos**, empezando por 3-4 muestras variadas (tirada, decisión, combinado, con llamada y vuelta, y una con regla especial como el mapa del tesoro).
 - Tabla de objetos mágicos (E037), lista de objetos y estadísticas de enemigos y barcos.
 - Decidir "Meditar", cómo encaja el guardado con el diseño roguelike (sección 3.7), el momento exacto de la **victoria** y el diseño del **minijuego naval**.

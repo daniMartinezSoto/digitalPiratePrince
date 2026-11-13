@@ -1,0 +1,32 @@
+{
+  "id": "jungla_profunda",
+  "eventos": [
+    { "evento": "aldea", "peso": 3, "libro": "E004" },
+    { "evento": "ruinas", "peso": 3, "libro": "E040" },
+    { "evento": "cueva", "peso": 3, "libro": "E088" },
+    { "evento": "jaguar", "peso": 2, "libro": "E061" },
+    { "evento": "guarida_pirata", "peso": 2, "libro": "E038" },
+    { "evento": "piratas_esqueleto", "peso": 2, "libro": "E085" },
+    { "evento": "nido", "peso": 1, "libro": "E039" },
+    { "evento": "bloqueado", "peso": 1, "libro": "E047" },
+    { "evento": "arenas_movedizas", "peso": 1, "libro": "E062" },
+    { "evento": "dinosaurio", "peso": 1, "libro": "E064" },
+    { "evento": "plantas_carnivoras", "peso": 1, "libro": "E052" },
+    { "evento": "marina", "peso": 1, "libro": "E065" },
+    { "evento": "pantano", "peso": 1, "libro": "E069" },
+    { "evento": "lluvias", "peso": 1, "libro": "E068" },
+    { "evento": "explorador", "peso": 1, "libro": "E051" },
+    { "evento": "pirata_maldito", "peso": 1, "libro": "E078" },
+    { "evento": "volcan", "peso": 1, "libro": "E090" },
+    { "evento": "ritual", "peso": 1, "libro": "E054" },
+    { "evento": "nativos_hostiles", "peso": 1, "libro": "E046" },
+    { "evento": "bruja_vudu", "peso": 1, "libro": "E066" },
+    { "evento": "esqueleto", "peso": 1, "libro": "E053" },
+    { "evento": "sol", "peso": 1, "libro": "E070" },
+    { "evento": "piratas_perdidos", "peso": 1, "libro": "E072" },
+    { "evento": "cabana", "peso": 1, "libro": "E058" },
+    { "evento": "campamento", "peso": 1, "libro": "E063" },
+    { "evento": "misioneros", "peso": 1, "libro": "E080" },
+    { "evento": "puente", "peso": 1, "libro": "E067" }
+  ]
+}

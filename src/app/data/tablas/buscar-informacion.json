@@ -1,0 +1,19 @@
+{
+  "id": "buscar_informacion",
+  "dado": "3d6",
+  "filas": [
+    { "min": 3, "max": 3, "texto": "Te roban: pierdes la mitad del oro que llevas.", "efectos": [{ "tipo": "perder_mitad_oro" }] },
+    { "min": 4, "max": 4, "texto": "No pasa nada." },
+    { "min": 5, "max": 5, "texto": "Haces amigos: la próxima vez que busques información o contrates aquí, tendrás +1." },
+    { "min": 6, "max": 6, "texto": "Encuentras un cubil de contrabandistas vacío y lo saqueas.", "efectos": [{ "tipo": "oro", "cantidad": 50 }] },
+    { "min": 7, "max": 7, "texto": "Bob el vendedor ambulante.", "evento": "bob_vendedor_ambulante", "libro": "E017" },
+    { "min": 8, "max": 8, "texto": "Un cartógrafo.", "evento": "cartografo", "libro": "E079" },
+    { "min": 9, "max": 12, "texto": "Una taberna clandestina.", "evento": "taberna_clandestina", "libro": "E081" },
+    { "min": 13, "max": 13, "texto": "Una bruja vudú.", "evento": "bruja_vudu", "libro": "E066" },
+    { "min": 14, "max": 14, "texto": "Un mercado de esclavos.", "evento": "mercado_de_esclavos", "libro": "E082" },
+    { "min": 15, "max": 15, "texto": "Un contrabandista.", "evento": "contrabandista", "libro": "E083" },
+    { "min": 16, "max": 16, "texto": "Una subasta secreta.", "evento": "subasta_secreta", "libro": "E084" },
+    { "min": 17, "max": 17, "texto": "Oyes rumores sobre un lugar.", "evento": "rumores", "libro": "E024" },
+    { "min": 18, "max": 18, "texto": "Un alguacil te ofrece una audiencia con el gobernador.", "evento": "alguacil", "libro": "E042" }
+  ]
+}

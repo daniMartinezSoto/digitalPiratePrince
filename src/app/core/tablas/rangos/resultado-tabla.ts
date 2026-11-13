@@ -1,4 +1,4 @@
-import type { Efecto } from './efecto';
+import type { Efecto } from '../efecto';
 
 // Lo que devuelve resolverTabla(): la fila elegida ya resuelta, más datos de la tirada.
 export interface ResultadoTabla {

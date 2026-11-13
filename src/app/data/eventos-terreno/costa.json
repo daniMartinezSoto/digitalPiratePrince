@@ -1,0 +1,24 @@
+{
+  "id": "costa",
+  "eventos": [
+    { "evento": "islote", "peso": 4, "libro": "E002" },
+    { "evento": "objeto", "peso": 4, "libro": "E014" },
+    { "evento": "botella", "peso": 3, "libro": "E035" },
+    { "evento": "vientos_favorables", "peso": 3, "libro": "E010" },
+    { "evento": "rocas", "peso": 3, "libro": "E012" },
+    { "evento": "barco", "peso": 3, "libro": "E008" },
+    { "evento": "imprevisto", "peso": 2, "libro": "E011" },
+    { "evento": "vientos_fuertes", "peso": 2, "libro": "E009" },
+    { "evento": "escondite", "peso": 2, "libro": "E031" },
+    { "evento": "tierra", "peso": 1, "libro": "E028" },
+    { "evento": "pandemia", "peso": 1, "libro": "E020" },
+    { "evento": "polizon", "peso": 1, "libro": "E016" },
+    { "evento": "perdidos", "peso": 1, "libro": "E013" },
+    { "evento": "piratas_perdidos", "peso": 1, "libro": "E072" },
+    { "evento": "monstruo", "peso": 1, "libro": "E026" },
+    { "evento": "bob_vendedor_ambulante", "peso": 1, "libro": "E017" },
+    { "evento": "traicion", "peso": 1, "libro": "E030" },
+    { "evento": "sirenas", "peso": 1, "libro": "E015" },
+    { "evento": "tormenta", "peso": 1, "libro": "E034" }
+  ]
+}

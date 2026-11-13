@@ -1,0 +1,14 @@
+{
+  "id": "nocturnos",
+  "eventos": [
+    { "evento": "piratas_esqueleto", "peso": 5, "libro": "E085" },
+    { "evento": "jaguar", "peso": 5, "libro": "E061" },
+    { "evento": "golem", "peso": 4, "libro": "E056" },
+    { "evento": "picadura", "peso": 4, "libro": "E059" },
+    { "evento": "nativos_hostiles", "peso": 4, "libro": "E046" },
+    { "evento": "piratas_hostiles", "peso": 4, "libro": "E003" },
+    { "evento": "marina", "peso": 4, "libro": "E065" },
+    { "evento": "cangrejo", "peso": 3, "libro": "E089" },
+    { "evento": "pirata_maldito", "peso": 3, "libro": "E078" }
+  ]
+}
