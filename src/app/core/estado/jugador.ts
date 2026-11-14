@@ -1,5 +1,5 @@
 
-import { ArticuloLlevado } from './articulo-llevado';
+import { ObjetoLlevado } from './objeto-llevado';
 import { CondicionActiva } from './condicion-activa';
 import { Seguidor } from './seguidor';
 
@@ -28,7 +28,7 @@ export interface Jugador {
 
   // Objetos que lleva (solo id y usos; el resto, en el catálogo) y huecos del inventario.
   // Un objeto puede ocupar varios huecos (campo "espacios" del catálogo).
-  inventario: ArticuloLlevado[];
+  inventario: ObjetoLlevado[];
   capacidadInventario: number;
 
   // Seguidores que acompañan al jugador (máximo 3).

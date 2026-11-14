@@ -24,7 +24,7 @@
 - **Ajustes antes del Sprint 4 (hechos tras leer el libro de eventos, ver sección 3.9):**
   - Dados: `tirar` y `rangoDeTirada` aceptan `+N` (`"1d6+1"`, `"1d6x10+5"`: primero multiplica, luego suma).
   - Efectos generales en `tablas/efecto.ts`: `operacion` (`sumar` por defecto, `fijar`, `mitad`, `maximo`, `todo`), `destino` (`jugador` por defecto, `todos`, `seguidor_azar`, `seguidor_elegido`; solo para la vida) y `ganar_partida` / `perder_partida`. Desaparece `perder_mitad_oro` (el robo de buscar información es ahora `{ "tipo": "oro", "operacion": "mitad" }`). `resolverTabla` copia el efecto y solo convierte la cantidad; `validarTabla` revisa todo lo nuevo.
-  - Estado: el inventario guarda `ArticuloLlevado { id, usosRestantes? }`; nuevos `jugador.condiciones: CondicionActiva[]` (`{ id, turnosRestantes? }`) y `jugador.fasesAccionPerdidas`. Los seguidores guardan sus habilidades por id. `Articulo` y `Habilidad` pasan a `core/catalogos/` como formato de catálogo (`imagen`, `espacios`, `precioVenta`, `magico`, `modificadores`).
+  - Estado: el inventario guarda `ObjetoLlevado { id, usosRestantes? }`; nuevos `jugador.condiciones: CondicionActiva[]` (`{ id, turnosRestantes? }`) y `jugador.fasesAccionPerdidas`. Los seguidores guardan sus habilidades por id. `Objeto` y `Habilidad` pasan a `core/catalogos/` como formato de catálogo (`imagen`, `espacios`, `precioVenta`, `magico`, `modificadores`).
   - `data/ajustes.json`: `comidaMaxima` (20, provisional).
 - **Tests:** 137 pasan en 14 archivos.
 
@@ -78,7 +78,7 @@ src/app/
 
 - **Aquí `core/` significa "lógica del juego", no "servicios globales de Angular".**
 - Reglas de oro: **`core/` no importa Angular** y **`ui/` no contiene reglas del juego.**
-- Los tests (`.spec.ts`) van junto al código. Las subcarpetas de `core/` se crean cuando toca su sprint. Existen ya: `core/dados/`, `core/estado/`, `core/personaje/`, `core/partida/`, `core/tablas/` (con `rangos/` y `listas-eventos/`), `core/modificadores/`, `core/ajustes/`, `core/catalogos/` (formatos de catálogo: `articulo.ts`, `habilidad.ts`); datos en `data/personaje/`, `data/tablas/`, `data/eventos-terreno/` y `data/ajustes.json`.
+- Los tests (`.spec.ts`) van junto al código. Las subcarpetas de `core/` se crean cuando toca su sprint. Existen ya: `core/dados/`, `core/estado/`, `core/personaje/`, `core/partida/`, `core/tablas/` (con `rangos/` y `listas-eventos/`), `core/modificadores/`, `core/ajustes/`, `core/catalogos/` (formatos de catálogo: `objeto.ts`, `habilidad.ts`); datos en `data/personaje/`, `data/tablas/`, `data/eventos-terreno/` y `data/ajustes.json`.
 - **Para añadir contenido:** cada cargador (`cargar-tablas.ts`, `cargar-listas-eventos.ts`) explica arriba cómo añadir un JSON nuevo (crearlo, importarlo, añadirlo a la lista). Los tests de los cargadores pasan el revisor por **todo** el contenido automáticamente.
 
 ### 3.3 Flujo de una acción
@@ -114,7 +114,7 @@ Jugador { nombre: string;            // lo elige el jugador
           oro, tripulacion, tripulacionMax, comida: number;
           fama, famaObjetivo: number;
           diasSinComer: number;      // contador único del grupo
-          inventario: ArticuloLlevado[]; capacidadInventario: number;   // huecos; un objeto puede ocupar varios
+          inventario: ObjetoLlevado[]; capacidadInventario: number;   // huecos; un objeto puede ocupar varios
           seguidores: Seguidor[];    // máximo 3
           condiciones: CondicionActiva[];   // maldiciones, bendiciones, enfermedades, tormenta...
           fasesAccionPerdidas: number }     // turnos en los que se pierde la acción (se come igual)
@@ -132,11 +132,11 @@ Seguidor { id: string; tipo: string; nombre: string; ataque: number;   // ataque
            resistencia, resistenciaMaxima: number;                     // resistencia = su vida
            habilidades: string[] }                                     // ids del catálogo de habilidades
 
-ArticuloLlevado { id: string; usosRestantes?: number }   // en la partida solo esto; el resto, del catálogo
+ObjetoLlevado   { id: string; usosRestantes?: number }   // en la partida solo esto; el resto, del catálogo
 CondicionActiva { id: string; turnosRestantes?: number } // sin turnos = hasta que algo la quite
 
 // Catálogos (core/catalogos/, datos en data/): lo que no cambia durante la partida
-Articulo  { id, nombre, descripcion; imagen?; tipo: 'pasivo' | 'activo'; usosMaximos?; espacios? (1);
+Objeto    { id, nombre, descripcion; imagen?; tipo: 'pasivo' | 'activo'; usosMaximos?; espacios? (1);
             precioVenta? (sin él no se vende); magico? (+1 fama al conseguirlo); modificadores? }
 Habilidad { id, nombre, descripcion; imagen?; tipo: 'pasiva' | 'activa'; modificadores? }  // sin cooldowns
 ```

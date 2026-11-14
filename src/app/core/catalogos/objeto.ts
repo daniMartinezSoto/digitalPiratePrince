@@ -2,9 +2,9 @@ import type { Modificadores } from '../modificadores/id-tirada';
 
 // Ficha de catálogo de un objeto (data/objetos.json, Sprint 4).
 // Es lo que NO cambia durante la partida: nombre, texto, dibujo, precio...
-// La partida solo guarda un ArticuloLlevado (el id y los usos que le quedan),
+// La partida solo guarda un ObjetoLlevado (el id y los usos que le quedan),
 // así que corregir un texto o un dibujo aquí vale para todas las partidas.
-export interface Articulo {
+export interface Objeto {
   // Identificador único, p. ej. "amuleto_del_destino".
   id: string;
 
