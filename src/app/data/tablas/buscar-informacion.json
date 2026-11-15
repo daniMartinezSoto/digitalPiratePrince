@@ -14,6 +14,6 @@
     { "min": 15, "max": 15, "texto": "Un contrabandista.", "evento": "contrabandista", "libro": "E083" },
     { "min": 16, "max": 16, "texto": "Una subasta secreta.", "evento": "subasta_secreta", "libro": "E084" },
     { "min": 17, "max": 17, "texto": "Oyes rumores sobre un lugar.", "evento": "rumores", "libro": "E024" },
-    { "min": 18, "max": 18, "texto": "Un alguacil te ofrece una audiencia con el gobernador.", "evento": "alguacil", "libro": "E042" }
+    { "min": 18, "max": 18, "texto": "Un alguacil te ofrece una audiencia con el gobernador.", "evento": "audiencia_gobernador", "libro": "E042" }
   ]
 }
