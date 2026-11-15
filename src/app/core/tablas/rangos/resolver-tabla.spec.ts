@@ -282,6 +282,38 @@ describe('resolverTabla', () => {
         expect(cantidad).toBeLessThanOrEqual(7);
       }
     });
+    it('objetos, condiciones sin turnos, banderas y quitar condición se devuelven tal cual', () => {
+      const efectos = [
+        { tipo: 'ganar_objeto', objeto: 'mano_de_mono' },
+        { tipo: 'perder_objeto', objeto: 'idolo_dorado' },
+        { tipo: 'poner_condicion', condicion: 'escorbuto' },
+        { tipo: 'quitar_condicion', categoria: 'maldicion' },
+        { tipo: 'bandera', bandera: 'emporio_bob_derrotado' },
+      ] as const;
+
+      const r = resolverTabla(tablaUnaFila([...efectos]), 0, new Dados(1));
+
+      expect(r.efectos).toEqual(efectos);
+      expect(r.efectos[2]).not.toHaveProperty('turnos'); // sin turnos = no aparece el campo
+    });
+
+    it('los turnos de una condición y los turnos perdidos con dados salen ya convertidos en números', () => {
+      const tabla = tablaUnaFila([
+        { tipo: 'poner_condicion', condicion: 'tormenta', turnos: '1d3' },
+        { tipo: 'perder_turnos', cantidad: '1d3' },
+      ]);
+      const gemelo = new Dados(9);
+      gemelo.tirar('1d6'); // el dado de la tabla
+      const turnos = gemelo.tirar('1d3').total;
+      const perdidos = gemelo.tirar('1d3').total;
+
+      const r = resolverTabla(tabla, 0, new Dados(9));
+
+      expect(r.efectos).toEqual([
+        { tipo: 'poner_condicion', condicion: 'tormenta', turnos },
+        { tipo: 'perder_turnos', cantidad: perdidos },
+      ]);
+    });
   });
 
   // -------------------------------------------------------------------------

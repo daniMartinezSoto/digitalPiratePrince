@@ -1,0 +1,32 @@
+[
+  {
+    "id": "maleficio_del_pirata",
+    "nombre": "Maleficio del pirata",
+    "descripcion": "Estás maldito: −1 en todas las tiradas de combate mientras dure la maldición.",
+    "categoria": "maldicion"
+  },
+  {
+    "id": "el_mal",
+    "nombre": "El mal está a bordo",
+    "descripcion": "Algo maligno se esconde en el barco. Cada turno pierdes tripulación hasta que resuelvas la situación.",
+    "categoria": "maldicion"
+  },
+  {
+    "id": "escorbuto",
+    "nombre": "Escorbuto",
+    "descripcion": "La falta de alimentos frescos enferma a la tripulación. Cada turno sin tocar tierra pierdes tripulantes.",
+    "categoria": "enfermedad"
+  },
+  {
+    "id": "tormenta",
+    "nombre": "Tormenta",
+    "descripcion": "Una tormenta azota el barco. No puedes viajar hasta que amaine.",
+    "categoria": "clima"
+  },
+  {
+    "id": "lluvias",
+    "nombre": "Lluvias torrenciales",
+    "descripcion": "Llueve a cántaros. No puedes moverte y tu grupo puede resfriarse.",
+    "categoria": "clima"
+  }
+]

@@ -174,4 +174,102 @@ describe('validarTabla', () => {
       expect(validarTabla(conEfectos([{ tipo: 'perder_mitad_oro' }])).join()).toMatch(/"perder_mitad_oro" no existe/);
     });
   });
+
+  describe('características (fuerza, ingenio, vidaMax)', () => {
+    function conEfectos(efectos: unknown[]): Tabla {
+      const tabla = tablaBuena();
+      tabla.filas[1].efectos = efectos as never;
+      return tabla;
+    }
+
+    it('se pueden subir, bajar y fijar', () => {
+      const tabla = conEfectos([
+        { tipo: 'fuerza', cantidad: 1 },
+        { tipo: 'ingenio', cantidad: -1 },
+        { tipo: 'vidaMax', cantidad: 4 },
+        { tipo: 'fuerza', operacion: 'fijar', cantidad: 2 },
+      ]);
+      expect(validarTabla(tabla)).toEqual([]);
+    });
+
+    it('no admiten "todo" porque nunca bajan de 1', () => {
+      expect(validarTabla(conEfectos([{ tipo: 'fuerza', operacion: 'todo' }])).join()).toMatch(/característica y nunca baja de 1/);
+    });
+
+    it('no se pueden fijar en 0', () => {
+      expect(validarTabla(conEfectos([{ tipo: 'ingenio', operacion: 'fijar', cantidad: 0 }])).join()).toMatch(/nunca bajan de 1/);
+    });
+
+    it('no admiten destino de seguidores', () => {
+      expect(validarTabla(conEfectos([{ tipo: 'fuerza', cantidad: 1, destino: 'todos' }])).join()).toMatch(/solo la vida/);
+    });
+  });
+
+  describe('objetos, condiciones, turnos perdidos y banderas', () => {
+    function conEfectos(efectos: unknown[]): Tabla {
+      const tabla = tablaBuena();
+      tabla.filas[1].efectos = efectos as never;
+      return tabla;
+    }
+    const erroresDe = (efecto: unknown) => validarTabla(conEfectos([efecto])).join(' | ');
+
+    it('acepta todas las formas correctas (con ids reales de los catálogos)', () => {
+      const tabla = conEfectos([
+        { tipo: 'ganar_objeto', objeto: 'mano_de_mono' },
+        { tipo: 'perder_objeto', objeto: 'idolo_dorado' },
+        { tipo: 'poner_condicion', condicion: 'escorbuto' },
+        { tipo: 'poner_condicion', condicion: 'tormenta', turnos: 2 },
+        { tipo: 'poner_condicion', condicion: 'lluvias', turnos: '1d3' },
+        { tipo: 'quitar_condicion', condicion: 'escorbuto' },
+        { tipo: 'quitar_condicion', categoria: 'maldicion' },
+        { tipo: 'perder_turnos', cantidad: 1 },
+        { tipo: 'perder_turnos', cantidad: '1d3' },
+        { tipo: 'bandera', bandera: 'emporio_bob_derrotado' },
+      ]);
+      expect(validarTabla(tabla)).toEqual([]);
+    });
+
+    it('detecta un objeto que no está en el catálogo', () => {
+      expect(erroresDe({ tipo: 'ganar_objeto', objeto: 'mano_de_mona' })).toMatch(
+        /el objeto "mano_de_mona" no existe en el catálogo de objetos/,
+      );
+    });
+
+    it('detecta que falta el objeto', () => {
+      expect(erroresDe({ tipo: 'perder_objeto' })).toMatch(/falta el "objeto"/);
+    });
+
+    it('detecta una condición que no está en el catálogo', () => {
+      expect(erroresDe({ tipo: 'poner_condicion', condicion: 'escorbutto' })).toMatch(
+        /la condición "escorbutto" no existe en el catálogo de condiciones/,
+      );
+    });
+
+    it('detecta turnos en 0, negativos o mal escritos', () => {
+      expect(erroresDe({ tipo: 'poner_condicion', condicion: 'tormenta', turnos: 0 })).toMatch(/los turnos/);
+      expect(erroresDe({ tipo: 'poner_condicion', condicion: 'tormenta', turnos: '-1d3' })).toMatch(/los turnos/);
+    });
+
+    it('quitar_condicion lleva una condición o una categoría, no las dos ni ninguna', () => {
+      expect(erroresDe({ tipo: 'quitar_condicion' })).toMatch(/una de las dos/);
+      expect(erroresDe({ tipo: 'quitar_condicion', condicion: 'escorbuto', categoria: 'enfermedad' })).toMatch(/una de las dos/);
+    });
+
+    it('detecta una categoría que no existe al quitar condiciones', () => {
+      expect(erroresDe({ tipo: 'quitar_condicion', categoria: 'maldición' })).toMatch(/la categoría "maldición" no existe/);
+    });
+
+    it('detecta turnos perdidos en 0 o negativos', () => {
+      expect(erroresDe({ tipo: 'perder_turnos', cantidad: 0 })).toMatch(/perder_turnos/);
+      expect(erroresDe({ tipo: 'perder_turnos', cantidad: -1 })).toMatch(/perder_turnos/);
+    });
+
+    it('detecta una bandera mal escrita', () => {
+      expect(erroresDe({ tipo: 'bandera', bandera: 'Bob derrotado' })).toMatch(/la bandera debe ser/);
+    });
+
+    it('detecta campos que sobran (p. ej. una cantidad en ganar_objeto)', () => {
+      expect(erroresDe({ tipo: 'ganar_objeto', objeto: 'mano_de_mono', cantidad: 2 })).toMatch(/sobra "cantidad"/);
+    });
+  });
 });

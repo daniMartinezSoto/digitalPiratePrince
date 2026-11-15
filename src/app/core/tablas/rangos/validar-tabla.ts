@@ -1,5 +1,16 @@
 import { rangoDeTirada } from '../../dados/tirada';
-import { DESTINOS, FINES_DE_PARTIDA, OPERACIONES, RECURSOS, RECURSOS_CON_MAXIMO } from '../efecto';
+import { CONDICIONES } from '../../catalogos/cargar-condiciones';
+import { OBJETOS } from '../../catalogos/cargar-objetos';
+import { CATEGORIAS_CONDICION } from '../../catalogos/condicion';
+import {
+  CARACTERISTICAS,
+  DESTINOS,
+  FINES_DE_PARTIDA,
+  OPERACIONES,
+  OTROS_EFECTOS,
+  RECURSOS,
+  RECURSOS_CON_MAXIMO,
+} from '../efecto';
 import type { Fila, Tabla } from './tabla';
 
 // Formatos válidos.
@@ -9,7 +20,9 @@ const FINES_TEXTO: readonly string[] = FINES_DE_PARTIDA;
 const OPERACIONES_TEXTO: readonly string[] = OPERACIONES;
 const DESTINOS_TEXTO: readonly string[] = DESTINOS;
 const CON_MAXIMO_TEXTO: readonly string[] = RECURSOS_CON_MAXIMO;
-const TIPOS_EFECTO: readonly string[] = [...RECURSOS, ...FINES_DE_PARTIDA];
+const CARACTERISTICAS_TEXTO: readonly string[] = CARACTERISTICAS;
+const CATEGORIAS_TEXTO: readonly string[] = CATEGORIAS_CONDICION;
+const TIPOS_EFECTO: readonly string[] = [...RECURSOS, ...FINES_DE_PARTIDA, ...OTROS_EFECTOS];
 // Operaciones que llevan cantidad; las demás (mitad, maximo, todo) no.
 const OPERACIONES_CON_CANTIDAD = ['sumar', 'fijar'];
 
@@ -99,54 +112,141 @@ function validarFila(fila: Fila, nombre: string): string[] {
 
 /** Revisa un efecto suelto. Lo mira como objeto genérico: en el JSON puede venir cualquier cosa. */
 function validarEfecto(efecto: unknown, donde: string): string[] {
-  const errores: string[] = [];
-  const e = efecto as { tipo: string; cantidad?: unknown; operacion?: string; destino?: string };
+  const e = efecto as Record<string, unknown> & { tipo: string };
 
   if (!TIPOS_EFECTO.includes(e.tipo)) {
     return [`${donde}: el tipo de efecto "${e.tipo}" no existe (válidos: ${TIPOS_EFECTO.join(', ')}).`];
   }
 
-  // Ganar o perder la partida: solo el tipo, nada más.
-  if (FINES_TEXTO.includes(e.tipo)) {
-    if (e.cantidad !== undefined || e.operacion !== undefined || e.destino !== undefined) {
-      errores.push(`${donde}: "${e.tipo}" no lleva cantidad, operación ni destino.`);
-    }
-    return errores;
+  switch (e.tipo) {
+    case 'ganar_partida':
+    case 'perder_partida':
+      return soloEstosCampos(e, [], donde);
+    case 'ganar_objeto':
+    case 'perder_objeto':
+      return [...soloEstosCampos(e, ['objeto'], donde), ...validarIdObjeto(e['objeto'], donde)];
+    case 'poner_condicion':
+      return [
+        ...soloEstosCampos(e, ['condicion', 'turnos'], donde),
+        ...validarIdCondicion(e['condicion'], donde),
+        ...(e['turnos'] === undefined ? [] : validarCantidadPositiva(e['turnos'], `los turnos de "${e.tipo}"`, donde)),
+      ];
+    case 'quitar_condicion':
+      return [...soloEstosCampos(e, ['condicion', 'categoria'], donde), ...validarQuitarCondicion(e, donde)];
+    case 'perder_turnos':
+      return [...soloEstosCampos(e, ['cantidad'], donde), ...validarCantidadPositiva(e['cantidad'], 'la cantidad de "perder_turnos"', donde)];
+    case 'bandera':
+      return [...soloEstosCampos(e, ['bandera'], donde), ...validarIdBandera(e['bandera'], donde)];
+    default:
+      return validarEfectoDeRecurso(e, donde);
   }
+}
 
-  // A partir de aquí es un recurso (oro, comida, tripulacion, vida, fama).
-  const operacion = e.operacion ?? 'sumar';
+/** Oro, comida, tripulacion, vida, fama, fuerza, ingenio y vidaMax. */
+function validarEfectoDeRecurso(e: Record<string, unknown> & { tipo: string }, donde: string): string[] {
+  const errores: string[] = [...soloEstosCampos(e, ['operacion', 'cantidad', 'destino'], donde)];
+  const operacion = typeof e['operacion'] === 'string' ? e['operacion'] : e['operacion'] === undefined ? 'sumar' : '?';
+  const esCaracteristica = CARACTERISTICAS_TEXTO.includes(e.tipo);
+
   if (!OPERACIONES_TEXTO.includes(operacion)) {
-    errores.push(`${donde}: la operación "${operacion}" no existe (válidas: ${OPERACIONES.join(', ')}).`);
+    errores.push(`${donde}: la operación "${String(e['operacion'])}" no existe (válidas: ${OPERACIONES.join(', ')}).`);
     return errores;
   }
 
   if (OPERACIONES_CON_CANTIDAD.includes(operacion)) {
     const cantidadValida =
-      (typeof e.cantidad === 'number' && Number.isInteger(e.cantidad)) ||
-      (typeof e.cantidad === 'string' && FORMATO_CANTIDAD.test(e.cantidad));
+      (typeof e['cantidad'] === 'number' && Number.isInteger(e['cantidad'])) ||
+      (typeof e['cantidad'] === 'string' && FORMATO_CANTIDAD.test(e['cantidad']));
     if (!cantidadValida) {
       errores.push(`${donde}: la cantidad de "${e.tipo}" no es válida (ejemplos: 8, -1, "2d6", "1d6+1", "-1d6").`);
-    } else if (operacion === 'fijar' && esNegativa(e.cantidad)) {
+    } else if (operacion === 'fijar' && esNegativa(e['cantidad'])) {
       errores.push(`${donde}: no se puede fijar "${e.tipo}" en un número negativo (ningún recurso baja de 0).`);
+    } else if (operacion === 'fijar' && esCaracteristica && e['cantidad'] === 0) {
+      errores.push(`${donde}: no se puede fijar "${e.tipo}" en 0 (las características nunca bajan de 1).`);
     }
-  } else if (e.cantidad !== undefined) {
+  } else if (e['cantidad'] !== undefined) {
     errores.push(`${donde}: la operación "${operacion}" no lleva cantidad.`);
   }
 
   if (operacion === 'maximo' && !CON_MAXIMO_TEXTO.includes(e.tipo)) {
     errores.push(`${donde}: "${e.tipo}" no tiene máximo, así que no admite "maximo" (solo ${RECURSOS_CON_MAXIMO.join(', ')}).`);
   }
+  if (operacion === 'todo' && esCaracteristica) {
+    errores.push(`${donde}: "${e.tipo}" es una característica y nunca baja de 1, así que no admite "todo".`);
+  }
 
-  if (e.destino !== undefined) {
-    if (!DESTINOS_TEXTO.includes(e.destino)) {
-      errores.push(`${donde}: el destino "${e.destino}" no existe (válidos: ${DESTINOS.join(', ')}).`);
-    } else if (e.destino !== 'jugador' && e.tipo !== 'vida') {
+  const destino = e['destino'];
+  if (destino !== undefined) {
+    if (typeof destino !== 'string' || !DESTINOS_TEXTO.includes(destino)) {
+      errores.push(`${donde}: el destino "${String(destino)}" no existe (válidos: ${DESTINOS.join(', ')}).`);
+    } else if (destino !== 'jugador' && e.tipo !== 'vida') {
       errores.push(`${donde}: solo la vida puede afectar a seguidores; "${e.tipo}" es siempre del jugador.`);
     }
   }
 
   return errores;
+}
+
+/** Avisa de campos que ese tipo de efecto no lleva (p. ej. una "cantidad" en ganar_objeto). */
+function soloEstosCampos(e: Record<string, unknown>, permitidos: string[], donde: string): string[] {
+  const sobran = Object.keys(e).filter(campo => campo !== 'tipo' && !permitidos.includes(campo));
+  if (sobran.length === 0) {
+    return [];
+  }
+  const lleva = permitidos.length > 0 ? `solo lleva ${permitidos.map(c => `"${c}"`).join(', ')}` : 'no lleva nada más';
+  return [`${donde}: "${String(e['tipo'])}" ${lleva}; sobra ${sobran.map(c => `"${c}"`).join(', ')}.`];
+}
+
+function validarIdObjeto(id: unknown, donde: string): string[] {
+  if (typeof id !== 'string') {
+    return [`${donde}: falta el "objeto" (su id del catálogo, p. ej. "mano_de_mono").`];
+  }
+  if (!OBJETOS.some(o => o.id === id)) {
+    return [`${donde}: el objeto "${id}" no existe en el catálogo de objetos (data/objetos.json).`];
+  }
+  return [];
+}
+
+function validarIdCondicion(id: unknown, donde: string): string[] {
+  if (typeof id !== 'string') {
+    return [`${donde}: falta la "condicion" (su id del catálogo, p. ej. "escorbuto").`];
+  }
+  if (!CONDICIONES.some(c => c.id === id)) {
+    return [`${donde}: la condición "${id}" no existe en el catálogo de condiciones (data/condiciones.json).`];
+  }
+  return [];
+}
+
+/** quitar_condicion lleva una condición concreta O una categoría, nunca las dos ni ninguna. */
+function validarQuitarCondicion(e: Record<string, unknown>, donde: string): string[] {
+  const tieneCondicion = e['condicion'] !== undefined;
+  const tieneCategoria = e['categoria'] !== undefined;
+  if (tieneCondicion === tieneCategoria) {
+    return [`${donde}: "quitar_condicion" lleva "condicion" (una concreta) o "categoria" (una de esa categoría), una de las dos.`];
+  }
+  if (tieneCondicion) {
+    return validarIdCondicion(e['condicion'], donde);
+  }
+  const categoria = e['categoria'];
+  if (typeof categoria !== 'string' || !CATEGORIAS_TEXTO.includes(categoria)) {
+    return [`${donde}: la categoría "${String(categoria)}" no existe (válidas: ${CATEGORIAS_CONDICION.join(', ')}).`];
+  }
+  return [];
+}
+
+function validarIdBandera(bandera: unknown, donde: string): string[] {
+  if (typeof bandera !== 'string' || !FORMATO_ID.test(bandera)) {
+    return [`${donde}: la bandera debe ser un nombre en minúsculas y con guiones bajos (p. ej. "emporio_bob_derrotado").`];
+  }
+  return [];
+}
+
+/** Turnos y turnos perdidos: un número entero de 1 o más, o dados sin signo menos ("1d3"). */
+function validarCantidadPositiva(valor: unknown, que: string, donde: string): string[] {
+  const valido =
+    (typeof valor === 'number' && Number.isInteger(valor) && valor >= 1) ||
+    (typeof valor === 'string' && FORMATO_CANTIDAD.test(valor) && !valor.startsWith('-'));
+  return valido ? [] : [`${donde}: ${que} debe ser un número entero de 1 o más, o dados como "1d3".`];
 }
 
 function esNegativa(cantidad: unknown): boolean {

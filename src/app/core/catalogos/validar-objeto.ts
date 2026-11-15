@@ -1,9 +1,8 @@
-import { IDS_TIRADA } from '../modificadores/id-tirada';
+import { validarModificadores } from '../modificadores/validar-modificadores';
 import type { Objeto } from './objeto';
 
 // Formato de los ids: minúsculas, números y guiones bajos ("mano_de_mono").
 const FORMATO_ID = /^[a-z][a-z0-9_]*$/;
-const TIRADAS: readonly string[] = IDS_TIRADA;
 
 /**
  * Revisa el catálogo de objetos completo y devuelve la lista de errores, en castellano.
@@ -72,20 +71,7 @@ function validarObjeto(objeto: Objeto): string[] {
   }
 
   // Bonificadores: solo sobre tiradas que existen y con números enteros.
-  const modificadores = o['modificadores'];
-  if (modificadores !== undefined) {
-    if (typeof modificadores !== 'object' || modificadores === null || Array.isArray(modificadores)) {
-      errores.push(`${nombre}: "modificadores" debe ser una lista de tiradas con su bonificador.`);
-    } else {
-      for (const [tirada, valor] of Object.entries(modificadores)) {
-        if (!TIRADAS.includes(tirada)) {
-          errores.push(`${nombre}: el bonificador va sobre la tirada "${tirada}", que no existe (válidas: ${IDS_TIRADA.join(', ')}).`);
-        } else if (!Number.isInteger(valor)) {
-          errores.push(`${nombre}: el bonificador de "${tirada}" debe ser un número entero.`);
-        }
-      }
-    }
-  }
+  errores.push(...validarModificadores(o['modificadores'], nombre));
 
   return errores;
 }

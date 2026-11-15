@@ -1,7 +1,14 @@
-// Recursos numéricos del jugador que una tabla (o un evento) puede modificar.
+import type { CategoriaCondicion } from '../catalogos/condicion';
+
+// Valores numéricos del jugador que una tabla (o un evento) puede modificar:
+// recursos (oro, comida...) y características (fuerza, ingenio, vida máxima).
 // Es un array (y de él sale el tipo) para poder recorrerlo en el test que valida las tablas.
-export const RECURSOS = ['oro', 'comida', 'tripulacion', 'vida', 'fama'] as const;
+export const RECURSOS = ['oro', 'comida', 'tripulacion', 'vida', 'fama', 'fuerza', 'ingenio', 'vidaMax'] as const;
 export type TipoRecurso = (typeof RECURSOS)[number];
+
+// Características: nunca bajan de 1 (con fuerza 0 nunca pasarías un chequeo). Por eso
+// no admiten "todo" (dejarlas a 0) ni fijarlas por debajo de 1. El resto de recursos baja como mucho a 0.
+export const CARACTERISTICAS: readonly TipoRecurso[] = ['fuerza', 'ingenio', 'vidaMax'];
 
 // Qué se hace con el recurso. Si no se escribe, es "sumar".
 //   sumar  → suma la cantidad (negativa = perder):        { "tipo": "oro", "cantidad": 20 }
@@ -29,41 +36,49 @@ export type Destino = (typeof DESTINOS)[number];
 export const FINES_DE_PARTIDA = ['ganar_partida', 'perder_partida'] as const;
 export type FinDePartida = (typeof FINES_DE_PARTIDA)[number];
 
+// Efectos que no son números del jugador: objetos, condiciones, turnos perdidos y banderas.
+//   { "tipo": "ganar_objeto", "objeto": "mano_de_mono" }
+//   { "tipo": "perder_objeto", "objeto": "idolo_dorado" }
+//   { "tipo": "poner_condicion", "condicion": "tormenta", "turnos": 2 }   (turnos opcional: sin él, dura hasta que algo la quite)
+//   { "tipo": "quitar_condicion", "condicion": "escorbuto" }              (una condición concreta)
+//   { "tipo": "quitar_condicion", "categoria": "maldicion" }              (una de esa categoría, la que sea)
+//   { "tipo": "perder_turnos", "cantidad": 1 }                            (fases de acción perdidas)
+//   { "tipo": "bandera", "bandera": "emporio_bob_derrotado" }              (un hecho general que el juego recuerda)
+// Aquí solo se describen; quien los aplica al estado es aplicarEfectos.
+export const OTROS_EFECTOS = [
+  'ganar_objeto',
+  'perder_objeto',
+  'poner_condicion',
+  'quitar_condicion',
+  'perder_turnos',
+  'bandera',
+] as const;
+
 // En el JSON la cantidad es un número fijo (8, -1) o una expresión de dados
 // ("2d6", "1d6x10", "1d6+1", "-1d6"). El signo menos delante = se pierde.
 export type CantidadDefinicion = number | string;
 
+// Efectos que son iguales en el JSON y ya resueltos (no llevan dados).
+type EfectoSinDados =
+  | { tipo: TipoRecurso; operacion: 'mitad' | 'maximo' | 'todo'; destino?: Destino }
+  | { tipo: FinDePartida }
+  | { tipo: 'ganar_objeto'; objeto: string }
+  | { tipo: 'perder_objeto'; objeto: string }
+  | { tipo: 'quitar_condicion'; condicion: string }
+  | { tipo: 'quitar_condicion'; categoria: CategoriaCondicion }
+  | { tipo: 'bandera'; bandera: string };
+
 // Efecto tal como se escribe en el JSON.
 export type EfectoDefinicion =
-  | {
-      tipo: TipoRecurso;
-      operacion?: 'sumar' | 'fijar';
-      cantidad: CantidadDefinicion;
-      destino?: Destino;
-    }
-  | {
-      tipo: TipoRecurso;
-      operacion: 'mitad' | 'maximo' | 'todo';
-      destino?: Destino;
-    }
-  | {
-      tipo: FinDePartida;
-    };
+  | EfectoSinDados
+  | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: CantidadDefinicion; destino?: Destino }
+  | { tipo: 'poner_condicion'; condicion: string; turnos?: CantidadDefinicion }
+  | { tipo: 'perder_turnos'; cantidad: CantidadDefinicion };
 
-// Efecto ya resuelto por resolverTabla: igual que en el JSON, pero la cantidad
-// es siempre un número concreto (positivo = ganar, negativo = perder).
+// Efecto ya resuelto por resolverTabla: igual que en el JSON, pero las cantidades y los turnos
+// son siempre números concretos (en los recursos: positivo = ganar, negativo = perder).
 export type Efecto =
-  | {
-      tipo: TipoRecurso;
-      operacion?: 'sumar' | 'fijar';
-      cantidad: number;
-      destino?: Destino;
-    }
-  | {
-      tipo: TipoRecurso;
-      operacion: 'mitad' | 'maximo' | 'todo';
-      destino?: Destino;
-    }
-  | {
-      tipo: FinDePartida;
-    };
+  | EfectoSinDados
+  | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: number; destino?: Destino }
+  | { tipo: 'poner_condicion'; condicion: string; turnos?: number }
+  | { tipo: 'perder_turnos'; cantidad: number };
