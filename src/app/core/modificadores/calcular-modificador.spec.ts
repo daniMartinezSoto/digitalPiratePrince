@@ -1,3 +1,5 @@
+import type { Condicion } from '../catalogos/condicion';
+import { OBJETOS } from '../catalogos/cargar-objetos';
 import { Dados } from '../dados/dados';
 import type { Jugador } from '../estado/jugador';
 import { crearPersonaje } from '../personaje/crear-personaje';
@@ -59,6 +61,84 @@ describe('calcularModificador', () => {
 
   it('lanza un error si el sobrenombre no existe', () => {
     expect(() => calcularModificador(jugadorCon('el_inventado'), 'pesca')).toThrow(/el_inventado/);
+  });
+
+  describe('objetos que lleva', () => {
+    it('el amuleto kalinago da +1 al buscar información y al pedir audiencia en aldeas', () => {
+      const jugador = { ...jugadorCon('el_fuerte'), inventario: [{ id: 'amuleto_kalinago' }] };
+
+      expect(calcularModificador(jugador, 'buscar_info_aldea')).toBe(1);
+      expect(calcularModificador(jugador, 'audiencia_aldea')).toBe(1);
+      expect(calcularModificador(jugador, 'buscar_info_puerto')).toBe(0);
+    });
+
+    it('se suma al sobrenombre: el nativo con el amuleto kalinago tiene +2 en aldeas', () => {
+      const jugador = { ...jugadorCon('el_nativo'), inventario: [{ id: 'amuleto_kalinago' }] };
+
+      expect(calcularModificador(jugador, 'buscar_info_aldea')).toBe(2);
+    });
+
+    it('un objeto sin bonificadores no suma nada', () => {
+      const jugador = { ...jugadorCon('el_fuerte'), inventario: [{ id: 'mano_de_mono', usosRestantes: 2 }] };
+
+      expect(calcularModificador(jugador, 'buscar_info_aldea')).toBe(0);
+    });
+
+    it('lanza un error si lleva un objeto que no está en el catálogo', () => {
+      const jugador = { ...jugadorCon('el_fuerte'), inventario: [{ id: 'objeto_inventado' }] };
+
+      expect(() => calcularModificador(jugador, 'pesca')).toThrow(/objeto_inventado/);
+    });
+  });
+
+  describe('condiciones que tiene', () => {
+    // El catálogo real todavía no tiene condiciones con bonificadores,
+    // así que en estos tests le pasamos un catálogo de prueba.
+    const condicionesDePrueba: Condicion[] = [
+      { id: 'mareo', nombre: 'Mareo', descripcion: 'Todo da vueltas.', categoria: 'enfermedad', modificadores: { pesca: -2 } },
+      { id: 'buena_estrella', nombre: 'Buena estrella', descripcion: 'La suerte te sonríe.', categoria: 'bendicion', modificadores: { pesca: 1 } },
+    ];
+    const catalogos = { objetos: OBJETOS, condiciones: condicionesDePrueba };
+
+    it('una condición resta o suma su bonificador', () => {
+      const mareado = { ...jugadorCon('el_fuerte'), condiciones: [{ id: 'mareo', turnosRestantes: 2 }] };
+
+      expect(calcularModificador(mareado, 'pesca', catalogos)).toBe(-2);
+      expect(calcularModificador(mareado, 'caza', catalogos)).toBe(0);
+    });
+
+    it('varias condiciones se suman entre sí', () => {
+      const jugador = { ...jugadorCon('el_fuerte'), condiciones: [{ id: 'mareo' }, { id: 'buena_estrella' }] };
+
+      expect(calcularModificador(jugador, 'pesca', catalogos)).toBe(-1);
+    });
+
+    it('lanza un error si tiene una condición que no está en el catálogo', () => {
+      const jugador = { ...jugadorCon('el_fuerte'), condiciones: [{ id: 'condicion_inventada' }] };
+
+      expect(() => calcularModificador(jugador, 'pesca')).toThrow(/condicion_inventada/);
+    });
+  });
+
+  describe('por cada X de fama (capitán pirata: +1 por cada 2)', () => {
+    it('sin fama no suma nada', () => {
+      expect(calcularModificador(jugadorCon('el_fuerte'), 'audiencia_guarida')).toBe(0);
+    });
+
+    it('con 5 de fama suma +2 (se redondea hacia abajo)', () => {
+      const famoso = { ...jugadorCon('el_fuerte'), fama: 5 };
+      expect(calcularModificador(famoso, 'audiencia_guarida')).toBe(2);
+    });
+
+    it('solo cuenta en las tiradas que lo tienen', () => {
+      const famoso = { ...jugadorCon('el_fuerte'), fama: 6 };
+      expect(calcularModificador(famoso, 'audiencia_puerto')).toBe(0);
+    });
+
+    it('se suma a todo lo demás: el influyente con 4 de fama tiene +3 con el capitán pirata', () => {
+      const jugador = { ...jugadorCon('el_influyente'), fama: 4 };
+      expect(calcularModificador(jugador, 'audiencia_guarida')).toBe(3);
+    });
   });
 
   // Red de seguridad para cuando edites sobrenombres.json a mano.

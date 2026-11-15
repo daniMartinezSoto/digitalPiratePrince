@@ -1,4 +1,5 @@
 {
   "probabilidadEventoAlViajar": 50,
-  "comidaMaxima": 20
+  "comidaMaxima": 20,
+  "bonificadorPorFama": { "audiencia_guarida": 2 }
 }
