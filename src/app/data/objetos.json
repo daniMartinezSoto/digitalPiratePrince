@@ -1,0 +1,40 @@
+[
+  {
+    "id": "idolo_dorado",
+    "nombre": "Ídolo dorado",
+    "descripcion": "Un gigantesco ídolo de oro con joyas engarzadas. Es demasiado grande y pesado.",
+    "tipo": "pasivo",
+    "espacios": 4,
+    "precioVenta": 800
+  },
+  {
+    "id": "mano_de_mono",
+    "nombre": "Mano de mono",
+    "descripcion": "Concede dos deseos: puedes evitar hasta dos eventos. Se descarta después.",
+    "tipo": "activo",
+    "usosMaximos": 2,
+    "magico": true
+  },
+  {
+    "id": "amuleto_del_destino",
+    "nombre": "Amuleto del destino",
+    "descripcion": "Te permite elegir el resultado del dado en un evento. Se descarta después.",
+    "tipo": "activo",
+    "usosMaximos": 1,
+    "magico": true
+  },
+  {
+    "id": "brujula_magica",
+    "nombre": "Brújula mágica",
+    "descripcion": "Puedes mover 1 hexágono más al viajar en barco y el evento \"perdidos\" no te afecta.",
+    "tipo": "pasivo",
+    "magico": true
+  },
+  {
+    "id": "amuleto_kalinago",
+    "nombre": "Amuleto kalinago",
+    "descripcion": "Los nativos te reciben mejor. Puedes entregarlo en una aldea a cambio de descansar gratis allí para siempre.",
+    "tipo": "pasivo",
+    "modificadores": { "audiencia_aldea": 1, "buscar_info_aldea": 1 }
+  }
+]
