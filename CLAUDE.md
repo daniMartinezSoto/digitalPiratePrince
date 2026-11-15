@@ -35,7 +35,7 @@
   - ✅ `aplicarEfectos(estado, efectos, dados, catalogos?)` en `core/efectos/`: devuelve `{ estado, cambios }` (ver sección 3.5). Nuevo `mundo.finPartida` (`core/estado/fin-partida.ts`).
 - **Tests:** 258 pasan en 20 archivos.
 
-**Siguiente:** antes del Sprint 5, **clasificar el libro de eventos** (sección 3.9, "En papel todo es un evento"): una lista E001-E090 que diga qué es cada uno en digital. Después, Sprint 5 (ciclo de turno, sección 9). El plan detallado por sprints lo mantiene el autor en un documento aparte.
+**Siguiente:** Sprint 5 (ciclo de turno, sección 9). La clasificación del libro de eventos ya está hecha (sección 3.9). El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
 ---
 
@@ -216,7 +216,7 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 - **Apuestas e inversiones** (E081, E082, E083): paso "elige una cantidad" del motor de eventos; los efectos posteriores podrán usar esa cantidad (Sprint 10). No requiere cambios ahora.
 - **Combate** (Sprint 7): enemigos con habilidades especiales (curarse, revivir, atacar dos veces, recibir menos daño, acertar solo con 5-6), número de enemigos al azar, recompensa por enemigo, combate no mortal ("vuelves con 1 PV"), ataque por sorpresa.
 - **Mapa** (Sprint 9): movimientos forzados (E009, E028, E043), hexágonos bloqueados (E047) o convertidos en aldea o puerto (E004, E038, E055), sitios apuntados a distancia y dirección (E024, E060) y qué pasa si caen fuera del mapa. **Hexágonos bloqueados (decidido):** se guardan como marcas en `mundo.marcas` (con un tipo: evento, bloqueado...) y viajar no deja entrar en ellos. **Ofender a una aldea bloquea su hexágono** (mismo sistema que el camino bloqueado de E047), tanto con el jefe de aldea como en el alojamiento; si estás dentro al ofenderla, tienes que salir (el siguiente turno, obligatoriamente viajar).
-- **En papel todo es un evento; en digital no (MUY IMPORTANTE).** En papel "lee E0XX" es la única forma de mandar al jugador a otra página. En digital cada E### se convierte en lo que realmente es: **evento** (historia con decisiones), **tabla** (solo una tirada: E036 Tesoro, E037 Tesoro mágico), **combate** (pelea con un guardia → combate con su enemigo), **efectos** (algo que pasa y ya) o **tienda** (E017 Bob). Esto decide **qué se programa y cuándo**: una tabla no espera al motor de eventos. **Pendiente: clasificar E001-E090 antes del Sprint 5.** Borrador de Claude en el proyecto de Claude: `claude/clasificacion-libro-eventos.md` (no va a GitHub). El autor se fía del criterio de sprints y tipos del borrador y se revisa sobre la marcha. Decisiones del autor (15-nov):
+- **En papel todo es un evento; en digital no (MUY IMPORTANTE).** En papel "lee E0XX" es la única forma de mandar al jugador a otra página. En digital cada E### se convierte en lo que realmente es: **evento** (historia con decisiones), **tabla** (solo una tirada: E036 Tesoro, E037 Tesoro mágico), **combate** (pelea con un guardia → combate con su enemigo), **efectos** (algo que pasa y ya) o **tienda** (E017 Bob). Esto decide **qué se programa y cuándo**: una tabla no espera al motor de eventos. **Clasificación E001-E090 hecha:** borrador de Claude en el proyecto de Claude: `claude/clasificacion-libro-eventos.md` (no va a GitHub). El autor se fía del criterio de sprints y tipos del borrador y se revisa sobre la marcha. Decisiones del autor (15-nov):
   - **E023 Arrestado = condición "en prisión"** que bloquea el juego: mientras dura no puedes viajar ni hacer acciones; cada turno aparece el evento de la cárcel (con su imagen) y hay que resolverlo para que el juego vuelva a la normalidad.
   - **Combate = herramienta + bestiario:** los eventos lanzan "combate + enemigo(s)" según lo que pase.
   - **E070 Sol abrasador:** se quita lo de cargar seguidores (no tienen inventario); se reescribe.
@@ -585,7 +585,7 @@ Los eventos van **después** del núcleo (detalle en el documento de sprints del
 2. ✅ Estado serializable y creación de personaje/partida.
 3. ✅ Resolvedor de tablas por rangos, listas ponderadas y modificadores por identificador.
 4. ✅ Efectos y estado ampliado: catálogos de objetos y condiciones, vocabulario de efectos, `calcularModificador` ampliado y `aplicarEfectos` con el chivato de cambios (sección 0 y 3.5).
-   - **Antes del 5: clasificar el libro de eventos** (sección 3.9).
+   - ✅ Clasificación del libro de eventos (sección 3.9).
 5. Ciclo de turno: inicio de turno (procesar condiciones activas: tiradas, duración, quitar las que terminan, avisos; saltar la acción si hay fases perdidas), comida (hambre, deserción, motín) y alojamiento. Las fichas de condición ganan aquí sus campos de reglas: prohibiciones, cambios de regla (p. ej. fama objetivo 12), qué pasa cada turno y cómo se quitan.
 6. Seguidores (efecto "se une un seguidor", catálogo de tipos), objetos (usos, descarte, vender en puertos y aldeas, elegir qué tirar si no cabe) y acciones sin eventos (pescar, cazar, comida, reclutar, descansar, enterrar tesoro). **Tablas que faltan** (cada una llega con su acción; las que mandan a eventos dependen de la clasificación del libro): contratar (discurso 1d6, con oro 1d6×5, seguidores 2d6), comprar/vender comida (1d6), audiencias (gobernador, jefe de aldea, capitán pirata), investigar naufragio (con subtablas), registrar ruinas (2d6), alojamiento en aldea (1d6) y **buscar información en aldeas** (tabla propia, 3d6).
 7. Combate normal (con habilidades especiales de enemigos, sección 3.9; el afortunado) y naval provisional.
@@ -609,6 +609,6 @@ Hasta el punto 8 no hace falta ni mapa ni libro de eventos. El 9 necesita el `.w
 - Tabla de objetos mágicos (E037), lista de objetos y estadísticas de enemigos y barcos.
 - Decidir "Meditar", cómo encaja el guardado con el diseño roguelike (sección 3.7), el momento exacto de la **victoria** y el diseño del **minijuego naval**.
 - Decisión de modelo pendiente (sección 3.4): modo barco/tierra y dónde queda el barco.
-- **Clasificar el libro de eventos** (E001-E090: evento, tabla, combate, efectos o tienda), a partir del borrador de Claude. Antes del Sprint 5.
+- Revisar sobre la marcha la **clasificación del libro de eventos** (`claude/clasificacion-libro-eventos.md` en el proyecto de Claude).
 - Dibujos de objetos y condiciones (mientras tanto, iconos de reserva por categoría).
 - Escribir la **tabla de buscar información en aldeas nativas** (3d6, mismos rangos que la de puertos).
