@@ -26,9 +26,16 @@
   - Efectos generales en `tablas/efecto.ts`: `operacion` (`sumar` por defecto, `fijar`, `mitad`, `maximo`, `todo`), `destino` (`jugador` por defecto, `todos`, `seguidor_azar`, `seguidor_elegido`; solo para la vida) y `ganar_partida` / `perder_partida`. Desaparece `perder_mitad_oro` (el robo de buscar información es ahora `{ "tipo": "oro", "operacion": "mitad" }`). `resolverTabla` copia el efecto y solo convierte la cantidad; `validarTabla` revisa todo lo nuevo.
   - Estado: el inventario guarda `ObjetoLlevado { id, usosRestantes? }`; nuevos `jugador.condiciones: CondicionActiva[]` (`{ id, turnosRestantes? }`) y `jugador.fasesAccionPerdidas`. Los seguidores guardan sus habilidades por id. `Objeto` y `Habilidad` pasan a `core/catalogos/` como formato de catálogo (`imagen`, `espacios`, `precioVenta`, `magico`, `modificadores`).
   - `data/ajustes.json`: `comidaMaxima` (20, provisional).
-- **Tests:** 137 pasan en 14 archivos.
+  - `Articulo`/`ArticuloLlevado` se renombran a `Objeto`/`ObjetoLlevado` (mismo vocabulario que el juego).
+- **Sprint 4: completado (efectos y estado ampliado).**
+  - ✅ Catálogo de objetos: `data/objetos.json` (5 ejemplos: ídolo dorado, mano de mono, amuleto del destino, brújula mágica, amuleto kalinago), cargador `core/catalogos/cargar-objetos.ts` (`OBJETOS`, `obtenerObjeto(id)`) y revisor `validar-objeto.ts` (`validarObjetos`: ids repetidos o mal escritos, activos con usos y pasivos sin ellos, espacios ≥ 1, precio ≥ 1, `magico` booleano, bonificadores).
+  - ✅ Catálogo de condiciones: `core/catalogos/condicion.ts` (`Condicion`, `CATEGORIAS_CONDICION`), `data/condiciones.json` (maleficio del pirata, el mal, escorbuto, tormenta, lluvias), cargador `cargar-condiciones.ts` y revisor `validar-condicion.ts`. La revisión de bonificadores es compartida: `core/modificadores/validar-modificadores.ts`.
+  - ✅ Vocabulario de efectos ampliado (`tablas/efecto.ts`): características `fuerza`, `ingenio`, `vidaMax` (nunca bajan de 1) y `ganar_objeto`, `perder_objeto`, `poner_condicion` (turnos opcionales, con dados), `quitar_condicion` (por id o por categoría), `perder_turnos`, `bandera`. `validarTabla` comprueba que objetos y condiciones existen en su catálogo y avisa de campos que sobran.
+  - ✅ `calcularModificador(jugador, idTirada, catalogos?)` suma sobrenombre + objetos que lleva + condiciones activas + "por cada X de fama" (`AJUSTES.bonificadorPorFama`, de momento `audiencia_guarida: 2`).
+  - ✅ `aplicarEfectos(estado, efectos, dados, catalogos?)` en `core/efectos/`: devuelve `{ estado, cambios }` (ver sección 3.5). Nuevo `mundo.finPartida` (`core/estado/fin-partida.ts`).
+- **Tests:** 258 pasan en 20 archivos.
 
-**Siguiente:** Sprint 4 (efectos y estado ampliado, ver sección 9). Decisiones detalladas en las secciones 3.9 y 7. El plan detallado por sprints lo mantiene el autor en un documento aparte.
+**Siguiente:** antes del Sprint 5, **clasificar el libro de eventos** (sección 3.9, "En papel todo es un evento"): una lista E001-E090 que diga qué es cada uno en digital. Después, Sprint 5 (ciclo de turno, sección 9). El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
 ---
 
@@ -78,8 +85,8 @@ src/app/
 
 - **Aquí `core/` significa "lógica del juego", no "servicios globales de Angular".**
 - Reglas de oro: **`core/` no importa Angular** y **`ui/` no contiene reglas del juego.**
-- Los tests (`.spec.ts`) van junto al código. Las subcarpetas de `core/` se crean cuando toca su sprint. Existen ya: `core/dados/`, `core/estado/`, `core/personaje/`, `core/partida/`, `core/tablas/` (con `rangos/` y `listas-eventos/`), `core/modificadores/`, `core/ajustes/`, `core/catalogos/` (formatos de catálogo: `objeto.ts`, `habilidad.ts`); datos en `data/personaje/`, `data/tablas/`, `data/eventos-terreno/` y `data/ajustes.json`.
-- **Para añadir contenido:** cada cargador (`cargar-tablas.ts`, `cargar-listas-eventos.ts`) explica arriba cómo añadir un JSON nuevo (crearlo, importarlo, añadirlo a la lista). Los tests de los cargadores pasan el revisor por **todo** el contenido automáticamente.
+- Los tests (`.spec.ts`) van junto al código. Las subcarpetas de `core/` se crean cuando toca su sprint. Existen ya: `core/dados/`, `core/estado/`, `core/personaje/`, `core/partida/`, `core/tablas/` (con `rangos/` y `listas-eventos/`), `core/modificadores/`, `core/ajustes/`, `core/catalogos/` (formatos, cargadores y revisores de catálogo: `objeto.ts`, `condicion.ts`, `habilidad.ts`), `core/efectos/` (`aplicarEfectos` y `Cambio`); datos en `data/personaje/`, `data/tablas/`, `data/eventos-terreno/`, `data/objetos.json`, `data/condiciones.json` y `data/ajustes.json`.
+- **Para añadir contenido:** cada cargador (`cargar-tablas.ts`, `cargar-listas-eventos.ts`, `cargar-objetos.ts`, `cargar-condiciones.ts`) explica arriba cómo añadir contenido nuevo (objetos y condiciones: solo escribir la ficha en su JSON). Los tests de los cargadores pasan el revisor por **todo** el contenido automáticamente.
 
 ### 3.3 Flujo de una acción
 
@@ -126,7 +133,9 @@ Mundo   { mapaId: string | null;
           marcas: { col, fila, evento }[];                       // cosas colocadas en hexágonos
           pilaEventos: { evento, paso }[];
           puertosVisitados: string[];                            // ids de puertos principales
-          estadoDados: number }                                  // dados.obtenerEstado()
+          estadoDados: number;                                   // dados.obtenerEstado()
+          finPartida: { resultado: 'victoria' | 'derrota';       // null mientras se juega
+                        motivo: 'vida' | 'tripulacion' | 'evento' } | null }
 
 Seguidor { id: string; tipo: string; nombre: string; ataque: number;   // ataque = daño que hace si acierta
            resistencia, resistenciaMaxima: number;                     // resistencia = su vida
@@ -139,12 +148,17 @@ CondicionActiva { id: string; turnosRestantes?: number } // sin turnos = hasta q
 Objeto    { id, nombre, descripcion; imagen?; tipo: 'pasivo' | 'activo'; usosMaximos?; espacios? (1);
             precioVenta? (sin él no se vende); magico? (+1 fama al conseguirlo); modificadores? }
 Habilidad { id, nombre, descripcion; imagen?; tipo: 'pasiva' | 'activa'; modificadores? }  // sin cooldowns
+Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicion' | 'enfermedad' | 'clima' | 'otra';
+            modificadores? }   // prohibiciones, cambios de regla, qué pasa cada turno y cómo se quita: Sprint 5
 ```
 
 - No hay interfaz `Personaje` separada: el protagonista es `Jugador`.
 - **`banderas` vs `marcas`:** banderas = hechos generales (hex de barco agotado, audiencia vetada...); marcas = elementos en coordenadas concretas (un tesoro marcado).
 - La **definición del mapa** (`data/`) no cambia durante la partida; lo que cambia va en `mundo`. El guardado almacena el id del mapa, no el mapa.
-- **Catálogos (decidido):** igual que los sobrenombres, objetos, habilidades y condiciones viven en catálogos de `data/` y la partida solo guarda el `id` y lo que cambia (usos, turnos). Así, corregir un texto o un dibujo vale para todas las partidas. Los catálogos con contenido (`data/objetos.json`, `data/condiciones.json`) llegan en el Sprint 4; la lógica de usos y descarte, en el Sprint 6.
+- **Catálogos (decidido):** igual que los sobrenombres, objetos, habilidades y condiciones viven en catálogos de `data/` y la partida solo guarda el `id` y lo que cambia (usos, turnos). Así, corregir un texto o un dibujo vale para todas las partidas. `data/objetos.json` y `data/condiciones.json` existen desde el Sprint 4; la lógica de usos y descarte, en el Sprint 6.
+- **La ficha describe; la regla se programa en su sprint.** Que la brújula mueva 1 hex más o que la mano de mono evite un evento se programa con el mapa o los eventos, igual que los sobrenombres.
+- **Condiciones = solo lo que dura.** Lo que pasa una vez ("tu oro se convierte en ceniza", "quédate con 1 PV") son efectos normales. La **categoría** existe porque las reglas hablan de categorías ("el monasterio, la biblia o la bruja quitan **una maldición**"). Lo que el libro marca "(maldición)", como el mal está a bordo, va en `maldicion`.
+- **Imágenes (decidido):** `imagen` es opcional en objetos y condiciones. Sin dibujo, la interfaz muestra un **icono de reserva por categoría** (calavera = maldición, nube = clima...). Las condiciones activas se verán como iconos en la partida.
 - **Bodega descartada:** comida y oro son contadores únicos, se esté en el barco o no. La comida tiene máximo (`AJUSTES.comidaMaxima`); el oro, no. (En papel cada 100 de oro ocupaban un hueco: aquí no.)
 
 **Por decidir (antes del sprint indicado):**
@@ -152,9 +166,17 @@ Habilidad { id, nombre, descripcion; imagen?; tipo: 'pasiva' | 'activa'; modific
 
 ### 3.5 Acciones y efectos
 - Una acción (p. ej. `pescar`) calcula **qué consigue** y lo devuelve como **efectos** (`Efecto[]`, p. ej. "+8 comida"). No suma nada por su cuenta. Mira el estado solo para lo que necesita (bonificadores, ubicación...).
-- **`aplicarEfectos(estado, efectos)` es el ÚNICO sitio que modifica el estado:** aplica topes (tripulación máx. 40, comida máx. `AJUSTES.comidaMaxima`, vida sin superar su máximo, huecos del inventario), reglas especiales (el contable, el afortunado, +1 de fama al conseguir un objeto mágico), añade y quita condiciones, suma fases de acción perdidas y detecta victoria y derrota. Así esas reglas se escriben una sola vez.
-- **Ningún recurso baja de 0.** Si tienes 15 de oro y pierdes 20, te quedas con 0 (el oro nunca es negativo; en E001, con −20, te quedas en 30 o en 0). Si la vida o la tripulación llegan a 0, se pierde la partida.
-- **Sprint 4:** `aplicarEfectos` debe devolver también **información de los cambios reales** (con la tripulación en 38 y máximo 40, un efecto de +5 produce realmente +2). Los mensajes mecánicos se generan a partir de esos cambios; los narrativos pertenecen a los eventos. Los efectos y las tablas no llevan mensajes de este tipo.
+- **`aplicarEfectos(estado, efectos, dados, catalogos?)` es el ÚNICO sitio que modifica el estado** (implementado en `core/efectos/aplicar-efectos.ts`). No toca el estado recibido: copia, cambia la copia y devuelve `{ estado, cambios }`. Aplica los efectos en orden:
+  - Topes: vida ≤ `vidaMax`, tripulación ≤ `tripulacionMax`, comida ≤ `AJUSTES.comidaMaxima`. **Ningún recurso baja de 0; las características (fuerza, ingenio, vidaMax) nunca bajan de 1.** Subir `vidaMax` no cura; bajarla por debajo de la vida baja la vida.
+  - Operaciones: `mitad` redondea hacia abajo (15 → 7); `maximo` sube al máximo; `todo` deja a 0.
+  - Destinos (solo vida): `todos` = jugador y cada seguidor; `seguidor_azar` elige con los dados; un seguidor a 0 de resistencia muere y sale del grupo. `seguidor_elegido` da error hasta el motor de eventos (Sprint 10).
+  - Objetos: solo entran si caben (cuenta `espacios`); los activos entran con `usosMaximos`; **los mágicos dan +1 de fama**. Si no cabe, no entra (elegir qué tirar: Sprint 6). Perder un objeto quita uno si lo tienes.
+  - Condiciones: **no se duplican** (se queda la que dure más; sin turnos = para siempre). Quitar por categoría quita **una, la más antigua**.
+  - Turnos perdidos se suman a `fasesAccionPerdidas`; las banderas se apuntan en `mundo.banderas` (solo banderas generales; las de un hex concreto, Sprint 9).
+  - **El contable:** cada vez que GANA oro (sumar positivo; no fijar) gana 2d6 más.
+  - **Fin de partida:** vida o tripulación a 0 → derrota; `ganar_partida` / `perder_partida` → victoria / derrota por evento. Se apunta en `mundo.finPartida` y **los efectos que quedan ya no se aplican**. Qué se hace después (pantalla, guardado) es de sprints posteriores. La victoria normal (fama + puertos) llega con el mapa (Sprint 9).
+- **El afortunado (decidido):** evita la muerte **una vez, solo en combate** (se queda con 1 PV). Se programa en el combate (Sprint 7), no en `aplicarEfectos`.
+- **El chivato (`Cambio`, `core/efectos/cambio.ts`):** lista de **cambios reales** (con la tripulación en 38 y máximo 40, un +5 produce "de 38 a 40"; si no cambia nada, no se apunta). Tipos: `recurso` (con `motivo` opcional: `contable`, `objeto_magico`), `resistencia_seguidor`, `seguidor_muerto`, `objeto_ganado`, `objeto_no_cabe`, `objeto_perdido`, `condicion_puesta`, `condicion_quitada`, `turnos_perdidos`, `bandera`, `fin_partida`. **Son datos, no mensajes:** la interfaz los convierte en notificaciones. Los mensajes narrativos pertenecen a los eventos; efectos y tablas no llevan mensajes.
 
 ### 3.6 Decisiones obligatorias desde el día uno
 1. **Estado serializable** (ver 3.4).
@@ -194,6 +216,7 @@ Habilidad { id, nombre, descripcion; imagen?; tipo: 'pasiva' | 'activa'; modific
 - **Apuestas e inversiones** (E081, E082, E083): paso "elige una cantidad" del motor de eventos; los efectos posteriores podrán usar esa cantidad (Sprint 10). No requiere cambios ahora.
 - **Combate** (Sprint 7): enemigos con habilidades especiales (curarse, revivir, atacar dos veces, recibir menos daño, acertar solo con 5-6), número de enemigos al azar, recompensa por enemigo, combate no mortal ("vuelves con 1 PV"), ataque por sorpresa.
 - **Mapa** (Sprint 9): movimientos forzados (E009, E028, E043), hexágonos bloqueados (E047) o convertidos en aldea o puerto (E004, E038, E055), sitios apuntados a distancia y dirección (E024, E060) y qué pasa si caen fuera del mapa.
+- **En papel todo es un evento; en digital no (MUY IMPORTANTE).** En papel "lee E0XX" es la única forma de mandar al jugador a otra página. En digital cada E### se convierte en lo que realmente es: **evento** (historia con decisiones), **tabla** (solo una tirada: E036 Tesoro, E037 Tesoro mágico), **combate** (pelea con un guardia → combate con su enemigo), **efectos** (algo que pasa y ya) o **tienda** (E017 Bob). Esto decide **qué se programa y cuándo**: una tabla no espera al motor de eventos. **Pendiente: clasificar E001-E090 antes del Sprint 5** (Claude prepara un borrador, el autor decide).
 
 ---
 
@@ -220,12 +243,12 @@ Cada turno = un día, con tres fases en orden:
 | El navegante | Avanza 2 hexes al viajar en barco |
 | El superviviente | En jungla espesa no necesita comer y avanza 2 hexes |
 | El influyente | +1 en buscar información; +1 en solicitar audiencia en puertos y guaridas pirata |
-| El afortunado | Puede evitar la muerte una vez |
+| El afortunado | Evita la muerte una vez **en combate** (se queda con 1 PV; Sprint 7) |
 | El contable | Cada vez que gana oro, gana 2d6 más (no es un modificador de tirada: se aplica en `aplicarEfectos`) |
 | El hermano | Empieza con un seguidor aleatorio gratuito. Si el seguidor muere, se pierde la partida |
 | El heredero | Empieza con un objeto mágico de la lista del evento E037 (no puede salir el ídolo, el 12) |
 
-Solo los `ajustes` numéricos (fuerte, conformista) están implementados. Los efectos especiales **no se simulan** hasta que existan los sistemas que necesitan.
+Implementados: los `ajustes` numéricos (fuerte, conformista), los `modificadores` (influyente, nativo) y el contable (en `aplicarEfectos`). Los efectos especiales **no se simulan** hasta que existan los sistemas que necesitan.
 
 **Características** (digital `1d3`): 1 *Fuerte* (Ingenio 2, Fuerza 4); 2 *Equilibrado* (3/3); 3 *Inteligente* (Ingenio 4, Fuerza 2).
 **Chequeo de Fuerza o Ingenio:** tirar 1d6 y sacar el valor de la característica **o menos**. Los piden algunos eventos.
@@ -249,7 +272,7 @@ Viajar · Buscar información (puertos y aldeas) · Descansar y cazar/pescar · 
 - **Hex de abundancia:** pescar es más eficaz (E005).
 - **Adentrarse en tierra:** se puede desembarcar en jungla, playa o puerto; **no se puede atracar en jungla profunda**. Al llegar a tierra desde el barco viajando, **no se tira evento**. Se anota dónde queda el barco; los seguidores acompañan siempre. **Volver al barco** automáticamente si se tienen tantas reservas de comida como hexágonos hay hasta el barco (se descartan), o turno a turno viajando.
 
-**Buscar información (3d6).** En puerto se pueden gastar 5 de oro para +1 al dado (hasta 3 veces). En aldea, +1 con seguidor nativo o sobrenombre "el nativo".
+**Buscar información (3d6).** En puerto se pueden gastar 5 de oro para +1 al dado (hasta 3 veces). En aldea, +1 con seguidor nativo, sobrenombre "el nativo" o amuleto kalinago (se suman).
 
 | 3d6 | Resultado |
 |---|---|
@@ -357,6 +380,10 @@ Códigos del libro de papel; en digital cada uno tendrá un id con nombre (ver 3
 | "Meditar" / guardado como mecánica | **Pendiente decidir** |
 | Dónde empieza el jugador | **Resuelto:** cada mapa declara su casilla de inicio; en el prototipo, 009.000 a pie (E001) |
 | Motín: la tabla pegada tiene dos filas "1" (la segunda será el 2) y la opción 3 ("Te escondes") no dice si da modificador | **Pendiente** al programar el evento |
+| Amuleto kalinago: el libro (E036) dice +2 en audiencia y buscar información en aldeas; las reglas, +1 en audiencia | **Resuelto:** +1 en `audiencia_aldea` y +1 en `buscar_info_aldea` |
+| Ídolo dorado: ¿mágico? | **Resuelto:** no (no da fama). Idea apuntada: "objetos legendarios" que den fama sin ser mágicos |
+| Lira de las sirenas (E037, "+2 fama") | **Resuelto:** 2 de fama en total (+1 por mágica y +1 del evento) |
+| El afortunado | **Resuelto:** solo en combate (ver 3.5) |
 
 ---
 
@@ -422,8 +449,10 @@ Al ser una lista, se puede evitar el mismo evento dos veces seguidas, retirar lo
 
 ```ts
 // efecto.ts
-export const RECURSOS = ['oro', 'comida', 'tripulacion', 'vida', 'fama'] as const;   // array para recorrerlo en el test de validación
+export const RECURSOS = ['oro', 'comida', 'tripulacion', 'vida', 'fama', 'fuerza', 'ingenio', 'vidaMax'] as const;
 export type TipoRecurso = (typeof RECURSOS)[number];
+export const CARACTERISTICAS = ['fuerza', 'ingenio', 'vidaMax'];   // nunca bajan de 1: sin "todo" ni fijar a 0
+export const OTROS_EFECTOS = ['ganar_objeto', 'perder_objeto', 'poner_condicion', 'quitar_condicion', 'perder_turnos', 'bandera'] as const;
 export const OPERACIONES = ['sumar', 'fijar', 'mitad', 'maximo', 'todo'] as const;     // sin poner = sumar
 export const RECURSOS_CON_MAXIMO = ['vida', 'tripulacion', 'comida'];                 // los únicos con "maximo"
 export const DESTINOS = ['jugador', 'todos', 'seguidor_azar', 'seguidor_elegido'] as const;  // sin poner = jugador; solo vida
@@ -432,8 +461,13 @@ export type CantidadDefinicion = number | string;          // 8, -1  o  "2d6" / 
 export type EfectoDefinicion =                             // tal como se escribe en el JSON
   | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: CantidadDefinicion; destino?: Destino }
   | { tipo: TipoRecurso; operacion: 'mitad' | 'maximo' | 'todo'; destino?: Destino }  // dependen del estado: aplicarEfectos
-  | { tipo: FinDePartida };
-export type Efecto = /* igual, pero con la cantidad ya convertida en número (+ ganar, − perder) */;
+  | { tipo: FinDePartida }
+  | { tipo: 'ganar_objeto' | 'perder_objeto'; objeto: string }                     // id del catálogo de objetos
+  | { tipo: 'poner_condicion'; condicion: string; turnos?: CantidadDefinicion }     // sin turnos = hasta que algo la quite
+  | { tipo: 'quitar_condicion'; condicion: string } | { tipo: 'quitar_condicion'; categoria: CategoriaCondicion }
+  | { tipo: 'perder_turnos'; cantidad: CantidadDefinicion }
+  | { tipo: 'bandera'; bandera: string };                                            // hecho general que el juego recuerda
+export type Efecto = /* igual, pero con cantidades y turnos ya convertidos en números (+ ganar, − perder) */;
 
 // tabla.ts
 export interface Fila { min: number; max: number; texto?: string; efectos?: EfectoDefinicion[]; evento?: string }
@@ -474,6 +508,7 @@ Una fila puede llevar efectos, un evento o ambas cosas: `{ "min": 9, "max": 12, 
 10. **Sin mensajes en efectos ni tablas** (ver 3.5), salvo el `texto` descriptivo de la fila.
 11. **Perder se escribe con signo menos**, también con dados: `{ "tipo": "vida", "cantidad": -1 }` (caza) o `{ "tipo": "oro", "cantidad": "-1d6" }` (multa del discurso). `resolverTabla` quita el `-`, tira y devuelve la cantidad en negativo; `tirar()` no se toca. El código solo suma: **el JSON decide si se gana o se pierde**.
 12. **Dados con suma:** `"1d6+1"` se admite en el dado de una tabla y en cantidades (primero multiplica, luego suma: `"1d6x10+5"`).
+13. **El revisor de tablas comprueba los catálogos (Sprint 4):** un `objeto` o una `condicion` que no existe en su catálogo es un error ("mano_de_mona"). También avisa de campos que sobran en un efecto.
 
 Si un evento referenciado todavía no existe, el juego muestra "evento X pendiente" para poder probar el flujo antes de tener el libro.
 
@@ -543,10 +578,11 @@ Los eventos van **después** del núcleo (detalle en el documento de sprints del
 1. ✅ Dados con semilla.
 2. ✅ Estado serializable y creación de personaje/partida.
 3. ✅ Resolvedor de tablas por rangos, listas ponderadas y modificadores por identificador.
-4. **Efectos y estado ampliado** (ajustes previos ya hechos, ver sección 0). Pasos: catálogos `data/objetos.json` y `data/condiciones.json` (formato, cargador, revisor y unos ejemplos del libro) → `calcularModificador` ampliado (condiciones activas, objetos que llevas, "por cada X de fama") → `aplicarEfectos` (operaciones, destinos, topes, nada baja de 0, comida máxima, añadir y quitar condiciones, fases perdidas, ganar o perder, +1 fama por objeto mágico) que devuelve la **lista de cambios reales** para avisar al jugador.
-5. Ciclo de turno: inicio de turno (procesar condiciones activas: tiradas, duración, quitar las que terminan, avisos; saltar la acción si hay fases perdidas), comida (hambre, deserción, motín) y alojamiento.
-6. Seguidores, objetos (usos, descarte, vender en puertos y aldeas) y acciones sin eventos (pescar, cazar, comida, reclutar, descansar, enterrar tesoro).
-7. Combate normal (con habilidades especiales de enemigos, sección 3.9) y naval provisional.
+4. ✅ Efectos y estado ampliado: catálogos de objetos y condiciones, vocabulario de efectos, `calcularModificador` ampliado y `aplicarEfectos` con el chivato de cambios (sección 0 y 3.5).
+   - **Antes del 5: clasificar el libro de eventos** (sección 3.9).
+5. Ciclo de turno: inicio de turno (procesar condiciones activas: tiradas, duración, quitar las que terminan, avisos; saltar la acción si hay fases perdidas), comida (hambre, deserción, motín) y alojamiento. Las fichas de condición ganan aquí sus campos de reglas: prohibiciones, cambios de regla (p. ej. fama objetivo 12), qué pasa cada turno y cómo se quitan.
+6. Seguidores (efecto "se une un seguidor", catálogo de tipos), objetos (usos, descarte, vender en puertos y aldeas, elegir qué tirar si no cabe) y acciones sin eventos (pescar, cazar, comida, reclutar, descansar, enterrar tesoro). **Tablas que faltan** (cada una llega con su acción; las que mandan a eventos dependen de la clasificación del libro): contratar (discurso 1d6, con oro 1d6×5, seguidores 2d6), comprar/vender comida (1d6), audiencias (gobernador, jefe de aldea, capitán pirata), investigar naufragio (con subtablas), registrar ruinas (2d6) y alojamiento en aldea (1d6).
+7. Combate normal (con habilidades especiales de enemigos, sección 3.9; el afortunado) y naval provisional.
 8. Guardado (autoguardado, exportar/importar, versión).
 9. Mapa (conversión `.wxx` → JSON, SVG), viajar, eventos que cambian el mapa y condición de victoria.
 10. Motor de eventos (punto único de tiradas con botones de objetos, atajos de escritura, paso "elige una cantidad", condiciones de ubicación) y primeros eventos reales (3-4 variados) para validar el formato.
@@ -567,3 +603,5 @@ Hasta el punto 8 no hace falta ni mapa ni libro de eventos. El 9 necesita el `.w
 - Tabla de objetos mágicos (E037), lista de objetos y estadísticas de enemigos y barcos.
 - Decidir "Meditar", cómo encaja el guardado con el diseño roguelike (sección 3.7), el momento exacto de la **victoria** y el diseño del **minijuego naval**.
 - Decisión de modelo pendiente (sección 3.4): modo barco/tierra y dónde queda el barco.
+- **Clasificar el libro de eventos** (E001-E090: evento, tabla, combate, efectos o tienda), a partir del borrador de Claude. Antes del Sprint 5.
+- Dibujos de objetos y condiciones (mientras tanto, iconos de reserva por categoría).

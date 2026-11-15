@@ -12,6 +12,7 @@ describe('crearPartida', () => {
     expect(estado.mundo.dia).toBe(1);
     expect(estado.mundo.mapaId).toBeNull();
     expect(estado.mundo.pilaEventos).toEqual([]);
+    expect(estado.mundo.finPartida).toBeNull();
   });
 
   it('con la misma semilla genera siempre el mismo estado', () => {

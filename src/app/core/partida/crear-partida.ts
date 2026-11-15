@@ -26,6 +26,7 @@ export function crearPartida(semilla: number, nombre: string): Partida {
       pilaEventos: [],
       puertosVisitados: [],
       estadoDados: dados.obtenerEstado(), // DESPUÉS de crear el personaje
+      finPartida: null,
     },
   };
 

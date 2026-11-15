@@ -1,3 +1,5 @@
+import type { FinPartida } from './fin-partida';
+
 
 export interface Mundo {
   // Identificador del mapa en el que se encuentra el jugador.
@@ -44,4 +46,7 @@ export interface Mundo {
   // Se obtiene mediante Dados.obtenerEstado() y permite continuar
   // la misma secuencia de tiradas al cargar una partida.
   estadoDados: number;
+
+  // Si la partida ha terminado, cómo y por qué. null mientras se sigue jugando.
+  finPartida: FinPartida | null;
 }

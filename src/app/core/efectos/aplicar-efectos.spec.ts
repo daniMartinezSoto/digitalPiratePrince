@@ -23,7 +23,7 @@ function seguidor(id: string, resistencia = 10): Seguidor {
 
 // Aplica efectos y devuelve el jugador resultante (lo que miramos en casi todos los tests).
 function aplicar(estado: Estado, ...efectos: Efecto[]): Jugador {
-  return aplicarEfectos(estado, efectos, new Dados(1)).jugador;
+  return aplicarEfectos(estado, efectos, new Dados(1)).estado.jugador;
 }
 
 describe('aplicarEfectos', () => {
@@ -33,7 +33,7 @@ describe('aplicarEfectos', () => {
       const estado = estadoCon({ oro: 50 });
       const copia = structuredClone(estado);
 
-      const nuevo = aplicarEfectos(estado, [{ tipo: 'oro', cantidad: 20 }], new Dados(1));
+      const { estado: nuevo } = aplicarEfectos(estado, [{ tipo: 'oro', cantidad: 20 }], new Dados(1));
 
       expect(estado).toEqual(copia);
       expect(nuevo.jugador.oro).toBe(70);
@@ -41,7 +41,7 @@ describe('aplicarEfectos', () => {
 
     it('sin efectos, el estado queda igual', () => {
       const estado = estadoCon();
-      expect(aplicarEfectos(estado, [], new Dados(1))).toEqual(estado);
+      expect(aplicarEfectos(estado, [], new Dados(1))).toEqual({ estado, cambios: [] });
     });
 
     it('aplica varios efectos en orden', () => {
@@ -78,11 +78,10 @@ describe('aplicarEfectos', () => {
     });
 
     it('ningún recurso baja de 0 (15 de oro − 20 = 0)', () => {
-      const j = aplicar(estadoCon({ oro: 15, tripulacion: 3, vida: 2 }),
-        { tipo: 'oro', cantidad: -20 }, { tipo: 'tripulacion', cantidad: -10 }, { tipo: 'vida', cantidad: -5 });
-      expect(j.oro).toBe(0);
-      expect(j.tripulacion).toBe(0);
-      expect(j.vida).toBe(0);
+      // Cada uno por separado: con tripulación o vida a 0 la partida termina y no se aplicaría lo siguiente.
+      expect(aplicar(estadoCon({ oro: 15 }), { tipo: 'oro', cantidad: -20 }).oro).toBe(0);
+      expect(aplicar(estadoCon({ tripulacion: 3 }), { tipo: 'tripulacion', cantidad: -10 }).tripulacion).toBe(0);
+      expect(aplicar(estadoCon({ vida: 2 }), { tipo: 'vida', cantidad: -5 }).vida).toBe(0);
     });
   });
 
@@ -264,8 +263,133 @@ describe('aplicarEfectos', () => {
     });
 
     it('una bandera se apunta en el mundo', () => {
-      const nuevo = aplicarEfectos(estadoCon(), [{ tipo: 'bandera', bandera: 'emporio_bob_derrotado' }], new Dados(1));
-      expect(nuevo.mundo.banderas['emporio_bob_derrotado']).toBe(true);
+      const { estado } = aplicarEfectos(estadoCon(), [{ tipo: 'bandera', bandera: 'emporio_bob_derrotado' }], new Dados(1));
+      expect(estado.mundo.banderas['emporio_bob_derrotado']).toBe(true);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  describe('el contable', () => {
+    it('cada vez que gana oro, gana 2d6 más', () => {
+      const gemelo = new Dados(3);
+      const extra = gemelo.tirar('2d6').total; // el contable es lo único que tira dados aquí
+
+      const { estado } = aplicarEfectos(estadoCon({ sobrenombre: 'el_contable', oro: 50 }), [{ tipo: 'oro', cantidad: 20 }], new Dados(3));
+
+      expect(estado.jugador.oro).toBe(70 + extra);
+    });
+
+    it('no gana nada extra al perder oro, al fijarlo ni con otros recursos', () => {
+      const contable = estadoCon({ sobrenombre: 'el_contable', oro: 50, comida: 5 });
+      expect(aplicar(contable, { tipo: 'oro', cantidad: -10 }).oro).toBe(40);
+      expect(aplicar(contable, { tipo: 'oro', operacion: 'fijar', cantidad: 100 }).oro).toBe(100);
+      expect(aplicar(contable, { tipo: 'comida', cantidad: 3 }).comida).toBe(8);
+    });
+
+    it('los demás sobrenombres no ganan nada extra', () => {
+      expect(aplicar(estadoCon({ oro: 50 }), { tipo: 'oro', cantidad: 20 }).oro).toBe(70);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  describe('fin de partida', () => {
+    it('mientras se juega, finPartida es null', () => {
+      const { estado } = aplicarEfectos(estadoCon({ vida: 10 }), [{ tipo: 'vida', cantidad: -3 }], new Dados(1));
+      expect(estado.mundo.finPartida).toBeNull();
+    });
+
+    it('si la vida llega a 0, derrota por vida', () => {
+      const { estado } = aplicarEfectos(estadoCon({ vida: 2 }), [{ tipo: 'vida', cantidad: -5 }], new Dados(1));
+      expect(estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'vida' });
+    });
+
+    it('si la tripulación llega a 0, derrota por tripulación', () => {
+      const { estado } = aplicarEfectos(estadoCon({ tripulacion: 3 }), [{ tipo: 'tripulacion', cantidad: -3 }], new Dados(1));
+      expect(estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'tripulacion' });
+    });
+
+    it('"ganar_partida" y "perder_partida" terminan la partida', () => {
+      expect(aplicarEfectos(estadoCon(), [{ tipo: 'ganar_partida' }], new Dados(1)).estado.mundo.finPartida)
+        .toEqual({ resultado: 'victoria', motivo: 'evento' });
+      expect(aplicarEfectos(estadoCon(), [{ tipo: 'perder_partida' }], new Dados(1)).estado.mundo.finPartida)
+        .toEqual({ resultado: 'derrota', motivo: 'evento' });
+    });
+
+    it('cuando la partida termina, los efectos que quedan ya no se aplican', () => {
+      const { estado } = aplicarEfectos(estadoCon({ vida: 1, oro: 50 }),
+        [{ tipo: 'vida', cantidad: -1 }, { tipo: 'oro', cantidad: 100 }], new Dados(1));
+      expect(estado.jugador.oro).toBe(50);
+    });
+
+    it('si la partida ya había terminado, no se aplica nada', () => {
+      const terminada = estadoCon({ oro: 50 });
+      terminada.mundo = { ...terminada.mundo, finPartida: { resultado: 'derrota', motivo: 'vida' } };
+      const { estado, cambios } = aplicarEfectos(terminada, [{ tipo: 'oro', cantidad: 100 }], new Dados(1));
+      expect(estado.jugador.oro).toBe(50);
+      expect(cambios).toEqual([]);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  describe('el chivato: la lista de cambios reales', () => {
+    const cambiosDe = (estado: Estado, ...efectos: Efecto[]) => aplicarEfectos(estado, efectos, new Dados(1)).cambios;
+
+    it('cuenta lo que cambió DE VERDAD: +5 de tripulación con 38 de 40 es de 38 a 40', () => {
+      expect(cambiosDe(estadoCon({ tripulacion: 38, tripulacionMax: 40 }), { tipo: 'tripulacion', cantidad: 5 }))
+        .toEqual([{ tipo: 'recurso', recurso: 'tripulacion', antes: 38, despues: 40 }]);
+    });
+
+    it('si no cambia nada (ya estabas al máximo), no apunta nada', () => {
+      expect(cambiosDe(estadoCon({ vida: 15, vidaMax: 15 }), { tipo: 'vida', cantidad: 3 })).toEqual([]);
+    });
+
+    it('el oro extra del contable aparece aparte, con su motivo', () => {
+      const gemelo = new Dados(3);
+      const extra = gemelo.tirar('2d6').total;
+
+      const { cambios } = aplicarEfectos(estadoCon({ sobrenombre: 'el_contable', oro: 50 }), [{ tipo: 'oro', cantidad: 20 }], new Dados(3));
+
+      expect(cambios).toEqual([
+        { tipo: 'recurso', recurso: 'oro', antes: 50, despues: 70 },
+        { tipo: 'recurso', recurso: 'oro', antes: 70, despues: 70 + extra, motivo: 'contable' },
+      ]);
+    });
+
+    it('objetos: ganado (con su fama si es mágico), perdido y "no cabe"', () => {
+      expect(cambiosDe(estadoCon({ fama: 0 }), { tipo: 'ganar_objeto', objeto: 'brujula_magica' })).toEqual([
+        { tipo: 'objeto_ganado', objeto: 'brujula_magica' },
+        { tipo: 'recurso', recurso: 'fama', antes: 0, despues: 1, motivo: 'objeto_magico' },
+      ]);
+      expect(cambiosDe(estadoCon({ inventario: [{ id: 'amuleto_kalinago' }] }), { tipo: 'perder_objeto', objeto: 'amuleto_kalinago' }))
+        .toEqual([{ tipo: 'objeto_perdido', objeto: 'amuleto_kalinago' }]);
+      expect(cambiosDe(estadoCon({ capacidadInventario: 3 }), { tipo: 'ganar_objeto', objeto: 'idolo_dorado' }))
+        .toEqual([{ tipo: 'objeto_no_cabe', objeto: 'idolo_dorado' }]);
+    });
+
+    it('condiciones puestas y quitadas', () => {
+      expect(cambiosDe(estadoCon(), { tipo: 'poner_condicion', condicion: 'tormenta', turnos: 2 }))
+        .toEqual([{ tipo: 'condicion_puesta', condicion: 'tormenta', turnos: 2 }]);
+      expect(cambiosDe(estadoCon({ condiciones: [{ id: 'el_mal' }] }), { tipo: 'quitar_condicion', categoria: 'maldicion' }))
+        .toEqual([{ tipo: 'condicion_quitada', condicion: 'el_mal' }]);
+    });
+
+    it('seguidores heridos y muertos', () => {
+      expect(cambiosDe(estadoCon({ vida: 10, seguidores: [seguidor('a', 5), seguidor('b', 2)] }), { tipo: 'vida', cantidad: -2, destino: 'todos' }))
+        .toEqual([
+          { tipo: 'recurso', recurso: 'vida', antes: 10, despues: 8 },
+          { tipo: 'resistencia_seguidor', seguidor: 'a', antes: 5, despues: 3 },
+          { tipo: 'resistencia_seguidor', seguidor: 'b', antes: 2, despues: 0 },
+          { tipo: 'seguidor_muerto', seguidor: 'b' },
+        ]);
+    });
+
+    it('turnos perdidos, banderas y fin de partida', () => {
+      expect(cambiosDe(estadoCon(), { tipo: 'perder_turnos', cantidad: 1 }, { tipo: 'bandera', bandera: 'bob_derrotado' }))
+        .toEqual([{ tipo: 'turnos_perdidos', cantidad: 1 }, { tipo: 'bandera', bandera: 'bob_derrotado' }]);
+      expect(cambiosDe(estadoCon({ vida: 1 }), { tipo: 'vida', cantidad: -1 })).toEqual([
+        { tipo: 'recurso', recurso: 'vida', antes: 1, despues: 0 },
+        { tipo: 'fin_partida', fin: { resultado: 'derrota', motivo: 'vida' } },
+      ]);
     });
   });
 });
