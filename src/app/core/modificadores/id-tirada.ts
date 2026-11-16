@@ -9,6 +9,7 @@ export const IDS_TIRADA = [
   'audiencia_guarida',
   'pesca',
   'caza',
+  'el_mal', // la tabla diaria de "el mal está a bordo"
 ] as const;
 
 export type IdTirada = (typeof IDS_TIRADA)[number];

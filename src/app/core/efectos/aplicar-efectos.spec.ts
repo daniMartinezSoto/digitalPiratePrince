@@ -163,6 +163,33 @@ describe('aplicarEfectos', () => {
       expect(aplicar(estadoCon({ vida: 10 }), { tipo: 'vida', cantidad: -3, destino: 'seguidor_azar' }).vida).toBe(10);
     });
 
+    it('"seguidor_azar" sin seguidores y con "siNoHay": pasan los efectos de reemplazo', () => {
+      // Escorbuto: muere un seguidor; si no tienes, pierdes tripulación.
+      const j = aplicar(estadoCon({ tripulacion: 30 }), {
+        tipo: 'vida', operacion: 'todo', destino: 'seguidor_azar',
+        siNoHay: [{ tipo: 'tripulacion', cantidad: -4 }],
+      });
+      expect(j.tripulacion).toBe(26);
+    });
+
+    it('"seguidor_azar" con seguidores: muere uno y "siNoHay" se ignora', () => {
+      const j = aplicar(estadoCon({ tripulacion: 30, seguidores: [seguidor('a'), seguidor('b')] }), {
+        tipo: 'vida', operacion: 'todo', destino: 'seguidor_azar',
+        siNoHay: [{ tipo: 'tripulacion', cantidad: -4 }],
+      });
+      expect(j.seguidores).toHaveLength(1);
+      expect(j.tripulacion).toBe(30);
+    });
+
+    it('si el reemplazo de "siNoHay" deja la tripulación a 0, se pierde la partida', () => {
+      const { estado, cambios } = aplicarEfectos(estadoCon({ tripulacion: 3 }), [{
+        tipo: 'vida', operacion: 'todo', destino: 'seguidor_azar',
+        siNoHay: [{ tipo: 'tripulacion', cantidad: -5 }],
+      }], new Dados(1));
+      expect(estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'tripulacion' });
+      expect(cambios.map(c => c.tipo)).toEqual(['recurso', 'fin_partida']);
+    });
+
     it('un seguidor que llega a 0 de resistencia muere y sale del grupo', () => {
       const j = aplicar(estadoCon({ seguidores: [seguidor('a', 2), seguidor('b', 10)] }), { tipo: 'vida', cantidad: -3, destino: 'todos' });
       expect(j.seguidores.map(s => s.id)).toEqual(['b']);

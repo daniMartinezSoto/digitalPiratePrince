@@ -1,0 +1,14 @@
+{
+  "id": "lluvias_persisten",
+  "dado": "1d6",
+  "filas": [
+    { "min": 1, "max": 3, "texto": "Las lluvias cesan.", "efectos": [{ "tipo": "quitar_condicion", "condicion": "lluvias" }] },
+    {
+      "min": 4, "max": 6, "texto": "Las lluvias persisten, pierdes tu fase de acción.",
+      "efectos": [
+        { "tipo": "perder_turnos", "cantidad": 1 },
+        { "tipo": "quitar_condicion", "condicion": "lluvias" }
+      ]
+    }
+  ]
+}

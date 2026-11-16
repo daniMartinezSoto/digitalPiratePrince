@@ -33,6 +33,7 @@ export interface ResultadoEfectos {
  *   - Ningún recurso baja de 0; las características (fuerza, ingenio, vidaMax) nunca bajan de 1.
  *   - Objetos: solo entran si caben; los mágicos dan +1 de fama.
  *   - Condiciones, turnos perdidos y banderas.
+ *   - "Un seguidor al azar" sin seguidores: no pasa nada, salvo que el efecto traiga "siNoHay".
  *   - El contable: cada vez que gana oro, gana 2d6 más.
  *   - Fin de partida: vida o tripulación a 0 (derrota), o un efecto ganar_partida / perder_partida.
  *     Cuando la partida termina, los efectos que quedan ya no se aplican.
@@ -112,7 +113,7 @@ function aplicarUno(estado: Estado, efecto: Efecto, dados: Dados, catalogos: Cat
       terminarPartida(estado, { resultado: 'derrota', motivo: 'evento' }, cambios);
       return;
     default:
-      aplicarARecurso(estado, efecto, dados, cambios);
+      aplicarARecurso(estado, efecto, dados, catalogos, cambios);
   }
 }
 
@@ -122,7 +123,7 @@ function aplicarUno(estado: Estado, efecto: Efecto, dados: Dados, catalogos: Cat
 
 type EfectoDeRecurso = Extract<Efecto, { tipo: TipoRecurso }>;
 
-function aplicarARecurso(estado: Estado, efecto: EfectoDeRecurso, dados: Dados, cambios: Cambio[]): void {
+function aplicarARecurso(estado: Estado, efecto: EfectoDeRecurso, dados: Dados, catalogos: CatalogosEfectos, cambios: Cambio[]): void {
   const destino = efecto.destino ?? 'jugador';
   const jugador = estado.jugador;
 
@@ -142,6 +143,9 @@ function aplicarARecurso(estado: Estado, efecto: EfectoDeRecurso, dados: Dados, 
     if (jugador.seguidores.length > 0) {
       const elegido = jugador.seguidores[dados.entero(0, jugador.seguidores.length - 1)];
       cambiarResistencia(elegido, efecto, cambios);
+    } else {
+      // No hay a quién afectar: si el efecto trae "siNoHay", pasan esos efectos en su lugar.
+      aplicarReemplazo(estado, efecto.siNoHay ?? [], dados, catalogos, cambios);
     }
   } else {
     // seguidor_elegido: el jugador tiene que elegir, y eso lo pregunta el motor de eventos (Sprint 10).
@@ -153,6 +157,17 @@ function aplicarARecurso(estado: Estado, efecto: EfectoDeRecurso, dados: Dados, 
     cambios.push({ tipo: 'seguidor_muerto', seguidor: muerto.id });
   }
   jugador.seguidores = jugador.seguidores.filter(s => s.resistencia > 0);
+}
+
+/** Los efectos de "siNoHay", uno detrás de otro, con las mismas reglas que cualquier efecto. */
+function aplicarReemplazo(estado: Estado, efectos: readonly Efecto[], dados: Dados, catalogos: CatalogosEfectos, cambios: Cambio[]): void {
+  for (const efecto of efectos) {
+    if (estado.mundo.finPartida) {
+      break; // la partida ya ha terminado
+    }
+    aplicarUno(estado, efecto, dados, catalogos, cambios);
+    comprobarDerrota(estado, cambios);
+  }
 }
 
 /**

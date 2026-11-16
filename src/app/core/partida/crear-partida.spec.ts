@@ -15,6 +15,12 @@ describe('crearPartida', () => {
     expect(estado.mundo.finPartida).toBeNull();
   });
 
+  it('una partida nueva empieza en el día 1, en la fase de inicio', () => {
+    const { estado } = crearPartida(123, 'Marta');
+    expect(estado.mundo.dia).toBe(1);
+    expect(estado.mundo.fase).toBe('inicio');
+  });
+
   it('con la misma semilla genera siempre el mismo estado', () => {
     const a = crearPartida(2024, 'Marta');
     const b = crearPartida(2024, 'Marta');

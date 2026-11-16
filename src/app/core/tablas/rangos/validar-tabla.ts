@@ -110,8 +110,11 @@ function validarFila(fila: Fila, nombre: string): string[] {
   return errores;
 }
 
-/** Revisa un efecto suelto. Lo mira como objeto genérico: en el JSON puede venir cualquier cosa. */
-function validarEfecto(efecto: unknown, donde: string): string[] {
+/**
+ * Revisa un efecto suelto. Lo mira como objeto genérico: en el JSON puede venir cualquier cosa.
+ * Se exporta porque los efectos también se escriben fuera de las tablas (fichas de condición).
+ */
+export function validarEfecto(efecto: unknown, donde: string): string[] {
   const e = efecto as Record<string, unknown> & { tipo: string };
 
   if (!TIPOS_EFECTO.includes(e.tipo)) {
@@ -144,7 +147,7 @@ function validarEfecto(efecto: unknown, donde: string): string[] {
 
 /** Oro, comida, tripulacion, vida, fama, fuerza, ingenio y vidaMax. */
 function validarEfectoDeRecurso(e: Record<string, unknown> & { tipo: string }, donde: string): string[] {
-  const errores: string[] = [...soloEstosCampos(e, ['operacion', 'cantidad', 'destino'], donde)];
+  const errores: string[] = [...soloEstosCampos(e, ['operacion', 'cantidad', 'destino', 'siNoHay'], donde)];
   const operacion = typeof e['operacion'] === 'string' ? e['operacion'] : e['operacion'] === undefined ? 'sumar' : '?';
   const esCaracteristica = CARACTERISTICAS_TEXTO.includes(e.tipo);
 
@@ -184,6 +187,31 @@ function validarEfectoDeRecurso(e: Record<string, unknown> & { tipo: string }, d
     }
   }
 
+  errores.push(...validarSiNoHay(e['siNoHay'], destino, donde));
+
+  return errores;
+}
+
+/** "siNoHay": solo con "seguidor_azar"; una lista de efectos normales (sin otro "siNoHay" dentro). */
+function validarSiNoHay(siNoHay: unknown, destino: unknown, donde: string): string[] {
+  if (siNoHay === undefined) {
+    return [];
+  }
+  if (destino !== 'seguidor_azar') {
+    return [`${donde}: "siNoHay" solo tiene sentido con el destino "seguidor_azar" (qué pasa si no hay ningún seguidor).`];
+  }
+  if (!Array.isArray(siNoHay) || siNoHay.length === 0) {
+    return [`${donde}: "siNoHay" debe ser una lista con al menos un efecto.`];
+  }
+
+  const errores: string[] = [];
+  for (const reemplazo of siNoHay) {
+    if (typeof reemplazo === 'object' && reemplazo !== null && 'siNoHay' in reemplazo) {
+      errores.push(`${donde}: un efecto de "siNoHay" no puede llevar otro "siNoHay" dentro.`);
+    } else {
+      errores.push(...validarEfecto(reemplazo, `${donde}, siNoHay`));
+    }
+  }
   return errores;
 }
 

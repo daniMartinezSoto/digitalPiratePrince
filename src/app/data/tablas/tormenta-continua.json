@@ -1,0 +1,8 @@
+{
+  "id": "tormenta_continua",
+  "dado": "1d6",
+  "filas": [
+    { "min": 1, "max": 2, "texto": "La tormenta continúa. No puedes viajar." },
+    { "min": 3, "max": 6, "texto": "La tormenta amaina.", "efectos": [{ "tipo": "quitar_condicion", "condicion": "tormenta" }] }
+  ]
+}

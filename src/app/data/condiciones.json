@@ -9,24 +9,40 @@
     "id": "el_mal",
     "nombre": "El mal está a bordo",
     "descripcion": "Algo maligno se esconde en el barco. Cada turno pierdes tripulación hasta que resuelvas la situación.",
-    "categoria": "maldicion"
+    "categoria": "maldicion",
+    "cadaTurno": {
+      "efectos": [{ "tipo": "tripulacion", "cantidad": -1 }],
+      "tabla": "el_mal"
+    }
+  },
+  {
+    "id": "pistas_criatura",
+    "nombre": "Pistas sobre la criatura",
+    "descripcion": "Sabes cómo enfrentarte a la criatura del barco: +1 en la tirada diaria de \"El mal está a bordo\".",
+    "categoria": "otra",
+    "modificadores": { "el_mal": 1 }
   },
   {
     "id": "escorbuto",
     "nombre": "Escorbuto",
     "descripcion": "La falta de alimentos frescos enferma a la tripulación. Cada turno sin tocar tierra pierdes tripulantes.",
-    "categoria": "enfermedad"
+    "categoria": "enfermedad",
+    "cadaTurno": { "tabla": "escorbuto" },
+    "alLlegar": { "lugar": "tierra" }
   },
   {
     "id": "tormenta",
     "nombre": "Tormenta",
     "descripcion": "Una tormenta azota el barco. No puedes viajar hasta que amaine.",
-    "categoria": "clima"
+    "categoria": "clima",
+    "prohibe": ["viajar"],
+    "cadaTurno": { "tabla": "tormenta_continua" }
   },
   {
     "id": "lluvias",
     "nombre": "Lluvias torrenciales",
-    "descripcion": "Llueve a cántaros. No puedes moverte y tu grupo puede resfriarse.",
-    "categoria": "clima"
+    "descripcion": "Llueve a cántaros. Si mañana las lluvias persisten, perderás tu fase de acción.",
+    "categoria": "clima",
+    "cadaTurno": { "tabla": "lluvias_persisten" }
   }
 ]

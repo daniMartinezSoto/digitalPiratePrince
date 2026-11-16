@@ -271,6 +271,24 @@ describe('resolverTabla', () => {
       ]);
     });
 
+    it('los dados de "siNoHay" se tiran siempre, justo después del efecto que los lleva', () => {
+      const tabla = tablaUnaFila([
+        { tipo: 'vida', operacion: 'todo', destino: 'seguidor_azar', siNoHay: [{ tipo: 'tripulacion', cantidad: '-1d6' }] },
+        { tipo: 'oro', cantidad: '1d6' },
+      ]);
+      const gemelo = new Dados(5);
+      gemelo.tirar('1d6'); // el dado de la tabla
+      const tripulacion = gemelo.tirar('1d6').total; // el de siNoHay
+      const oro = gemelo.tirar('1d6').total; // el del efecto siguiente
+
+      const r = resolverTabla(tabla, 0, new Dados(5));
+
+      expect(r.efectos).toEqual([
+        { tipo: 'vida', operacion: 'todo', destino: 'seguidor_azar', siNoHay: [{ tipo: 'tripulacion', cantidad: -tripulacion }] },
+        { tipo: 'oro', cantidad: oro },
+      ]);
+    });
+
     it('acepta cantidades con suma ("1d6+1")', () => {
       const tabla = tablaUnaFila([{ tipo: 'oro', cantidad: '1d6+1' }]);
 

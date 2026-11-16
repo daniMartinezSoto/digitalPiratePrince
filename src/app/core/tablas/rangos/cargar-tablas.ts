@@ -2,7 +2,11 @@ import type { Tabla } from './tabla';
 
 import buscarInformacion from '../../../data/tablas/buscar-informacion.json';
 import caza from '../../../data/tablas/caza.json';
+import elMal from '../../../data/tablas/el-mal.json';
+import escorbuto from '../../../data/tablas/escorbuto.json';
+import lluviasPersisten from '../../../data/tablas/lluvias-persisten.json';
 import pesca from '../../../data/tablas/pesca.json';
+import tormentaContinua from '../../../data/tablas/tormenta-continua.json';
 
 // El JSON llega sin tipos ("oro" es un texto cualquiera). Aquí, y solo aquí,
 // le decimos que es una Tabla. El test de validación comprueba que de verdad lo sea.
@@ -15,7 +19,11 @@ const comoTabla = (json: unknown) => json as Tabla;
 export const TABLAS: readonly Tabla[] = [
   comoTabla(buscarInformacion),
   comoTabla(caza),
+  comoTabla(elMal),
+  comoTabla(escorbuto),
+  comoTabla(lluviasPersisten),
   comoTabla(pesca),
+  comoTabla(tormentaContinua),
 ];
 
 /** Devuelve la tabla con ese id. Si no existe, avisa con un error que lista las disponibles. */

@@ -9,6 +9,8 @@ import type { Fila, Tabla } from './tabla';
  *
  * Orden en que se gastan los dados (no cambiarlo: afecta a las partidas guardadas):
  * primero el dado de la tabla y después cada efecto con dados, en orden.
+ * Los efectos de "siNoHay" se tiran SIEMPRE, justo después del efecto que los lleva,
+ * se vayan a usar o no: así la tabla gasta los mismos dados tengas o no seguidores.
  */
 export function resolverTabla(tabla: Tabla, modificador: number, dados: Dados): ResultadoTabla {
   // 1. Tirar el dado de la tabla y sumar el modificador.
@@ -58,16 +60,23 @@ function buscarFila(tabla: Tabla, total: number): Fila {
  * la "cantidad" y, en poner_condicion, los "turnos".
  * El resto (mitad, maximo, todo, objetos, banderas, ganar/perder la partida...) sale como entró:
  * lo aplica aplicarEfectos, que sí conoce el estado.
+ * Se exporta porque los efectos también se escriben fuera de las tablas (fichas de condición).
  */
-function resolverEfecto(definicion: EfectoDefinicion, dados: Dados): Efecto {
+export function resolverEfecto(definicion: EfectoDefinicion, dados: Dados): Efecto {
   if (definicion.tipo === 'poner_condicion') {
     const { turnos, ...resto } = definicion;
     return turnos === undefined ? resto : { ...resto, turnos: resolverCantidad(turnos, dados) };
   }
-  if ('cantidad' in definicion) {
-    return { ...definicion, cantidad: resolverCantidad(definicion.cantidad, dados) } as Efecto;
+  // Primero la cantidad del propio efecto...
+  const resuelto = (
+    'cantidad' in definicion ? { ...definicion, cantidad: resolverCantidad(definicion.cantidad, dados) } : { ...definicion }
+  ) as Efecto;
+
+  // ...y después, si lleva "siNoHay", los efectos de reemplazo (también pueden llevar dados).
+  if ('siNoHay' in definicion && definicion.siNoHay !== undefined && 'siNoHay' in resuelto) {
+    resuelto.siNoHay = definicion.siNoHay.map(reemplazo => resolverEfecto(reemplazo, dados));
   }
-  return { ...definicion };
+  return resuelto;
 }
 
 /** 8 → 8 · "2d6" → lo que salga · "-1d6" → lo que salga, en negativo. */

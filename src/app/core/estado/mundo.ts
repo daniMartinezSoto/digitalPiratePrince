@@ -1,5 +1,5 @@
+import type { Fase } from './fase';
 import type { FinPartida } from './fin-partida';
-
 
 export interface Mundo {
   // Identificador del mapa en el que se encuentra el jugador.
@@ -16,6 +16,11 @@ export interface Mundo {
 
   // Día actual de la aventura.
   dia: number;
+
+  // Momento del día en el que está la partida (ver fase.ts).
+  // Sirve para que, al cargar una partida guardada a mitad de turno,
+  // el juego sepa qué toca: no se puede repetir la acción ni saltarse la comida.
+  fase: Fase;
 
   // Banderas: recuerdan acontecimientos o condiciones de la aventura.
   // Por ejemplo, si se ha visitado un puerto importante.

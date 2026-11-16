@@ -28,6 +28,10 @@ export const RECURSOS_CON_MAXIMO: readonly TipoRecurso[] = ['vida', 'tripulacion
 //   todos             → el jugador y todos los seguidores ("todo el grupo pierde 2 PV")
 //   seguidor_azar     → un seguidor al azar
 //   seguidor_elegido  → un seguidor que elige el jugador
+// Con "seguidor_azar" se puede añadir "siNoHay": los efectos que pasan EN SU LUGAR si no hay
+// ningún seguidor (escorbuto: muere un seguidor; si no tienes, pierdes 1d6 de tripulación):
+//   { "tipo": "vida", "operacion": "todo", "destino": "seguidor_azar",
+//     "siNoHay": [{ "tipo": "tripulacion", "cantidad": "-1d6" }] }
 export const DESTINOS = ['jugador', 'todos', 'seguidor_azar', 'seguidor_elegido'] as const;
 export type Destino = (typeof DESTINOS)[number];
 
@@ -60,7 +64,6 @@ export type CantidadDefinicion = number | string;
 
 // Efectos que son iguales en el JSON y ya resueltos (no llevan dados).
 type EfectoSinDados =
-  | { tipo: TipoRecurso; operacion: 'mitad' | 'maximo' | 'todo'; destino?: Destino }
   | { tipo: FinDePartida }
   | { tipo: 'ganar_objeto'; objeto: string }
   | { tipo: 'perder_objeto'; objeto: string }
@@ -71,7 +74,8 @@ type EfectoSinDados =
 // Efecto tal como se escribe en el JSON.
 export type EfectoDefinicion =
   | EfectoSinDados
-  | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: CantidadDefinicion; destino?: Destino }
+  | { tipo: TipoRecurso; operacion: 'mitad' | 'maximo' | 'todo'; destino?: Destino; siNoHay?: EfectoDefinicion[] }
+  | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: CantidadDefinicion; destino?: Destino; siNoHay?: EfectoDefinicion[] }
   | { tipo: 'poner_condicion'; condicion: string; turnos?: CantidadDefinicion }
   | { tipo: 'perder_turnos'; cantidad: CantidadDefinicion };
 
@@ -79,6 +83,7 @@ export type EfectoDefinicion =
 // son siempre números concretos (en los recursos: positivo = ganar, negativo = perder).
 export type Efecto =
   | EfectoSinDados
-  | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: number; destino?: Destino }
+  | { tipo: TipoRecurso; operacion: 'mitad' | 'maximo' | 'todo'; destino?: Destino; siNoHay?: Efecto[] }
+  | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: number; destino?: Destino; siNoHay?: Efecto[] }
   | { tipo: 'poner_condicion'; condicion: string; turnos?: number }
   | { tipo: 'perder_turnos'; cantidad: number };

@@ -21,6 +21,7 @@ export function crearPartida(semilla: number, nombre: string): Partida {
       mapaId: null,
       posicion: null,
       dia: 1,
+      fase: 'inicio',
       banderas: {},
       marcas: [],
       pilaEventos: [],

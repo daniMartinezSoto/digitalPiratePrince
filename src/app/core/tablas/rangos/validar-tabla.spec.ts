@@ -158,6 +158,29 @@ describe('validarTabla', () => {
       expect(validarTabla(conEfectos([{ tipo: 'vida', operacion: 'fijar', cantidad: -1 }])).join()).toMatch(/número negativo/);
     });
 
+    it('acepta "siNoHay" en un efecto a un seguidor al azar', () => {
+      const tabla = conEfectos([
+        { tipo: 'vida', operacion: 'todo', destino: 'seguidor_azar', siNoHay: [{ tipo: 'tripulacion', cantidad: '-1d6' }] },
+      ]);
+      expect(validarTabla(tabla)).toEqual([]);
+    });
+
+    it('detecta un "siNoHay" en un efecto que no va a un seguidor al azar', () => {
+      const tabla = conEfectos([{ tipo: 'vida', cantidad: -1, destino: 'todos', siNoHay: [{ tipo: 'oro', cantidad: 1 }] }]);
+      expect(validarTabla(tabla).join()).toMatch(/"siNoHay" solo tiene sentido con el destino "seguidor_azar"/);
+    });
+
+    it('detecta un "siNoHay" vacío, con efectos mal escritos o con otro "siNoHay" dentro', () => {
+      const base = { tipo: 'vida', cantidad: -1, destino: 'seguidor_azar' };
+      expect(validarTabla(conEfectos([{ ...base, siNoHay: [] }])).join()).toMatch(/"siNoHay" debe ser una lista/);
+      expect(validarTabla(conEfectos([{ ...base, siNoHay: [{ tipo: 'tripulasion', cantidad: -1 }] }])).join()).toMatch(
+        /siNoHay: el tipo de efecto "tripulasion" no existe/,
+      );
+      expect(validarTabla(conEfectos([{ ...base, siNoHay: [{ ...base, siNoHay: [{ tipo: 'oro', cantidad: 1 }] }] }])).join()).toMatch(
+        /no puede llevar otro "siNoHay" dentro/,
+      );
+    });
+
     it('detecta un destino que no existe', () => {
       expect(validarTabla(conEfectos([{ tipo: 'vida', cantidad: -1, destino: 'barco' }])).join()).toMatch(/destino "barco" no existe/);
     });
