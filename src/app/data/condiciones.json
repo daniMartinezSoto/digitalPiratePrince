@@ -31,6 +31,12 @@
     "alLlegar": { "lugar": "tierra" }
   },
   {
+    "id": "hambre",
+    "nombre": "Hambre",
+    "descripcion": "No has comido lo suficiente. Cada día sin comer pierdes más vida, tus seguidores pueden marcharse y la tripulación puede amotinarse. Se quita al comer.",
+    "categoria": "otra"
+  },
+  {
     "id": "tormenta",
     "nombre": "Tormenta",
     "descripcion": "Una tormenta azota el barco. No puedes viajar hasta que amaine.",

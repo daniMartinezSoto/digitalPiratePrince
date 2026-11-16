@@ -16,6 +16,23 @@ describe('ajustes', () => {
     expect(AJUSTES.comidaMaxima).toBeGreaterThanOrEqual(5);
   });
 
+  it('el precio de la taberna es un número entero mayor que 0', () => {
+    expect(Number.isInteger(AJUSTES.precioTaberna)).toBe(true);
+    expect(AJUSTES.precioTaberna).toBeGreaterThan(0);
+  });
+
+  it('los precios de la posada y del monasterio son números enteros mayores que 0', () => {
+    for (const precio of [AJUSTES.precioPosada, AJUSTES.precioMonasterio]) {
+      expect(Number.isInteger(precio)).toBe(true);
+      expect(precio).toBeGreaterThan(0);
+    }
+  });
+
+  it('la probabilidad de evento nocturno es un porcentaje entre 0 y 100', () => {
+    expect(AJUSTES.probabilidadEventoNocturno).toBeGreaterThanOrEqual(0);
+    expect(AJUSTES.probabilidadEventoNocturno).toBeLessThanOrEqual(100);
+  });
+
   it('el bonificador por fama solo usa tiradas que existen y "cada X" es un entero de 1 o más', () => {
     const conocidas: readonly string[] = IDS_TIRADA;
     for (const [tirada, cada] of Object.entries(AJUSTES.bonificadorPorFama)) {

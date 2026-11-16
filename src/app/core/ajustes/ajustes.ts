@@ -10,6 +10,21 @@ export interface Ajustes {
   comidaMaxima: number;
 
   /**
+   * Oro que cuesta comer pagando (la taberna de un puerto, o los nativos de una aldea si aceptan tu oro)
+   * por cada reserva de comida que se necesite ese día.
+   */
+  precioTaberna: number;
+
+  /** Oro que cuesta dormir en la posada de un puerto, por personaje (el jugador y cada seguidor). */
+  precioPosada: number;
+
+  /** Oro que cuesta dormir en un monasterio, por personaje. */
+  precioMonasterio: number;
+
+  /** Porcentaje (0-100) de que pase un evento nocturno al dormir a la intemperie. En papel: 1-2 en 1d6 = 33. */
+  probabilidadEventoNocturno: number;
+
+  /**
    * Tiradas que dan +1 por cada X puntos de fama. { "audiencia_guarida": 2 } = +1 por cada 2 de fama
    * al pedir audiencia al capitán pirata (con 5 de fama, +2).
    */

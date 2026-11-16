@@ -33,9 +33,18 @@
   - ✅ Vocabulario de efectos ampliado (`tablas/efecto.ts`): características `fuerza`, `ingenio`, `vidaMax` (nunca bajan de 1) y `ganar_objeto`, `perder_objeto`, `poner_condicion` (turnos opcionales, con dados), `quitar_condicion` (por id o por categoría), `perder_turnos`, `bandera`. `validarTabla` comprueba que objetos y condiciones existen en su catálogo y avisa de campos que sobran.
   - ✅ `calcularModificador(jugador, idTirada, catalogos?)` suma sobrenombre + objetos que lleva + condiciones activas + "por cada X de fama" (`AJUSTES.bonificadorPorFama`, de momento `audiencia_guarida: 2`).
   - ✅ `aplicarEfectos(estado, efectos, dados, catalogos?)` en `core/efectos/`: devuelve `{ estado, cambios }` (ver sección 3.5). Nuevo `mundo.finPartida` (`core/estado/fin-partida.ts`).
-- **Tests:** 258 pasan en 20 archivos.
+- **Sprint 5: completado (ciclo de turno: comida, inanición y descanso).** Decisiones y reglas en la sección 3.10; reglas de comida y descanso en 4.6 y 4.7.
+  - ✅ Fase del turno en el estado: `core/estado/fase.ts` (`FASES`: `inicio`, `accion`, `comida`, `descanso`) y `mundo.fase`. `VERSION_ESTADO` sigue en 1 (aún no hay guardado).
+  - ✅ Fichas de condición completas (`core/catalogos/condicion.ts`): `prohibe` (`PROHIBICIONES`), `ajustes` (`AJUSTES_DE_CONDICION`), `cadaTurno` (`efectos` y/o `tabla`) y `alLlegar` (`lugar`, y opcionalmente `efectos` y `evento`). El revisor lo comprueba todo, incluidos los efectos (`validarEfecto` se exporta desde `validar-tabla.ts`) y que la tabla exista.
+  - ✅ Condiciones del juego (`data/condiciones.json`): maleficio del pirata, el mal, pistas sobre la criatura, escorbuto, hambre, tormenta y lluvias. Tablas diarias en `data/tablas/`: `el-mal`, `escorbuto`, `tormenta-continua`, `lluvias-persisten`. Id de tirada nuevo: `el_mal`.
+  - ✅ Efectos: campo `siNoHay` en los efectos con destino `seguidor_azar` (efectos de reemplazo si no hay seguidores). Sus dados se tiran siempre, se usen o no.
+  - ✅ Consultas (`core/condiciones/consultas.ts`): `estaProhibido`, `condicionesQueProhiben`, `famaObjetivoActual`, `comidaPorDia`. Solo calculan; no guardan nada.
+  - ✅ `core/turno/`: `iniciarTurno` (amanecer), `comer` + `opcionesDeComida`, `descansar` + `opcionesDeDescanso` (cierra el día: `dia + 1`, fase `inicio`), `lugar.ts` (`LUGARES`) y un test de día completo. `core/personaje/vinculo-nativo.ts` (`tieneVinculoNativo`).
+  - ✅ Estado: `Seguidor.inseparable?`. Cambio nuevo `seguidor_se_marcha`. `data/ajustes.json`: `precioTaberna` (5), `precioPosada` (5), `precioMonasterio` (7), `probabilidadEventoNocturno` (33).
+  - **La fase de acción sigue siendo un hueco:** `iniciarTurno` deja el día en `accion` y todavía nada lo pasa a `comida`; lo harán las acciones del Sprint 6.
+- **Tests:** 408 pasan en 26 archivos.
 
-**Siguiente:** Sprint 5 (ciclo de turno, sección 9). La clasificación del libro de eventos ya está hecha (sección 3.9). El plan detallado por sprints lo mantiene el autor en un documento aparte.
+**Siguiente:** Sprint 6 (seguidores, objetos y acciones sin eventos, sección 9). El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
 ---
 
@@ -61,6 +70,7 @@ En `docs/`: el PDF de reglas (24 páginas; **no incluye el libro de eventos**) y
 - **Convención de nombres:** código y carpetas en español (`pescar`, `estado`, `jugador`, `mundo`, `core`...). Los nombres propios de Angular (`signal`, `Injectable`...) quedan en inglés.
 - Ir de uno en uno: un paso, `ng test --watch=false`, y solo entonces el siguiente. No adelantar sprints.
 - Al terminar cada sprint: commit, push y actualizar la sección 0.
+- **Con Claude (desde el Sprint 5):** Claude edita los archivos directamente en el PC del autor, pero **no hace commits ni push** (los hace el autor, y pide el comando si lo necesita). Para cada paso: plan → visto bueno → cambios → el autor lanza `ng test --watch=false` → siguiente paso.
 
 ---
 
@@ -85,7 +95,7 @@ src/app/
 
 - **Aquí `core/` significa "lógica del juego", no "servicios globales de Angular".**
 - Reglas de oro: **`core/` no importa Angular** y **`ui/` no contiene reglas del juego.**
-- Los tests (`.spec.ts`) van junto al código. Las subcarpetas de `core/` se crean cuando toca su sprint. Existen ya: `core/dados/`, `core/estado/`, `core/personaje/`, `core/partida/`, `core/tablas/` (con `rangos/` y `listas-eventos/`), `core/modificadores/`, `core/ajustes/`, `core/catalogos/` (formatos, cargadores y revisores de catálogo: `objeto.ts`, `condicion.ts`, `habilidad.ts`), `core/efectos/` (`aplicarEfectos` y `Cambio`); datos en `data/personaje/`, `data/tablas/`, `data/eventos-terreno/`, `data/objetos.json`, `data/condiciones.json` y `data/ajustes.json`.
+- Los tests (`.spec.ts`) van junto al código. Las subcarpetas de `core/` se crean cuando toca su sprint. Existen ya: `core/dados/`, `core/estado/`, `core/personaje/`, `core/partida/`, `core/tablas/` (con `rangos/` y `listas-eventos/`), `core/modificadores/`, `core/ajustes/`, `core/catalogos/` (formatos, cargadores y revisores de catálogo: `objeto.ts`, `condicion.ts`, `habilidad.ts`), `core/efectos/` (`aplicarEfectos` y `Cambio`), `core/condiciones/` (consultas sobre las condiciones activas) y `core/turno/` (las fases del día: `iniciar-turno.ts`, `comer.ts`, `descansar.ts`, `lugar.ts`); datos en `data/personaje/`, `data/tablas/`, `data/eventos-terreno/`, `data/objetos.json`, `data/condiciones.json` y `data/ajustes.json`.
 - **Para añadir contenido:** cada cargador (`cargar-tablas.ts`, `cargar-listas-eventos.ts`, `cargar-objetos.ts`, `cargar-condiciones.ts`) explica arriba cómo añadir contenido nuevo (objetos y condiciones: solo escribir la ficha en su JSON). Los tests de los cargadores pasan el revisor por **todo** el contenido automáticamente.
 
 ### 3.3 Flujo de una acción
@@ -129,6 +139,7 @@ Jugador { nombre: string;            // lo elige el jugador
 Mundo   { mapaId: string | null;
           posicion: { col, fila } | null;
           dia: number;
+          fase: 'inicio' | 'accion' | 'comida' | 'descanso';     // momento del día (core/estado/fase.ts)
           banderas: Record<string, boolean | number | string>;   // hechos generales
           marcas: { col, fila, evento }[];                       // cosas colocadas en hexágonos
           pilaEventos: { evento, paso }[];
@@ -139,7 +150,8 @@ Mundo   { mapaId: string | null;
 
 Seguidor { id: string; tipo: string; nombre: string; ataque: number;   // ataque = daño que hace si acierta
            resistencia, resistenciaMaxima: number;                     // resistencia = su vida
-           habilidades: string[] }                                     // ids del catálogo de habilidades
+           habilidades: string[];                                      // ids del catálogo de habilidades
+           inseparable?: boolean }                                     // true = nunca se marcha por su cuenta (sí puede morir)
 
 ObjetoLlevado   { id: string; usosRestantes?: number }   // en la partida solo esto; el resto, del catálogo
 CondicionActiva { id: string; turnosRestantes?: number } // sin turnos = hasta que algo la quite
@@ -149,7 +161,11 @@ Objeto    { id, nombre, descripcion; imagen?; tipo: 'pasivo' | 'activo'; usosMax
             precioVenta? (sin él no se vende); magico? (+1 fama al conseguirlo); modificadores? }
 Habilidad { id, nombre, descripcion; imagen?; tipo: 'pasiva' | 'activa'; modificadores? }  // sin cooldowns
 Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicion' | 'enfermedad' | 'clima' | 'otra';
-            modificadores? }   // prohibiciones, cambios de regla, qué pasa cada turno y cómo se quita: Sprint 5
+            modificadores?;                       // bonificadores a tiradas mientras dura
+            prohibe?: Prohibicion[];              // 'viajar' | 'solicitar_audiencia' | 'ganar_oro' | 'nuevos_seguidores'
+            ajustes?: { famaObjetivo?, comidaPorDia? };   // reglas que cambian mientras dura (se suman a la regla normal)
+            cadaTurno?: { efectos?, tabla? };     // qué pasa cada amanecer (lo ejecuta iniciarTurno)
+            alLlegar?: { lugar: 'tierra' | 'puerto' | 'aldea' | 'naufragio'; efectos?; evento? } }   // al llegar, SE QUITA (y puede pasar algo)
 ```
 
 - No hay interfaz `Personaje` separada: el protagonista es `Jugador`.
@@ -161,8 +177,7 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 - **Imágenes (decidido):** `imagen` es opcional en objetos y condiciones. Sin dibujo, la interfaz muestra un **icono de reserva por categoría** (calavera = maldición, nube = clima...). Las condiciones activas se verán como iconos en la partida.
 - **Bodega descartada:** comida y oro son contadores únicos, se esté en el barco o no. La comida tiene máximo (`AJUSTES.comidaMaxima`); el oro, no. (En papel cada 100 de oro ocupaban un hueco: aquí no.)
 
-**Por decidir (antes del sprint indicado):**
-- `Mundo`: ¿modo `'barco' | 'tierra'` y `posicionBarco` (dónde queda atracado al ir a pie)? E001 empieza a pie, así que hace falta desde el principio del juego. Antes del Sprint 5/9.
+**Barco y monigote (decidido, se programa en el Sprint 9):** al desembarcar, el barco se queda en su hexágono de agua y aparece un monigote a pie; al volver al hexágono del barco, el monigote desaparece y se vuelve a controlar el barco. Para eso `Mundo` guardará **dónde está el barco** (`posicionBarco`): si el jugador está en esa casilla, va a bordo; si no, a pie. No hace falta guardar un "modo". E001 empieza a pie, así que hace falta desde el principio del juego.
 
 ### 3.5 Acciones y efectos
 - Una acción (p. ej. `pescar`) calcula **qué consigue** y lo devuelve como **efectos** (`Efecto[]`, p. ej. "+8 comida"). No suma nada por su cuenta. Mira el estado solo para lo que necesita (bonificadores, ubicación...).
@@ -170,13 +185,15 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
   - Topes: vida ≤ `vidaMax`, tripulación ≤ `tripulacionMax`, comida ≤ `AJUSTES.comidaMaxima`. **Ningún recurso baja de 0; las características (fuerza, ingenio, vidaMax) nunca bajan de 1.** Subir `vidaMax` no cura; bajarla por debajo de la vida baja la vida.
   - Operaciones: `mitad` redondea hacia abajo (15 → 7); `maximo` sube al máximo; `todo` deja a 0.
   - Destinos (solo vida): `todos` = jugador y cada seguidor; `seguidor_azar` elige con los dados; un seguidor a 0 de resistencia muere y sale del grupo. `seguidor_elegido` da error hasta el motor de eventos (Sprint 10).
+  - **`siNoHay` (Sprint 5):** un efecto a `seguidor_azar` puede llevar los efectos que pasan en su lugar si no hay ningún seguidor (escorbuto: muere un seguidor; si no tienes, −1d6 de tripulación). Sin `siNoHay`, no pasa nada.
   - Objetos: solo entran si caben (cuenta `espacios`); los activos entran con `usosMaximos`; **los mágicos dan +1 de fama**. Si no cabe, no entra (elegir qué tirar: Sprint 6). Perder un objeto quita uno si lo tienes.
   - Condiciones: **no se duplican** (se queda la que dure más; sin turnos = para siempre). Quitar por categoría quita **una, la más antigua**.
   - Turnos perdidos se suman a `fasesAccionPerdidas`; las banderas se apuntan en `mundo.banderas` (solo banderas generales; las de un hex concreto, Sprint 9).
   - **El contable:** cada vez que GANA oro (sumar positivo; no fijar) gana 2d6 más.
   - **Fin de partida:** vida o tripulación a 0 → derrota; `ganar_partida` / `perder_partida` → victoria / derrota por evento. Se apunta en `mundo.finPartida` y **los efectos que quedan ya no se aplican**. Qué se hace después (pantalla, guardado) es de sprints posteriores. La victoria normal (fama + puertos) llega con el mapa (Sprint 9).
 - **El afortunado (decidido):** evita la muerte **una vez, solo en combate** (se queda con 1 PV). Se programa en el combate (Sprint 7), no en `aplicarEfectos`.
-- **El chivato (`Cambio`, `core/efectos/cambio.ts`):** lista de **cambios reales** (con la tripulación en 38 y máximo 40, un +5 produce "de 38 a 40"; si no cambia nada, no se apunta). Tipos: `recurso` (con `motivo` opcional: `contable`, `objeto_magico`), `resistencia_seguidor`, `seguidor_muerto`, `objeto_ganado`, `objeto_no_cabe`, `objeto_perdido`, `condicion_puesta`, `condicion_quitada`, `turnos_perdidos`, `bandera`, `fin_partida`. **Son datos, no mensajes:** la interfaz los convierte en notificaciones. Los mensajes narrativos pertenecen a los eventos; efectos y tablas no llevan mensajes.
+- **Excepción: la contabilidad del turno (Sprint 5).** Las funciones de `core/turno/` cambian por su cuenta (siempre devolviendo una copia) lo que es del propio turno y no un efecto de juego: `mundo.fase`, `mundo.dia`, `mundo.estadoDados`, gastar una fase de acción perdida, restar turnos a las condiciones, `diasSinComer` y los seguidores que se marchan por hambre. Todo lo demás (recursos, condiciones, objetos, fin de partida) sigue pasando por `aplicarEfectos`.
+- **El chivato (`Cambio`, `core/efectos/cambio.ts`):** lista de **cambios reales** (con la tripulación en 38 y máximo 40, un +5 produce "de 38 a 40"; si no cambia nada, no se apunta). Tipos: `recurso` (con `motivo` opcional: `contable`, `objeto_magico`), `resistencia_seguidor`, `seguidor_muerto`, `seguidor_se_marcha` (se va por su cuenta; no es morir), `objeto_ganado`, `objeto_no_cabe`, `objeto_perdido`, `condicion_puesta`, `condicion_quitada`, `turnos_perdidos`, `bandera`, `fin_partida`. **Son datos, no mensajes:** la interfaz los convierte en notificaciones. Los mensajes narrativos pertenecen a los eventos; efectos y tablas no llevan mensajes.
 
 ### 3.6 Decisiones obligatorias desde el día uno
 1. **Estado serializable** (ver 3.4).
@@ -187,7 +204,7 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 - **Autoguardado** al final de cada turno (localStorage o IndexedDB; valorar `navigator.storage.persist()`).
 - **Exportar/importar** la partida como JSON.
 - Campo **`version`** para migrar partidas antiguas.
-- Posibles ranuras múltiples. "Meditar" del monasterio puede reconvertirse en guardado manual o conservarse como limitación (pendiente decidir).
+- Posibles ranuras múltiples. **"Meditar" del monasterio desaparece (decidido en el Sprint 5):** no se guarda la partida en los monasterios.
 - **Sin decidir todavía (el autor lo está sopesando):** cómo encaja el guardado con un diseño tipo roguelike (sin volver atrás). Revisar esta sección antes del Sprint 8.
 
 ### 3.8 Cambios respecto al juego de papel (decididos por el autor)
@@ -215,13 +232,52 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 - **Escritura fácil de eventos:** "vuelve a tirar", "tira dos veces", "lee el punto X", "elige 2 de estas opciones" deben tener atajos fáciles y su revisor (Sprint 10).
 - **Apuestas e inversiones** (E081, E082, E083): paso "elige una cantidad" del motor de eventos; los efectos posteriores podrán usar esa cantidad (Sprint 10). No requiere cambios ahora.
 - **Combate** (Sprint 7): enemigos con habilidades especiales (curarse, revivir, atacar dos veces, recibir menos daño, acertar solo con 5-6), número de enemigos al azar, recompensa por enemigo, combate no mortal ("vuelves con 1 PV"), ataque por sorpresa.
-- **Mapa** (Sprint 9): movimientos forzados (E009, E028, E043), hexágonos bloqueados (E047) o convertidos en aldea o puerto (E004, E038, E055), sitios apuntados a distancia y dirección (E024, E060) y qué pasa si caen fuera del mapa. **Hexágonos bloqueados (decidido):** se guardan como marcas en `mundo.marcas` (con un tipo: evento, bloqueado...) y viajar no deja entrar en ellos. **Ofender a una aldea bloquea su hexágono** (mismo sistema que el camino bloqueado de E047), tanto con el jefe de aldea como en el alojamiento; si estás dentro al ofenderla, tienes que salir (el siguiente turno, obligatoriamente viajar).
+- **Mapa** (Sprint 9): movimientos forzados (E009, E028, E043), hexágonos bloqueados (E047) o convertidos en aldea o puerto (E004, E038, E055), sitios apuntados a distancia y dirección (E024, E060) y qué pasa si caen fuera del mapa. **Hexágonos bloqueados (decidido):** se guardan como marcas en `mundo.marcas` (con un tipo: evento, bloqueado...) y viajar no deja entrar en ellos. **Ofender a una aldea bloquea su hexágono** (mismo sistema que el camino bloqueado de E047), tanto con el jefe de aldea como al intentar dormir en ella; si estás dentro al ofenderla, tienes que salir (el siguiente turno, obligatoriamente viajar).
 - **En papel todo es un evento; en digital no (MUY IMPORTANTE).** En papel "lee E0XX" es la única forma de mandar al jugador a otra página. En digital cada E### se convierte en lo que realmente es: **evento** (historia con decisiones), **tabla** (solo una tirada: E036 Tesoro, E037 Tesoro mágico), **combate** (pelea con un guardia → combate con su enemigo), **efectos** (algo que pasa y ya) o **tienda** (E017 Bob). Esto decide **qué se programa y cuándo**: una tabla no espera al motor de eventos. **Clasificación E001-E090 hecha:** borrador de Claude en el proyecto de Claude: `claude/clasificacion-libro-eventos.md` (no va a GitHub). El autor se fía del criterio de sprints y tipos del borrador y se revisa sobre la marcha. Decisiones del autor (15-nov):
   - **E023 Arrestado = condición "en prisión"** que bloquea el juego: mientras dura no puedes viajar ni hacer acciones; cada turno aparece el evento de la cárcel (con su imagen) y hay que resolverlo para que el juego vuelva a la normalidad.
   - **Combate = herramienta + bestiario:** los eventos lanzan "combate + enemigo(s)" según lo que pase.
   - **E070 Sol abrasador:** se quita lo de cargar seguidores (no tienen inventario); se reescribe.
   - **E041 Deseo:** primer evento real del motor de eventos.
   - **Tipo "Especial"** = regla única que no encaja en tabla, combate, condición ni pasos normales de evento (p. ej. E067: cuatro tiradas seguidas; E052: tantos chequeos como plantas). No tiene que ver con cómo se llega al evento.
+
+### 3.10 Decisiones del Sprint 5 (ciclo de turno)
+
+**El día (`core/turno/`).** Cada función comprueba que la partida está en SU fase (si no, error: evita, p. ej., dos amaneceres el mismo día), no toca el estado recibido y apunta `mundo.estadoDados` al terminar. Devuelven **datos, no mensajes**, y los eventos que lanzan salen como **eventos pendientes** (ids), hasta que exista el motor de eventos.
+
+| Fase | Función | Qué hace | Deja la fase en |
+|---|---|---|---|
+| `inicio` | `iniciarTurno(estado, dados)` | Las condiciones activas actúan; se gasta una fase de acción perdida si la hay | `accion` (o `comida` si la acción está perdida) |
+| `accion` | *(Sprint 6)* | La acción del jugador y sus eventos | `comida` |
+| `comida` | `comer(estado, eleccion, lugar, dados)` | Come o pasa hambre | `descanso` |
+| `descanso` | `descansar(estado, eleccion, lugar, dados)` | Duerme; puede saltar un evento nocturno; **cierra el día** | `inicio` del día siguiente |
+
+- **El lugar es un dato suelto** hasta que exista el mapa: `barco` (a bordo, en mar), `puerto`, `aldea`, `monasterio` o `intemperie` (playa, jungla, jungla profunda). Lo dice quien llama; después lo calculará el mapa.
+- **Opciones para la interfaz:** `opcionesDeComida` y `opcionesDeDescanso` dicen qué se puede elegir, cuánto cuesta y si llega el oro. **Una opción que no se puede pagar sale igual, pero desactivada** (decisión del autor).
+
+**Amanecer (`iniciarTurno`).** Recorre las condiciones que había al amanecer, **de la más antigua a la más nueva**. Cada una: (a) sus efectos fijos de `cadaTurno`, (b) su tirada diaria en su tabla y (c) si tiene turnos contados, uno menos (a 0 se quita; el último día todavía actúa). Devuelve un **parte** por condición (dados, texto de la fila, cambios reales).
+- Una condición que otra se ha llevado esa mañana ya no hace nada. Las que aparecen durante la mañana empiezan a contar al día siguiente.
+- Si la partida termina a mitad (vida o tripulación a 0), se para ahí.
+- **Bonificador de la tirada diaria:** si la tabla tiene un id de tirada con su mismo nombre (`el_mal`), se suman los bonificadores del jugador; si no, se tira sin bonificador.
+- Las condiciones actúan **antes** de mirar si hay acción: "las lluvias persisten" quita la acción de ese mismo día.
+
+**Condiciones: cómo se quitan.** Por una fila de su tabla (`quitar_condicion`), por turnos, por categoría (monasterio, bruja, biblia: "una maldición") o **al llegar a un lugar** (`alLlegar`).
+- **"Al llegar" es un patrón del juego:** al llegar a ese tipo de lugar, la condición se quita y, si la ficha lo dice, da unos efectos o lanza un evento. Hoy solo lo usa el escorbuto (se cura al tocar tierra). Servirá para: carta de la hija del gobernador (E035: puerto → audiencia con +1), mensaje del nativo (aldea → seguidor nativo), mensaje del náufrago (naufragio → seguidor), esclavos por vender (E008: puerto → +100 de oro), "el poder de la amistad" (E074: puerto → seguidor gratis). Cada una con su icono mientras se lleva. Quien avisa de la llegada es viajar (Sprint 9).
+- **Los ajustes se calculan, no se guardan:** `famaObjetivoActual(jugador)` = la del personaje + lo que digan sus condiciones. `jugador.famaObjetivo` no cambia nunca; así no hay nada que deshacer al quitarse la condición. **La interfaz debe usar las funciones de `core/condiciones/consultas.ts`, no leer el campo directamente.**
+- **Las prohibiciones solo se declaran:** cada acción las hará cumplir cuando exista (viajar: Sprint 9; audiencias y seguidores: Sprint 6; ganar oro: en `aplicarEfectos`, con el amuleto maldito).
+
+**Decisiones del autor sobre las condiciones del libro:**
+- **El mal está a bordo (E018):** actúa también estando a pie. Cada amanecer −1 de tripulación y tirada en su tabla. La fila 4 da "pistas sobre la criatura" (+1 en la tirada, **una sola vez**; las condiciones acumulables se descartan mientras solo las use este evento). Al expulsar a la criatura (filas 5 y 6) se quitan el mal y las pistas. Falta el "+1 con seguidor nativo o bruja vudú" (bonificadores de seguidores, Sprint 6).
+- **Tormenta (E034):** prohíbe viajar; cada amanecer 1d6, con 1-2 continúa.
+- **Lluvias (E068):** al amanecer siguiente, 1d6: con 4+ "las lluvias persisten, pierdes tu fase de acción" (se pierde la acción de ese día); en los dos casos la condición se quita (al día siguiente despeja seguro). El resfriado no se vuelve a tirar: es del evento.
+- **Escorbuto (E033):** tabla diaria; fila 1: muere un seguidor al azar o, si no hay, −1d6 de tripulación. Se cura al tocar tierra (te reabasteces de fruta) y no vuelve al zarpar.
+- **Trampa (E029) y secuestro (E042) sin seguidores:** se coge el resultado anterior de la tabla o se vuelve a tirar (al escribir esas tablas, Sprint 6).
+- **Eventos de una sola vez por partida:** el mal está a bordo solo puede salir una vez (y otros que el autor decidirá). Si sale en el dado de otro evento y ya ocurrió, se coge el resultado siguiente o se vuelve a tirar. Listas de terreno: Sprint 9; eventos que mandan a otros: motor de eventos.
+- **Seguidores inseparables:** `Seguidor.inseparable` = nunca se marcha por su cuenta (sí puede morir). Lo serán el seguidor del hermano y los que el libro dice que "te acompañarán siempre" (E014, E023, E035, E041). Se asigna al crear cada seguidor (Sprint 6).
+
+**Pendiente para el Sprint 6 (decidido en este sprint):**
+- **Condiciones otorgadas:** un objeto, un sobrenombre o un seguidor podrá declarar "mientras me tengas, tienes esta condición". No se guardan: se calculan. Hace falta para el **amuleto maldito** (sus maldiciones duran mientras se lleva) y para el **vínculo nativo**.
+- **Vínculo nativo con icono:** el autor quiere que el jugador vea que lo tiene y qué le da. Hoy es la función `tieneVinculoNativo` (sobrenombre "el nativo", amuleto kalinago o un seguidor de tipo `nativo`, **nombre de tipo provisional**), escrita en un solo sitio. Los +1 de aldea **se siguen sumando** entre fuentes, así que los bonificadores se quedan en cada fuente y la condición llevará solo las reglas de sí o no.
+- **Imágenes:** `imagen` es opcional en las fichas; ninguna condición la usa aún. Propuesta de carpeta: `public/condiciones/...` (sin decidir).
 
 ---
 
@@ -230,10 +286,11 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 > Nota: en este apartado, los códigos `E###` son referencias al libro de eventos de papel. En el código y los JSON se usarán ids con nombre (ver 3.8).
 
 ### 4.1 Turno
-Cada turno = un día, con tres fases en orden:
-1. **Acción** (una sola, según el tipo de hexágono). Puede encadenar eventos que deben resolverse **todos** antes de pasar a la siguiente fase.
-2. **Comida** (obligatoria).
-3. **Alojamiento** (depende de dónde estés).
+Cada turno = un día, con cuatro fases en orden (`mundo.fase`):
+1. **Inicio** [digital]: amanece y actúan las condiciones activas (tormenta, el mal está a bordo...). Si hay fases de acción perdidas, se gasta una y se salta la acción.
+2. **Acción** (una sola, según el tipo de hexágono). Puede encadenar eventos que deben resolverse **todos** antes de pasar a la siguiente fase.
+3. **Comida** (obligatoria).
+4. **Descanso** (antes "alojamiento"; depende de dónde estés). Al terminar empieza el día siguiente.
 
 ### 4.2 Creación de personaje
 
@@ -328,7 +385,7 @@ Viajar · Buscar información (puertos y aldeas) · Descansar y cazar/pescar · 
 - *Capitán pirata (guarida):* +1 por cada 2 puntos de fama. 1-2 ofendes y no puedes volver · 3 no se permite · 4+ permitida (E045).
 - Otros modificadores: barbero-cirujano +1, influyente +1 en puertos y guaridas, nativo +1 en aldeas.
 
-**Visitar monasterio (una de tres):** *Rezar* (descartar maldición, amuleto vudú o amuleto maldito; se pierden sus facultades) · *Descansar* (10 de oro por personaje: recupera toda la vida de ese personaje) · *Meditar* (guardar partida). Descansar gratis en la fase de alojamiento si se está en un monasterio.
+**Visitar monasterio (una de dos) [digital, decidido en el Sprint 5; se programa en el Sprint 6]:** *Rezar* (descartar maldición, amuleto vudú o amuleto maldito; se pierden sus facultades) · *Descansar* (**20 de oro por personaje**: recupera toda la vida de ese personaje). **"Meditar" ya no existe.** Dormir en el monasterio en la fase de descanso **se paga** (ver 4.7).
 
 **Investigar naufragio (1d6):** 1-2 barco maldito (1d6: 1-3 superar E078; 4 *corregido por el autor en su versión*; 5-6 superar E085), al superarlo 1d6×10 de oro y un tesoro (E036) · 3 guarida pirata (E038) · 4-5 hogar de alguien (1d6: 1 E086, 2 E071, 3 E076, 4 E072, 5 E083, 6 E075) · 6 restos antiguos (E053 y E021).
 
@@ -336,16 +393,41 @@ Viajar · Buscar información (puertos y aldeas) · Descansar y cazar/pescar · 
 
 **Registrar ruinas (2d6):** 2 E022 · 3 E049 · 4 E053 dos veces · 5 E078 y, si se supera, cofre E021 · 6-7 ciudad pirata neutral: E038 yendo directo al punto 3 · 8-9 E040 · 10 gruta E088 · 11 lámpara mágica: 1d6, con 3+ lee E045 · 12 recibes "el ídolo antediluviano" (si ya lo tienes, E037).
 
-### 4.6 Fase de comida [digital]
-- Cada turno se gasta **1 reserva de comida** (o **1 de oro** en puerto/aldea) y con eso come **todo el grupo**: jugador, seguidores y tripulación.
-- **Si no se come:** `diasSinComer` (contador único) sube. Cada **seguidor se marcha** con probabilidad **`10 + 10 × diasSinComer` %** (20% el primer día, 30% el segundo...; tope 100%) y, con la misma fórmula, puede haber **motín de la tripulación** (es un evento, ver sección 8). Tiradas **independientes** (una por seguidor y otra para el motín), con `dados.probabilidad(p)`, no con `Math.random()`.
-- **Inanición del jugador** (acumulativa; se restaura al comer): **−1 al dado de ataque** y **−1 PV** por día. (En papel también reducía la capacidad de carga a la mitad: por decidir si se mantiene.) Si la vida fuera a ser 0 por la fase de comida: 1d6, con 1 muere, con 2+ vive un día más.
+### 4.6 Fase de comida [digital, programada en el Sprint 5: `core/turno/comer.ts`]
+- **Comer es obligatorio.** Cada día hace falta **1 reserva de comida** (más con condiciones como "hambre insaciable": `comidaPorDia`) y con eso come **todo el grupo**: jugador, seguidores y tripulación.
+- **El jugador elige** entre gastar sus **reservas** o **pagar con oro**, donde se pueda:
+  - **Puerto:** comer en la **taberna**, `AJUSTES.precioTaberna` (5) de oro por cada reserva que haría falta.
+  - **Aldea:** los nativos **no aceptan monedas**; solo si el jugador tiene **vínculo nativo** (sobrenombre "el nativo", amuleto kalinago o un seguidor nativo) puede intercambiar oro por comida, al mismo precio.
+  - **Resto:** solo reservas.
+  - Si se puede pagar pero no llega el oro, la opción sale desactivada.
+- **Si las reservas no llegan:** gasta las que tiene y pasa hambre igual.
+- **Hambre (inanición):** `diasSinComer` (contador único) sube y aparece la **condición "hambre"** (con su icono), que se quita al comer.
+  - **Vida:** pierde tantos PV como días lleva sin comer (1, 2, 3...). Si eso le dejaría sin vida: **1d6, con 1 muere; con 2+ se queda con 1 PV** y vive un día más.
+  - **Seguidores:** cada uno se marcha con probabilidad **`10 + 10 × diasSinComer` %** (20 % el primer día, 30 % el segundo...; tope 100 %). Los **inseparables** no se marchan nunca.
+  - **Motín:** con esa misma probabilidad (es un evento, ver sección 8; de momento se devuelve como evento pendiente `motin`, también estando a pie).
+  - Tiradas **independientes**, con `dados.probabilidad(p)`.
+  - **Dado de ataque:** −1 por día sin comer, **tope −3** (sale de `diasSinComer`; se programa con el combate, Sprint 7. Con −3 "solo aciertas con un 6, y haces 6 de daño": afinar entonces).
+  - En papel también reducía la capacidad de carga a la mitad: por decidir si se mantiene.
+- Al comer del todo, `diasSinComer` vuelve a 0. Comer no cura.
 
-### 4.7 Fase de alojamiento
-- **En el barco (hex de mar):** se omite.
-- **En puerto:** habitación 2 de oro/noche, hasta 2 personajes. Si no se alquila: noche en la calle, sin eventos nocturnos pero **no cuenta como descanso**, y por cada seguidor 1d6: con 1-2 deserta.
-- **En aldea:** con seguidor nativo o sobrenombre "el nativo" se descansa como en el barco; con amuleto kalinago se puede entregar para dormir gratis siempre. Si no, 1d6 (+1 por cada objeto entregado como regalo): 1 ofendes (chequeo de Ingenio: éxito → noche a la intemperie pero puedes seguir en la aldea; fallo → debes irte, próximo turno obligatoriamente viajar, y si vuelves mueres) · 2 duermes a la intemperie con tirada de evento nocturno · 3 duermes a las afueras sin evento nocturno pero sin descanso, seguidores 1d6 (1-2 deserta) · 4-7 descansas · 8+ descansas y un nativo se une (seguidor nativo).
-- **A la intemperie:** 1d6, con 1-2 evento nocturno (lista ponderada de eventos nocturnos). La deserción de seguidores también ocurre por dormir a la intemperie o sin alojamiento, con la tirada de arriba.
+### 4.7 Fase de descanso [digital, programada en el Sprint 5: `core/turno/descansar.ts`]
+Antes "alojamiento". **"Taberna" es donde se come en un puerto; "posada", donde se duerme en un puerto.** Dormir bien **cura 1 PV**; dormir a la intemperie no cura. **Nadie deserta por dormir al raso** (regla de papel eliminada).
+
+| Lugar | Opciones | Coste | Cura |
+|---|---|---|---|
+| Barco (hex de mar) | A bordo | Gratis | +1 PV al jugador y a sus seguidores |
+| Puerto | Posada solo el jugador | `precioPosada` (5) | +1 PV solo al jugador |
+| | Posada para todos (si hay seguidores) | 5 por personaje | +1 PV a todos |
+| | Intemperie | Gratis | Nada. **En un puerto no hay eventos nocturnos** |
+| Monasterio | Igual que el puerto | `precioMonasterio` (7) por personaje | Igual |
+| | Intemperie | Gratis | Nada; puede haber evento nocturno |
+| Playa, jungla, jungla profunda | Intemperie | Gratis | Nada; puede haber evento nocturno |
+| Aldea | Intemperie | Gratis | Nada; puede haber evento nocturno |
+| | Convencer a los aldeanos de que te dejen dormir en la aldea | — | **Sprint 6**, con su tabla (hay que retocarla) |
+
+- **Evento nocturno:** a la intemperie, salvo en un puerto: `AJUSTES.probabilidadEventoNocturno` (33 %, el "1-2 en 1d6" del papel), elegido de la lista ponderada de eventos nocturnos.
+- Solo se curan los que duermen bajo techo (o a bordo).
+- **Tabla de papel para dormir en la aldea (a retocar en el Sprint 6):** con vínculo nativo se descansa como en el barco; con amuleto kalinago se puede entregar para dormir gratis siempre. Si no, 1d6 (+1 por cada objeto entregado como regalo): 1 ofendes (chequeo de Ingenio: éxito → noche a la intemperie pero puedes seguir en la aldea; fallo → debes irte y la aldea queda bloqueada) · 2 duermes a la intemperie con tirada de evento nocturno · 3 duermes a las afueras sin evento nocturno pero sin descanso · 4-7 descansas · 8+ descansas y un nativo se une (seguidor nativo). Las deserciones de esa tabla se eliminan.
 
 ### 4.8 Combate
 Por rondas hasta que un bando huye o es eliminado. **El daño se aplica a la vez.** Cada ronda se emparejan luchadores (si un bando supera al otro, uno puede enfrentarse a varios). Todos lanzan 1d6 y restan daño a la resistencia del rival.
@@ -374,7 +456,7 @@ Códigos del libro de papel; en digital cada uno tendrá un id con nombre (ver 3
 |---|---|
 | Inventario 5 vs 10 | **Resuelto:** 5 objetos; en el barco, ilimitado. Comida y oro aparte |
 | Pesca: unidad | **Resuelto:** reservas de comida |
-| Inanición y "valor de ataque" | **Resuelto:** el jugador ataca 1d6, −1 por día de inanición |
+| Inanición y "valor de ataque" | **Resuelto:** el jugador ataca 1d6, −1 por día de inanición (tope −3) |
 | Naufragio, falta el 4 | **Resuelto** por el autor en su versión |
 | Chequeos de Fuerza | **Resuelto:** 1d6 ≤ Fuerza |
 | Notas azules / veneno | **Ignorar** |
@@ -383,7 +465,9 @@ Códigos del libro de papel; en digital cada uno tendrá un id con nombre (ver 3
 | Cocinero | **Pendiente:** su habilidad original ya no aplica; darle otra o quitarlo |
 | Inanición: ¿capacidad de carga a la mitad? | **Pendiente decidir** |
 | Victoria: ¿se gana al cumplir las dos condiciones o al entrar en un puerto después? Supuestos: "visitado" = entrar en el hex; el conformista también debe visitar los 3; el puerto de inicio cuenta si es principal | **Pendiente** (sprint de la condición de victoria) |
-| "Meditar" / guardado como mecánica | **Pendiente decidir** |
+| "Meditar" / guardado como mecánica | **Resuelto (Sprint 5):** "meditar" desaparece; no se guarda en monasterios |
+| El mal está a bordo, fila 5: el −1d6 de tripulación puede dejarte a 0 y hacerte perder aunque derrotes a la criatura | **Pendiente:** hoy está como en el libro |
+| Motín estando a pie, lejos del barco | **Pendiente:** hoy puede saltar siempre; se ajustará al escribir el evento |
 | Dónde empieza el jugador | **Resuelto:** cada mapa declara su casilla de inicio; en el prototipo, 009.000 a pie (E001) |
 | Motín: la tabla pegada tiene dos filas "1" (la segunda será el 2) y la opción 3 ("Te escondes") no dice si da modificador | **Pendiente** al programar el evento |
 | Amuleto kalinago: el libro (E036) dice +2 en audiencia y buscar información en aldeas; las reglas, +1 en audiencia | **Resuelto:** +1 en `audiencia_aldea` y +1 en `buscar_info_aldea` |
@@ -586,11 +670,11 @@ Los eventos van **después** del núcleo (detalle en el documento de sprints del
 3. ✅ Resolvedor de tablas por rangos, listas ponderadas y modificadores por identificador.
 4. ✅ Efectos y estado ampliado: catálogos de objetos y condiciones, vocabulario de efectos, `calcularModificador` ampliado y `aplicarEfectos` con el chivato de cambios (sección 0 y 3.5).
    - ✅ Clasificación del libro de eventos (sección 3.9).
-5. Ciclo de turno: inicio de turno (procesar condiciones activas: tiradas, duración, quitar las que terminan, avisos; saltar la acción si hay fases perdidas), comida (hambre, deserción, motín) y alojamiento. Las fichas de condición ganan aquí sus campos de reglas: prohibiciones, cambios de regla (p. ej. fama objetivo 12), qué pasa cada turno y cómo se quitan.
-6. Seguidores (efecto "se une un seguidor", catálogo de tipos), objetos (usos, descarte, vender en puertos y aldeas, elegir qué tirar si no cabe) y acciones sin eventos (pescar, cazar, comida, reclutar, descansar, enterrar tesoro). **Tablas que faltan** (cada una llega con su acción; las que mandan a eventos dependen de la clasificación del libro): contratar (discurso 1d6, con oro 1d6×5, seguidores 2d6), comprar/vender comida (1d6), audiencias (gobernador, jefe de aldea, capitán pirata), investigar naufragio (con subtablas), registrar ruinas (2d6), alojamiento en aldea (1d6) y **buscar información en aldeas** (tabla propia, 3d6).
+5. ✅ Ciclo de turno: inicio de turno, comida (hambre, deserción, motín) y descanso, con las fichas de condición completas (secciones 0 y 3.10).
+6. Seguidores (efecto "se une un seguidor", catálogo de tipos, `inseparable`, bonificadores de seguidores), **condiciones otorgadas** por objetos, sobrenombres y seguidores (amuleto maldito, vínculo nativo con icono; sección 3.10), **pasar de la fase de acción a la de comida**, monasterio (rezar y descansar por 20 de oro), objetos (usos, descarte, vender en puertos y aldeas, elegir qué tirar si no cabe) y acciones sin eventos (pescar, cazar, comida, reclutar, descansar, enterrar tesoro). **Tablas que faltan** (cada una llega con su acción; las que mandan a eventos dependen de la clasificación del libro): contratar (discurso 1d6, con oro 1d6×5, seguidores 2d6), comprar/vender comida (1d6), audiencias (gobernador, jefe de aldea, capitán pirata), investigar naufragio (con subtablas), registrar ruinas (2d6), **dormir en la aldea** (1d6, a retocar; sección 4.7) y **buscar información en aldeas** (tabla propia, 3d6).
 7. Combate normal (con habilidades especiales de enemigos, sección 3.9; el afortunado) y naval provisional.
 8. Guardado (autoguardado, exportar/importar, versión).
-9. Mapa (conversión `.wxx` → JSON, SVG), viajar, eventos que cambian el mapa y condición de victoria.
+9. Mapa (conversión `.wxx` → JSON, SVG), viajar (respetando `prohibe: viajar`, avisando de las llegadas para `alLlegar` y calculando el lugar para comida y descanso), `posicionBarco`, eventos de una sola vez en las listas de terreno, eventos que cambian el mapa y condición de victoria (con `famaObjetivoActual`).
 10. Motor de eventos (punto único de tiradas con botones de objetos, atajos de escritura, paso "elige una cantidad", condiciones de ubicación) y primeros eventos reales (3-4 variados) para validar el formato.
 11. Contenido, interfaz pulida, minijuego naval y, más adelante, backend.
 
@@ -607,8 +691,12 @@ Hasta el punto 8 no hace falta ni mapa ni libro de eventos. El 9 necesita el `.w
 - Completar y equilibrar las **listas de eventos por terreno** (ya pasadas del papel, faltan algunos eventos).
 - **Libro de eventos**, empezando por 3-4 muestras variadas (tirada, decisión, combinado, con llamada y vuelta, y una con regla especial como el mapa del tesoro).
 - Tabla de objetos mágicos (E037), lista de objetos y estadísticas de enemigos y barcos.
-- Decidir "Meditar", cómo encaja el guardado con el diseño roguelike (sección 3.7), el momento exacto de la **victoria** y el diseño del **minijuego naval**.
-- Decisión de modelo pendiente (sección 3.4): modo barco/tierra y dónde queda el barco.
+- Decidir cómo encaja el guardado con el diseño roguelike (sección 3.7), el momento exacto de la **victoria** y el diseño del **minijuego naval**.
+- Decidir qué **eventos solo pueden salir una vez por partida** (de momento, el mal está a bordo).
+- Retocar la **tabla para dormir en la aldea** (sección 4.7).
+- Equilibrar jugando los precios de `data/ajustes.json`: taberna (5), posada (5) y monasterio (7).
+- Decidir los **nombres de los tipos de seguidor** (hoy el vínculo nativo busca el tipo `nativo`, provisional) y la carpeta de las imágenes.
+- Decidir si la fila 5 de **El mal está a bordo** puede dejarte sin tripulación, y si el **motín** puede saltar estando a pie.
 - Revisar sobre la marcha la **clasificación del libro de eventos** (`claude/clasificacion-libro-eventos.md` en el proyecto de Claude).
 - Dibujos de objetos y condiciones (mientras tanto, iconos de reserva por categoría).
 - Escribir la **tabla de buscar información en aldeas nativas** (3d6, mismos rangos que la de puertos).

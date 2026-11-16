@@ -1,5 +1,9 @@
 {
   "probabilidadEventoAlViajar": 50,
   "comidaMaxima": 20,
+  "precioTaberna": 5,
+  "precioPosada": 5,
+  "precioMonasterio": 7,
+  "probabilidadEventoNocturno": 33,
   "bonificadorPorFama": { "audiencia_guarida": 2 }
 }

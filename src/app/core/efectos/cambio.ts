@@ -13,6 +13,8 @@ export type Cambio =
   // La resistencia (vida) de un seguidor.
   | { tipo: 'resistencia_seguidor'; seguidor: string; antes: number; despues: number }
   | { tipo: 'seguidor_muerto'; seguidor: string }
+  // Un seguidor se va por su cuenta (hambre, dormir en la calle). No es lo mismo que morir.
+  | { tipo: 'seguidor_se_marcha'; seguidor: string }
   | { tipo: 'objeto_ganado'; objeto: string }
   | { tipo: 'objeto_no_cabe'; objeto: string }
   | { tipo: 'objeto_perdido'; objeto: string }

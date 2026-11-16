@@ -17,4 +17,8 @@ export interface Seguidor {
   // Ids de sus habilidades en el catálogo (p. ej. ["cirujano"]).
   // El nombre, la descripción y los bonificadores se buscan en el catálogo.
   habilidades: string[];
+
+  // true = nunca se marcha por su cuenta (ni por hambre ni por dormir en la calle): el hermano,
+  // el náufrago que te debe la vida... Sí puede morir. Sin ponerlo = un seguidor normal.
+  inseparable?: boolean;
 }
