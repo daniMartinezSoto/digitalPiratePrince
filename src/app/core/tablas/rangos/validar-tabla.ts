@@ -1,6 +1,7 @@
 import { rangoDeTirada } from '../../dados/tirada';
 import { CONDICIONES } from '../../catalogos/cargar-condiciones';
 import { OBJETOS } from '../../catalogos/cargar-objetos';
+import { TIPOS_SEGUIDOR } from '../../catalogos/cargar-seguidores';
 import { CATEGORIAS_CONDICION } from '../../catalogos/condicion';
 import {
   CARACTERISTICAS,
@@ -130,8 +131,9 @@ export function validarEfecto(efecto: unknown, donde: string): string[] {
       return [...soloEstosCampos(e, ['objeto'], donde), ...validarIdObjeto(e['objeto'], donde)];
     case 'poner_condicion':
       return [
-        ...soloEstosCampos(e, ['condicion', 'turnos'], donde),
+        ...soloEstosCampos(e, ['condicion', 'turnos', 'partes'], donde),
         ...validarIdCondicion(e['condicion'], donde),
+        ...validarPartes(e['partes'], donde),
         ...(e['turnos'] === undefined ? [] : validarCantidadPositiva(e['turnos'], `los turnos de "${e.tipo}"`, donde)),
       ];
     case 'quitar_condicion':
@@ -140,6 +142,15 @@ export function validarEfecto(efecto: unknown, donde: string): string[] {
       return [...soloEstosCampos(e, ['cantidad'], donde), ...validarCantidadPositiva(e['cantidad'], 'la cantidad de "perder_turnos"', donde)];
     case 'bandera':
       return [...soloEstosCampos(e, ['bandera'], donde), ...validarIdBandera(e['bandera'], donde)];
+    case 'ganar_seguidor':
+      // "despedir" no se escribe en el JSON (lo elige el jugador durante la partida): aquí sobra.
+      return [
+        ...soloEstosCampos(e, ['seguidor', 'inseparable'], donde),
+        ...validarIdSeguidor(e['seguidor'], donde),
+        ...(e['inseparable'] === undefined || typeof e['inseparable'] === 'boolean'
+          ? []
+          : [`${donde}: "inseparable" debe ser true o false.`]),
+      ];
     default:
       return validarEfectoDeRecurso(e, donde);
   }
@@ -231,6 +242,31 @@ function validarIdObjeto(id: unknown, donde: string): string[] {
   }
   if (!OBJETOS.some(o => o.id === id)) {
     return [`${donde}: el objeto "${id}" no existe en el catálogo de objetos (data/objetos.json).`];
+  }
+  return [];
+}
+
+/** "partes": las condiciones que una condición lleva dentro (el amuleto maldito). Tienen que existir. */
+function validarPartes(partes: unknown, donde: string): string[] {
+  if (partes === undefined) {
+    return [];
+  }
+  if (!Array.isArray(partes) || partes.length === 0) {
+    return [`${donde}: "partes" debe ser una lista con al menos una condición (si no lleva ninguna dentro, no lo pongas).`];
+  }
+  return partes.flatMap(parte =>
+    typeof parte === 'string' && CONDICIONES.some(c => c.id === parte)
+      ? []
+      : [`${donde}: la parte "${String(parte)}" no existe en el catálogo de condiciones (data/condiciones.json).`],
+  );
+}
+
+function validarIdSeguidor(id: unknown, donde: string): string[] {
+  if (typeof id !== 'string') {
+    return [`${donde}: falta el "seguidor" (el id de su tipo en el catálogo, p. ej. "forzudo").`];
+  }
+  if (!TIPOS_SEGUIDOR.some(t => t.id === id)) {
+    return [`${donde}: el seguidor "${id}" no existe en el catálogo de seguidores (data/seguidores.json).`];
   }
   return [];
 }

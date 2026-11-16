@@ -21,4 +21,8 @@ export interface Seguidor {
   // true = nunca se marcha por su cuenta (ni por hambre ni por dormir en la calle): el hermano,
   // el náufrago que te debe la vida... Sí puede morir. Sin ponerlo = un seguidor normal.
   inseparable?: boolean;
+
+  // true = si muere, el jugador PIERDE la partida (el seguidor de "el hermano").
+  // No es lo mismo que inseparable: habrá inseparables cuya muerte no hace perder.
+  vital?: boolean;
 }

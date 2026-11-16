@@ -1,0 +1,15 @@
+{
+  "id": "descuido_a_bordo",
+  "eventos": [
+    { "evento": "perdidos", "peso": 4, "libro": "E013" },
+    { "evento": "rocas", "peso": 4, "libro": "E012" },
+    { "evento": "vientos_fuertes", "peso": 4, "libro": "E009" },
+    { "evento": "polizon", "peso": 3, "libro": "E016" },
+    { "evento": "imprevisto", "peso": 3, "libro": "E011" },
+    { "evento": "traicion", "peso": 2, "libro": "E030" },
+    { "evento": "motin", "peso": 1, "libro": "E019" },
+    { "evento": "sirenas", "peso": 1, "libro": "E015" },
+    { "evento": "monstruo", "peso": 1, "libro": "E026" },
+    { "evento": "tormenta", "peso": 1, "libro": "E034" }
+  ]
+}

@@ -4,9 +4,9 @@ import { LISTAS_EVENTOS, obtenerListaEventos } from './cargar-listas-eventos';
 import { validarListaEventos } from './validar-lista-eventos';
 
 describe('cargar listas de eventos', () => {
-  it('hay una lista por terreno y otra de eventos nocturnos', () => {
+  it('hay una lista por terreno, la de eventos nocturnos y la de "descuido a bordo"', () => {
     const ids = LISTAS_EVENTOS.map(l => l.id).sort();
-    expect(ids).toEqual(['alta_mar', 'costa', 'jungla', 'jungla_profunda', 'nocturnos', 'playa']);
+    expect(ids).toEqual(['alta_mar', 'costa', 'descuido_a_bordo', 'jungla', 'jungla_profunda', 'nocturnos', 'playa']);
   });
 
   it('devuelve una lista por su id', () => {

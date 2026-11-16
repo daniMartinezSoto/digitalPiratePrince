@@ -1,0 +1,81 @@
+[
+  {
+    "id": "pirata_anciano",
+    "nombre": "Pirata anciano",
+    "descripcion": "Un viejo lobo de mar retirado que se apunta por las historias, no por el oro.",
+    "resistencia": 6,
+    "habilidades": [],
+    "precio": 0
+  },
+  {
+    "id": "pescador",
+    "nombre": "Pescador",
+    "descripcion": "Sabe dónde pican. Con él, las redes siempre vuelven un poco más llenas.",
+    "habilidades": ["pesca_abundante"],
+    "precio": 30
+  },
+  {
+    "id": "nativo",
+    "nombre": "Nativo kalinago",
+    "descripcion": "Compras su libertad y te lo agradece guiándote entre los suyos.",
+    "resistencia": 12,
+    "habilidades": ["guia_nativo"],
+    "nombres": ["nativos"],
+    "precio": 45
+  },
+  {
+    "id": "forzudo",
+    "nombre": "Forzudo",
+    "descripcion": "Pega más fuerte que nadie de tu tripulación.",
+    "ataque": 3,
+    "habilidades": [],
+    "precio": 25
+  },
+  {
+    "id": "artista",
+    "nombre": "Artista",
+    "descripcion": "Malo con la espada, bueno sacándole monedas a la gente de los puertos.",
+    "ataque": 1,
+    "habilidades": ["mendigar"],
+    "precio": 35
+  },
+  {
+    "id": "barbero_cirujano",
+    "nombre": "Barbero-cirujano",
+    "descripcion": "Cose heridas, arregla barbas y sabe cómo hablar a la gente importante.",
+    "habilidades": ["cirujano"],
+    "precio": 40
+  },
+  {
+    "id": "navegante",
+    "nombre": "Navegante",
+    "descripcion": "Lee el viento y las estrellas: con él, tu barco llega más lejos.",
+    "habilidades": ["navegacion"],
+    "precio": 30
+  },
+  {
+    "id": "mono",
+    "nombre": "Mono amaestrado",
+    "descripcion": "No pelea y aguanta poco, pero tiene las manos muy largas.",
+    "ataque": 0,
+    "resistencia": 3,
+    "habilidades": ["manos_largas"],
+    "precio": 40
+  },
+  {
+    "id": "pirata_experto",
+    "nombre": "Pirata experto",
+    "descripcion": "Un veterano curtido en cien abordajes: duro y peligroso.",
+    "ataque": 3,
+    "resistencia": 12,
+    "habilidades": [],
+    "precio": 60
+  },
+  {
+    "id": "bruja_vudu",
+    "nombre": "Bruja vudú",
+    "descripcion": "Solo se une a quien ella quiere. Los espíritus no tienen secretos para ella.",
+    "habilidades": ["magia_vudu"],
+    "nombres": ["mujeres"]
+  }
+]

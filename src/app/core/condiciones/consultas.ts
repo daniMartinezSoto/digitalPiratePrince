@@ -1,8 +1,11 @@
 import { CONDICIONES } from '../catalogos/cargar-condiciones';
 import type { AjusteDeCondicion, Condicion, Prohibicion } from '../catalogos/condicion';
 import type { Jugador } from '../estado/jugador';
+import { condicionesVigentes } from './condiciones-vigentes';
 
-// Preguntas sobre las condiciones que el jugador tiene AHORA MISMO.
+// Preguntas sobre las condiciones que el jugador tiene AHORA MISMO: las apuntadas, las que van
+// dentro de otra (las dos mitades del amuleto maldito) y las que le otorgan sus cosas
+// (ver condiciones-vigentes.ts).
 // Solo consultan: no cambian nada. Por eso, al quitarse una condición, la respuesta
 // vuelve sola a lo normal (no hay nada que deshacer).
 // El último parámetro es el catálogo donde buscar las fichas: por defecto, el del juego;
@@ -61,12 +64,12 @@ function sumaDeAjustes(jugador: Jugador, regla: AjusteDeCondicion, condiciones: 
   return total;
 }
 
-/** Las fichas de catálogo de las condiciones que tiene el jugador. */
+/** Las fichas de catálogo de las condiciones vigentes del jugador (apuntadas, partes y otorgadas). */
 function fichasActivas(jugador: Jugador, condiciones: readonly Condicion[]): Condicion[] {
-  return jugador.condiciones.map(activa => {
-    const ficha = condiciones.find(c => c.id === activa.id);
+  return condicionesVigentes(jugador).map(vigente => {
+    const ficha = condiciones.find(c => c.id === vigente.id);
     if (!ficha) {
-      throw new Error(`El jugador tiene la condición "${activa.id}", que no está en el catálogo`);
+      throw new Error(`El jugador tiene la condición "${vigente.id}", que no está en el catálogo`);
     }
     return ficha;
   });

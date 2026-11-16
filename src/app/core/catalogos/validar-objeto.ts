@@ -1,3 +1,4 @@
+import { validarOtorga } from '../condiciones/validar-otorga';
 import { validarModificadores } from '../modificadores/validar-modificadores';
 import type { Objeto } from './objeto';
 
@@ -72,6 +73,9 @@ function validarObjeto(objeto: Objeto): string[] {
 
   // Bonificadores: solo sobre tiradas que existen y con números enteros.
   errores.push(...validarModificadores(o['modificadores'], nombre));
+
+  // Condiciones que da mientras lo llevas: tienen que existir.
+  errores.push(...validarOtorga(o['otorga'], nombre));
 
   return errores;
 }

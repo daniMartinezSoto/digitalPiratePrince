@@ -23,7 +23,8 @@
     "modificadores": {
       "buscar_info_aldea": 1,
       "audiencia_aldea": 1
-    }
+    },
+    "otorga": ["vinculo_nativo"]
   },
   {
     "id": "el_fuerte",

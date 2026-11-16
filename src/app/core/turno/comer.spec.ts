@@ -55,7 +55,7 @@ describe('opcionesDeComida', () => {
     const pago = { precio: PRECIO, alcanzaElOro: true };
     expect(opcionesDeComida(estadoCon({ sobrenombre: 'el_nativo' }), 'aldea').pago).toEqual(pago);
     expect(opcionesDeComida(estadoCon({ inventario: [{ id: 'amuleto_kalinago' }] }), 'aldea').pago).toEqual(pago);
-    expect(opcionesDeComida(estadoCon({ seguidores: [{ ...seguidor('a'), tipo: 'nativo' }] }), 'aldea').pago).toEqual(pago);
+    expect(opcionesDeComida(estadoCon({ seguidores: [{ ...seguidor('a'), tipo: 'nativo', habilidades: ['guia_nativo'] }] }), 'aldea').pago).toEqual(pago);
   });
 
   it('si se puede pagar pero no llega el oro: la opción sale, pero avisa de que no le llega', () => {

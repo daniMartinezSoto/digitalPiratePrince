@@ -1,7 +1,24 @@
 import { Dados } from '../dados/dados';
 import { Jugador } from '../estado/jugador';
+import type { Seguidor } from '../estado/seguidor';
+import { TIPOS_SEGUIDOR } from '../catalogos/cargar-seguidores';
+import { crearSeguidor } from '../seguidores/crear-seguidor';
 import sobrenombres from '../../data/personaje/sobrenombres.json';
 import caracteristicas from '../../data/personaje/caracteristicas.json';
+
+const SOBRENOMBRE_HERMANO = 'el_hermano';
+
+/**
+ * El seguidor con el que empieza "el hermano": de un tipo al azar entre TODOS los del catálogo
+ * (se contraten en puertos o no), todos con la misma probabilidad. Es gratis.
+ *   - inseparable: nunca se marcha por su cuenta ni se le puede despedir.
+ *   - vital: si muere, el jugador pierde la partida.
+ * Cuenta para el máximo de seguidores. Gasta dos números del generador: el tipo y el nombre.
+ */
+function seguidorDelHermano(dados: Dados): Seguidor {
+  const tipo = TIPOS_SEGUIDOR[dados.entero(0, TIPOS_SEGUIDOR.length - 1)];
+  return crearSeguidor(tipo.id, [], dados, { inseparable: true, vital: true });
+}
 
 export function crearPersonaje(
   nombre: string,
@@ -15,6 +32,9 @@ export function crearPersonaje(
   // Seleccionar perfil de características aleatorio.
   const tiradaCaracteristicas = dados.tirar('1d3');
   const perfil = caracteristicas[tiradaCaracteristicas.total - 1];
+
+  // "El hermano" empieza acompañado (ver seguidorDelHermano). Los demás, solos.
+  const seguidores = sobrenombre.id === SOBRENOMBRE_HERMANO ? [seguidorDelHermano(dados)] : [];
 
   // Construir el jugador con sus valores iniciales.
   const jugador: Jugador = {
@@ -38,7 +58,7 @@ export function crearPersonaje(
     inventario: [],
     capacidadInventario: 5 + (sobrenombre.ajustes.capacidadInventario ?? 0),
 
-    seguidores: [],
+    seguidores,
 
     condiciones: [],
     fasesAccionPerdidas: 0

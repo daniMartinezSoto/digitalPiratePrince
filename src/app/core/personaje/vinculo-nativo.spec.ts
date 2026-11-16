@@ -21,8 +21,11 @@ describe('tieneVinculoNativo', () => {
   });
 
   it('lo tiene quien va con un seguidor nativo', () => {
-    const seguidor = { id: 'a', nombre: 'a', ataque: 2, resistencia: 10, resistenciaMaxima: 10, habilidades: [] };
-    expect(tieneVinculoNativo(jugadorCon({ seguidores: [{ ...seguidor, tipo: 'nativo' }] }))).toBe(true);
-    expect(tieneVinculoNativo(jugadorCon({ seguidores: [{ ...seguidor, tipo: 'forzudo' }] }))).toBe(false);
+    // El vínculo lo da su habilidad ("guía nativo"), no el nombre del tipo.
+    const seguidor = { id: 'a', nombre: 'a', ataque: 2, resistencia: 10, resistenciaMaxima: 10 };
+    const nativo = { ...seguidor, tipo: 'nativo', habilidades: ['guia_nativo'] };
+    const forzudo = { ...seguidor, tipo: 'forzudo', habilidades: [] };
+    expect(tieneVinculoNativo(jugadorCon({ seguidores: [nativo] }))).toBe(true);
+    expect(tieneVinculoNativo(jugadorCon({ seguidores: [forzudo] }))).toBe(false);
   });
 });

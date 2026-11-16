@@ -44,10 +44,14 @@ export type FinDePartida = (typeof FINES_DE_PARTIDA)[number];
 //   { "tipo": "ganar_objeto", "objeto": "mano_de_mono" }
 //   { "tipo": "perder_objeto", "objeto": "idolo_dorado" }
 //   { "tipo": "poner_condicion", "condicion": "tormenta", "turnos": 2 }   (turnos opcional: sin él, dura hasta que algo la quite)
+//   { "tipo": "poner_condicion", "condicion": "amuleto_maldito", "partes": ["fuerza_letal", "hambre_insaciable"] }
+//                                                                          (partes: las condiciones que lleva DENTRO; se van con ella)
 //   { "tipo": "quitar_condicion", "condicion": "escorbuto" }              (una condición concreta)
 //   { "tipo": "quitar_condicion", "categoria": "maldicion" }              (una de esa categoría, la que sea)
 //   { "tipo": "perder_turnos", "cantidad": 1 }                            (fases de acción perdidas)
 //   { "tipo": "bandera", "bandera": "emporio_bob_derrotado" }              (un hecho general que el juego recuerda)
+//   { "tipo": "ganar_seguidor", "seguidor": "nativo" }                     (se une un seguidor de ese tipo del catálogo)
+//   { "tipo": "ganar_seguidor", "seguidor": "bruja_vudu", "inseparable": true }   (uno que nunca se marchará por su cuenta)
 // Aquí solo se describen; quien los aplica al estado es aplicarEfectos.
 export const OTROS_EFECTOS = [
   'ganar_objeto',
@@ -56,6 +60,7 @@ export const OTROS_EFECTOS = [
   'quitar_condicion',
   'perder_turnos',
   'bandera',
+  'ganar_seguidor',
 ] as const;
 
 // En el JSON la cantidad es un número fijo (8, -1) o una expresión de dados
@@ -69,14 +74,18 @@ type EfectoSinDados =
   | { tipo: 'perder_objeto'; objeto: string }
   | { tipo: 'quitar_condicion'; condicion: string }
   | { tipo: 'quitar_condicion'; categoria: CategoriaCondicion }
-  | { tipo: 'bandera'; bandera: string };
+  | { tipo: 'bandera'; bandera: string }
+  // seguidor = id del TIPO en el catálogo ("forzudo"). El nombre propio se le pone al unirse.
+  // despedir NO se escribe en el JSON: lo añade el juego cuando el grupo está lleno y el jugador
+  // elige a quién despide para hacer sitio (es el id del seguidor en la partida, p. ej. "forzudo_1").
+  | { tipo: 'ganar_seguidor'; seguidor: string; inseparable?: boolean; despedir?: string };
 
 // Efecto tal como se escribe en el JSON.
 export type EfectoDefinicion =
   | EfectoSinDados
   | { tipo: TipoRecurso; operacion: 'mitad' | 'maximo' | 'todo'; destino?: Destino; siNoHay?: EfectoDefinicion[] }
   | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: CantidadDefinicion; destino?: Destino; siNoHay?: EfectoDefinicion[] }
-  | { tipo: 'poner_condicion'; condicion: string; turnos?: CantidadDefinicion }
+  | { tipo: 'poner_condicion'; condicion: string; turnos?: CantidadDefinicion; partes?: string[] }
   | { tipo: 'perder_turnos'; cantidad: CantidadDefinicion };
 
 // Efecto ya resuelto por resolverTabla: igual que en el JSON, pero las cantidades y los turnos
@@ -85,5 +94,5 @@ export type Efecto =
   | EfectoSinDados
   | { tipo: TipoRecurso; operacion: 'mitad' | 'maximo' | 'todo'; destino?: Destino; siNoHay?: Efecto[] }
   | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: number; destino?: Destino; siNoHay?: Efecto[] }
-  | { tipo: 'poner_condicion'; condicion: string; turnos?: number }
+  | { tipo: 'poner_condicion'; condicion: string; turnos?: number; partes?: string[] }
   | { tipo: 'perder_turnos'; cantidad: number };

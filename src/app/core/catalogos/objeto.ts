@@ -32,4 +32,8 @@ export interface Objeto {
 
   // Bonificadores a tiradas mientras lo llevas, igual que los sobrenombres.
   modificadores?: Modificadores;
+
+  // Condiciones que tienes MIENTRAS lo llevas (ids del catálogo de condiciones).
+  // El amuleto kalinago: ["vinculo_nativo"]. No se guardan en la partida: se calculan.
+  otorga?: string[];
 }

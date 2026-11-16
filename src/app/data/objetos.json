@@ -35,6 +35,7 @@
     "nombre": "Amuleto kalinago",
     "descripcion": "Los nativos te reciben mejor. Puedes entregarlo en una aldea a cambio de descansar gratis allí para siempre.",
     "tipo": "pasivo",
-    "modificadores": { "audiencia_aldea": 1, "buscar_info_aldea": 1 }
+    "modificadores": { "audiencia_aldea": 1, "buscar_info_aldea": 1 },
+    "otorga": ["vinculo_nativo"]
   }
 ]

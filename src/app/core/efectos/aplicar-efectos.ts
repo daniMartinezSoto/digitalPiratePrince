@@ -1,19 +1,29 @@
 import { AJUSTES } from '../ajustes/ajustes';
 import { CONDICIONES } from '../catalogos/cargar-condiciones';
 import { OBJETOS } from '../catalogos/cargar-objetos';
+import { TIPOS_SEGUIDOR } from '../catalogos/cargar-seguidores';
 import type { Condicion } from '../catalogos/condicion';
 import type { Objeto } from '../catalogos/objeto';
+import type { TipoSeguidor } from '../catalogos/tipo-seguidor';
+import { estaProhibido } from '../condiciones/consultas';
 import type { Dados } from '../dados/dados';
 import type { Estado } from '../estado/estado';
+import type { FinPartida } from '../estado/fin-partida';
 import type { Jugador } from '../estado/jugador';
 import type { Seguidor } from '../estado/seguidor';
+import { crearSeguidor } from '../seguidores/crear-seguidor';
+import { LISTAS_DE_NOMBRES } from '../seguidores/nombres';
 import { CARACTERISTICAS, type Efecto, type TipoRecurso } from '../tablas/efecto';
-import type { Cambio } from './cambio';
+import { tieneCondicion } from '../condiciones/condiciones-vigentes';
+import type { Cambio, MotivoDeRecurso } from './cambio';
 
 /** Catálogos en los que buscar las fichas. Por defecto, los del juego; los tests pueden pasar otros. */
 export interface CatalogosEfectos {
   objetos: readonly Objeto[];
   condiciones: readonly Condicion[];
+  // Fichas de seguidores y listas de nombres propios. Sin ponerlas = las del juego.
+  seguidores?: readonly TipoSeguidor[];
+  nombres?: Readonly<Record<string, readonly string[]>>;
 }
 
 const CATALOGOS_DEL_JUEGO: CatalogosEfectos = { objetos: OBJETOS, condiciones: CONDICIONES };
@@ -33,12 +43,15 @@ export interface ResultadoEfectos {
  *   - Ningún recurso baja de 0; las características (fuerza, ingenio, vidaMax) nunca bajan de 1.
  *   - Objetos: solo entran si caben; los mágicos dan +1 de fama.
  *   - Condiciones, turnos perdidos y banderas.
+ *   - Seguidores nuevos: entran si hay sitio (AJUSTES.maximoSeguidores) y ninguna condición lo prohíbe.
+ *     Con el grupo lleno solo entran si el efecto dice a quién se despide (nunca a un inseparable).
  *   - "Un seguidor al azar" sin seguidores: no pasa nada, salvo que el efecto traiga "siNoHay".
- *   - El contable: cada vez que gana oro, gana 2d6 más.
- *   - Fin de partida: vida o tripulación a 0 (derrota), o un efecto ganar_partida / perder_partida.
+ *   - El contable: cada vez que gana oro, gana 2d6 más. Odio al dinero: gana 1d6 menos.
+ *   - Fin de partida: vida o tripulación a 0 (derrota), la muerte de un seguidor "vital" (derrota),
+ *     o un efecto ganar_partida / perder_partida.
  *     Cuando la partida termina, los efectos que quedan ya no se aplican.
  * Devuelve también la lista de cambios reales, para avisar al jugador.
- * Los dados se usan para "un seguidor al azar" y para el contable.
+ * Los dados se usan para "un seguidor al azar", para el contable y para el nombre de un seguidor nuevo.
  */
 export function aplicarEfectos(
   estado: Estado,
@@ -72,7 +85,7 @@ function comprobarDerrota(estado: Estado, cambios: Cambio[]): void {
   }
 }
 
-function terminarPartida(estado: Estado, fin: { resultado: 'victoria' | 'derrota'; motivo: 'vida' | 'tripulacion' | 'evento' }, cambios: Cambio[]): void {
+function terminarPartida(estado: Estado, fin: FinPartida, cambios: Cambio[]): void {
   estado.mundo.finPartida = fin;
   cambios.push({ tipo: 'fin_partida', fin });
 }
@@ -89,7 +102,7 @@ function aplicarUno(estado: Estado, efecto: Efecto, dados: Dados, catalogos: Cat
       perderObjeto(jugador, efecto.objeto, cambios);
       return;
     case 'poner_condicion':
-      ponerCondicion(jugador, efecto.condicion, efecto.turnos, catalogos.condiciones, cambios);
+      ponerCondicion(jugador, efecto.condicion, efecto.turnos, efecto.partes, catalogos.condiciones, cambios);
       return;
     case 'quitar_condicion':
       if ('condicion' in efecto) {
@@ -105,6 +118,9 @@ function aplicarUno(estado: Estado, efecto: Efecto, dados: Dados, catalogos: Cat
     case 'bandera':
       estado.mundo.banderas[efecto.bandera] = true;
       cambios.push({ tipo: 'bandera', bandera: efecto.bandera });
+      return;
+    case 'ganar_seguidor':
+      ganarSeguidor(jugador, efecto, dados, catalogos, cambios);
       return;
     case 'ganar_partida':
       terminarPartida(estado, { resultado: 'victoria', motivo: 'evento' }, cambios);
@@ -130,6 +146,7 @@ function aplicarARecurso(estado: Estado, efecto: EfectoDeRecurso, dados: Dados, 
   if (destino === 'jugador') {
     cambiarRecursoDelJugador(jugador, efecto, cambios);
     aplicarContable(jugador, efecto, dados, cambios);
+    aplicarOdioAlDinero(jugador, efecto, dados, cambios);
     return;
   }
 
@@ -153,10 +170,16 @@ function aplicarARecurso(estado: Estado, efecto: EfectoDeRecurso, dados: Dados, 
   }
 
   // Los seguidores que se quedan sin resistencia mueren y salen del grupo.
-  for (const muerto of jugador.seguidores.filter(s => s.resistencia <= 0)) {
+  const muertos = jugador.seguidores.filter(s => s.resistencia <= 0);
+  for (const muerto of muertos) {
     cambios.push({ tipo: 'seguidor_muerto', seguidor: muerto.id });
   }
   jugador.seguidores = jugador.seguidores.filter(s => s.resistencia > 0);
+
+  // Si ha muerto un seguidor "vital" (el de "el hermano"), el jugador pierde la partida.
+  if (muertos.some(s => s.vital) && !estado.mundo.finPartida) {
+    terminarPartida(estado, { resultado: 'derrota', motivo: 'seguidor' }, cambios);
+  }
 }
 
 /** Los efectos de "siNoHay", uno detrás de otro, con las mismas reglas que cualquier efecto. */
@@ -175,12 +198,33 @@ function aplicarReemplazo(estado: Estado, efectos: readonly Efecto[], dados: Dad
  * No cuenta "fijar": eso no es ganar, es quedarse con una cantidad.
  */
 function aplicarContable(jugador: Jugador, efecto: EfectoDeRecurso, dados: Dados, cambios: Cambio[]): void {
-  const esGanarOro = efecto.tipo === 'oro' && (efecto.operacion ?? 'sumar') === 'sumar' && 'cantidad' in efecto && efecto.cantidad > 0;
-  if (!esGanarOro || jugador.sobrenombre !== 'el_contable') {
+  if (oroGanado(efecto) === 0 || jugador.sobrenombre !== 'el_contable') {
     return;
   }
   const extra = dados.tirar('2d6').total;
   apuntarRecurso(jugador, 'oro', jugador.oro + extra, cambios, 'contable');
+}
+
+const CONDICION_ODIO_AL_DINERO = 'odio_al_dinero';
+
+/**
+ * Odio al dinero (maldición del amuleto maldito): cada vez que GANA oro, gana 1d6 menos.
+ * Como mucho pierde lo que ese efecto le daba: si le dan 4 y sale un 5, se queda sin esos 4,
+ * pero no le quita del oro que ya tenía. Es el contable al revés (y va después de él).
+ */
+function aplicarOdioAlDinero(jugador: Jugador, efecto: EfectoDeRecurso, dados: Dados, cambios: Cambio[]): void {
+  const ganado = oroGanado(efecto);
+  if (ganado === 0 || !tieneCondicion(jugador, CONDICION_ODIO_AL_DINERO)) {
+    return;
+  }
+  const menos = Math.min(dados.tirar('1d6').total, ganado);
+  apuntarRecurso(jugador, 'oro', jugador.oro - menos, cambios, 'odio_al_dinero');
+}
+
+/** Oro que GANA con ese efecto (sumar con cantidad positiva). 0 si no es ganar oro ("fijar" no es ganar). */
+function oroGanado(efecto: EfectoDeRecurso): number {
+  const esGanarOro = efecto.tipo === 'oro' && (efecto.operacion ?? 'sumar') === 'sumar' && 'cantidad' in efecto && efecto.cantidad > 0;
+  return esGanarOro && 'cantidad' in efecto ? efecto.cantidad : 0;
 }
 
 function cambiarRecursoDelJugador(jugador: Jugador, efecto: EfectoDeRecurso, cambios: Cambio[]): void {
@@ -196,7 +240,7 @@ function cambiarRecursoDelJugador(jugador: Jugador, efecto: EfectoDeRecurso, cam
 }
 
 /** Pone un recurso en un valor (recortado a sus límites) y, si cambia de verdad, lo apunta en el chivato. */
-function apuntarRecurso(jugador: Jugador, tipo: TipoRecurso, valor: number, cambios: Cambio[], motivo?: 'contable' | 'objeto_magico'): void {
+function apuntarRecurso(jugador: Jugador, tipo: TipoRecurso, valor: number, cambios: Cambio[], motivo?: MotivoDeRecurso): void {
   const { minimo, maximo } = limitesDe(jugador, tipo);
   const antes = jugador[tipo];
   const despues = recortar(valor, minimo, maximo);
@@ -294,17 +338,33 @@ function ponerCondicion(
   jugador: Jugador,
   idCondicion: string,
   turnos: number | undefined,
+  partes: readonly string[] | undefined,
   condiciones: readonly Condicion[],
   cambios: Cambio[],
 ): void {
   buscarFicha(condiciones, idCondicion, 'condición'); // comprueba que existe
+  for (const parte of partes ?? []) {
+    buscarFicha(condiciones, parte, 'condición'); // y las que lleva dentro, también
+  }
 
   const yaActiva = jugador.condiciones.find(c => c.id === idCondicion);
   if (!yaActiva) {
-    jugador.condiciones.push(turnos === undefined ? { id: idCondicion } : { id: idCondicion, turnosRestantes: turnos });
-    cambios.push(turnos === undefined ? { tipo: 'condicion_puesta', condicion: idCondicion } : { tipo: 'condicion_puesta', condicion: idCondicion, turnos });
+    // Solo se apuntan los campos que tiene: sin turnos = para siempre; sin partes = no lleva nada dentro.
+    jugador.condiciones.push({
+      id: idCondicion,
+      ...(turnos === undefined ? {} : { turnosRestantes: turnos }),
+      ...(partes === undefined ? {} : { partes: [...partes] }),
+    });
+    cambios.push({
+      tipo: 'condicion_puesta',
+      condicion: idCondicion,
+      ...(turnos === undefined ? {} : { turnos }),
+      ...(partes === undefined ? {} : { partes: [...partes] }),
+    });
     return;
   }
+
+  // (Si ya tenía un amuleto maldito, se queda con el suyo: las partes del nuevo se ignoran.)
 
   // Ya la tiene: no se duplica, se queda la que dure más (sin turnos = dura para siempre).
   if (yaActiva.turnosRestantes !== undefined && (turnos === undefined || turnos > yaActiva.turnosRestantes)) {
@@ -328,6 +388,63 @@ function quitarCondicion(jugador: Jugador, posicion: number, cambios: Cambio[]):
     const [quitada] = jugador.condiciones.splice(posicion, 1);
     cambios.push({ tipo: 'condicion_quitada', condicion: quitada.id });
   }
+}
+
+// ---------------------------------------------------------------------------
+// Seguidores
+// ---------------------------------------------------------------------------
+
+type EfectoGanarSeguidor = Extract<Efecto, { tipo: 'ganar_seguidor' }>;
+
+/**
+ * Se une un seguidor nuevo (el polizón nativo, el forzudo que contratas...).
+ *   1. Si una condición prohíbe nuevos seguidores, no entra.
+ *   2. Si el grupo está lleno, solo entra si el efecto dice a quién se despide para hacerle sitio
+ *      (lo ha elegido el jugador antes). A un inseparable no se le puede despedir.
+ *   3. Si entra, crearSeguidor le pone nombre (gasta un número del generador; si no entra, ninguno).
+ */
+function ganarSeguidor(jugador: Jugador, efecto: EfectoGanarSeguidor, dados: Dados, catalogos: CatalogosEfectos, cambios: Cambio[]): void {
+  const tipos = catalogos.seguidores ?? TIPOS_SEGUIDOR;
+  if (!tipos.some(t => t.id === efecto.seguidor)) {
+    throw new Error(`aplicarEfectos: no existe el tipo de seguidor "${efecto.seguidor}" en el catálogo`);
+  }
+
+  if (estaProhibido(jugador, 'nuevos_seguidores', catalogos.condiciones)) {
+    cambios.push({ tipo: 'seguidor_no_se_une', tipoSeguidor: efecto.seguidor, motivo: 'prohibido' });
+    return;
+  }
+
+  if (jugador.seguidores.length >= AJUSTES.maximoSeguidores) {
+    if (efecto.despedir === undefined) {
+      cambios.push({ tipo: 'seguidor_no_se_une', tipoSeguidor: efecto.seguidor, motivo: 'grupo_lleno' });
+      return;
+    }
+    despedirSeguidor(jugador, efecto.despedir, cambios);
+  }
+  // (Si había sitio, no se despide a nadie aunque el efecto lo diga: no hace falta.)
+
+  const nuevo = crearSeguidor(
+    efecto.seguidor,
+    jugador.seguidores,
+    dados,
+    { inseparable: efecto.inseparable },
+    { tipos, nombres: catalogos.nombres ?? LISTAS_DE_NOMBRES },
+  );
+  jugador.seguidores.push(nuevo);
+  cambios.push({ tipo: 'seguidor_se_une', seguidor: nuevo.id });
+}
+
+/** El jugador despide a ese seguidor (por su id en la partida) para hacer sitio. */
+function despedirSeguidor(jugador: Jugador, idSeguidor: string, cambios: Cambio[]): void {
+  const posicion = jugador.seguidores.findIndex(s => s.id === idSeguidor);
+  if (posicion === -1) {
+    throw new Error(`aplicarEfectos: no se puede despedir a "${idSeguidor}": no está en el grupo`);
+  }
+  if (jugador.seguidores[posicion].inseparable) {
+    throw new Error(`aplicarEfectos: no se puede despedir a "${idSeguidor}": es inseparable`);
+  }
+  jugador.seguidores.splice(posicion, 1);
+  cambios.push({ tipo: 'seguidor_despedido', seguidor: idSeguidor });
 }
 
 // ---------------------------------------------------------------------------

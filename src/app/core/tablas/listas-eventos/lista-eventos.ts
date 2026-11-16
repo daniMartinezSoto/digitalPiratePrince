@@ -7,6 +7,6 @@ export interface EntradaEvento {
 }
 
 export interface ListaEventos {
-  id: string; // "alta_mar", "costa", "jungla", "jungla_profunda", "playa" o "nocturnos"
+  id: string; // "alta_mar", "costa", "jungla", "jungla_profunda", "playa", "nocturnos" o "descuido_a_bordo"
   eventos: EntradaEvento[];
 }

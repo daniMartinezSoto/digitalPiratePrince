@@ -19,6 +19,19 @@ function estadoCon(cambios: Partial<Jugador> = {}): Estado {
   };
 }
 
+// "Dormir genial" depende de los dados. Estas dos semillas son la primera con la que se duerme
+// genial y la primera con la que no (se buscan solas: valen aunque cambie el porcentaje).
+function semillaConLaQueSeDuerme(genial: boolean): number {
+  for (let semilla = 1; semilla <= 1000; semilla++) {
+    if (new Dados(semilla).probabilidad(AJUSTES.probabilidadDormirGenial / 100) === genial) {
+      return semilla;
+    }
+  }
+  throw new Error('No hay ninguna semilla así: revisa AJUSTES.probabilidadDormirGenial');
+}
+const NOCHE_GENIAL = semillaConLaQueSeDuerme(true);
+const NOCHE_NORMAL = semillaConLaQueSeDuerme(false);
+
 // Un seguidor herido (8 de 10).
 function seguidor(id: string): Seguidor {
   return { id, tipo: 'forzudo', nombre: id, ataque: 2, resistencia: 8, resistenciaMaxima: 10, habilidades: [] };
@@ -124,38 +137,87 @@ describe('descansar', () => {
 
   // -------------------------------------------------------------------------
   describe('dónde se duerme', () => {
-    it('a bordo: gratis, +1 PV al jugador y a sus seguidores', () => {
-      const r = descansar(estadoCon({ seguidores: [seguidor('a'), seguidor('b')] }), 'a_bordo', 'barco', new Dados(1));
+    it('a bordo, durmiendo genial: gratis, +1 PV al jugador y a sus seguidores', () => {
+      const r = descansar(estadoCon({ seguidores: [seguidor('a'), seguidor('b')] }), 'a_bordo', 'barco', new Dados(NOCHE_GENIAL));
+      expect(r.haDormidoGenial).toBe(true);
       expect(r.estado.jugador.oro).toBe(50);
       expect(r.estado.jugador.vida).toBe(11);
       expect(r.estado.jugador.seguidores.map(s => s.resistencia)).toEqual([9, 9]);
       expect(r.eventos).toEqual([]);
     });
 
-    it('posada solo el jugador: paga su parte y solo se cura él', () => {
-      const r = descansar(estadoCon({ seguidores: [seguidor('a')] }), 'techo_solo', 'puerto', new Dados(1));
+    it('a bordo, en una noche normal: no se cura nadie', () => {
+      const r = descansar(estadoCon({ seguidores: [seguidor('a'), seguidor('b')] }), 'a_bordo', 'barco', new Dados(NOCHE_NORMAL));
+      expect(r.haDormidoGenial).toBe(false);
+      expect(r.estado.jugador.vida).toBe(10);
+      expect(r.estado.jugador.seguidores.map(s => s.resistencia)).toEqual([8, 8]);
+      expect(r.cambios).toEqual([]);
+    });
+
+    it('posada solo el jugador, durmiendo genial: paga su parte y solo se cura él', () => {
+      const r = descansar(estadoCon({ seguidores: [seguidor('a')] }), 'techo_solo', 'puerto', new Dados(NOCHE_GENIAL));
       expect(r.estado.jugador.oro).toBe(50 - POSADA);
       expect(r.estado.jugador.vida).toBe(11);
       expect(r.estado.jugador.seguidores[0].resistencia).toBe(8);
     });
 
-    it('posada para todos: paga por cada personaje y se curan todos', () => {
-      const r = descansar(estadoCon({ seguidores: [seguidor('a'), seguidor('b')] }), 'techo_todos', 'puerto', new Dados(1));
+    it('posada para todos, durmiendo genial: paga por cada personaje y se curan todos', () => {
+      const r = descansar(estadoCon({ seguidores: [seguidor('a'), seguidor('b')] }), 'techo_todos', 'puerto', new Dados(NOCHE_GENIAL));
       expect(r.estado.jugador.oro).toBe(50 - 3 * POSADA);
       expect(r.estado.jugador.vida).toBe(11);
       expect(r.estado.jugador.seguidores.map(s => s.resistencia)).toEqual([9, 9]);
     });
 
     it('monasterio: igual que la posada, con su precio', () => {
-      const r = descansar(estadoCon({ seguidores: [seguidor('a')] }), 'techo_todos', 'monasterio', new Dados(1));
+      const r = descansar(estadoCon({ seguidores: [seguidor('a')] }), 'techo_todos', 'monasterio', new Dados(NOCHE_GENIAL));
       expect(r.estado.jugador.oro).toBe(50 - 2 * MONASTERIO);
       expect(r.estado.jugador.vida).toBe(11);
       expect(r.estado.jugador.seguidores[0].resistencia).toBe(9);
     });
 
+    it('la posada se paga igual aunque la noche sea normal y no cure', () => {
+      const r = descansar(estadoCon(), 'techo_solo', 'puerto', new Dados(NOCHE_NORMAL));
+      expect(r.estado.jugador.oro).toBe(50 - POSADA);
+      expect(r.estado.jugador.vida).toBe(10);
+    });
+
+    it('se duerme genial más o menos la mitad de las noches (AJUSTES.probabilidadDormirGenial)', () => {
+      let geniales = 0;
+      for (let semilla = 1; semilla <= 1000; semilla++) {
+        if (descansar(estadoCon(), 'a_bordo', 'barco', new Dados(semilla)).haDormidoGenial) {
+          geniales++;
+        }
+      }
+      const esperadas = AJUSTES.probabilidadDormirGenial * 10;
+      expect(geniales).toBeGreaterThan(esperadas - 80);
+      expect(geniales).toBeLessThan(esperadas + 80);
+    });
+
+    it('es una sola tirada para todo el grupo: o se curan todos o ninguno', () => {
+      for (let semilla = 1; semilla <= 100; semilla++) {
+        const r = descansar(estadoCon({ seguidores: [seguidor('a'), seguidor('b')] }), 'a_bordo', 'barco', new Dados(semilla));
+        const curados = [r.estado.jugador.vida - 10, ...r.estado.jugador.seguidores.map(s => s.resistencia - 8)];
+        expect(new Set(curados).size).toBe(1);
+      }
+    });
+
+    it('a bordo o bajo techo gasta un número del generador (la tirada de dormir genial)', () => {
+      const dados = new Dados(5);
+      const testigo = new Dados(5);
+      descansar(estadoCon(), 'a_bordo', 'barco', dados);
+      testigo.probabilidad(0.5);
+      expect(dados.obtenerEstado()).toBe(testigo.obtenerEstado());
+    });
+
+    it('a la intemperie no se tira: nunca se duerme genial', () => {
+      const r = descansar(estadoCon(), 'intemperie', 'puerto', new Dados(NOCHE_GENIAL));
+      expect('haDormidoGenial' in r).toBe(false);
+      expect(r.estado.jugador.vida).toBe(10);
+    });
+
     it('descansar no cura por encima del máximo', () => {
       const sano = { ...seguidor('a'), resistencia: 10 };
-      const r = descansar(estadoCon({ vida: 15, seguidores: [sano] }), 'a_bordo', 'barco', new Dados(1));
+      const r = descansar(estadoCon({ vida: 15, seguidores: [sano] }), 'a_bordo', 'barco', new Dados(NOCHE_GENIAL));
       expect(r.estado.jugador.vida).toBe(15);
       expect(r.estado.jugador.seguidores[0].resistencia).toBe(10);
       expect(r.cambios).toEqual([]);

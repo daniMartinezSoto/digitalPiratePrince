@@ -1,20 +1,17 @@
+import { tieneCondicion } from '../condiciones/condiciones-vigentes';
 import type { Jugador } from '../estado/jugador';
 
-// Ids que dan "vínculo nativo". El tipo de seguidor es provisional: el catálogo de
-// seguidores llega en el Sprint 6 y entonces se confirma (o se cambia aquí, en un solo sitio).
-const SOBRENOMBRE_NATIVO = 'el_nativo';
-const OBJETO_KALINAGO = 'amuleto_kalinago';
-const TIPO_SEGUIDOR_NATIVO = 'nativo';
+// El vínculo nativo es una condición del catálogo (data/condiciones.json) que nadie "apunta":
+// la OTORGAN el sobrenombre "el nativo", el amuleto kalinago y la habilidad del seguidor nativo
+// (campo "otorga" de sus fichas). Para que otra cosa dé vínculo nativo, basta con ponérselo en su ficha.
+export const CONDICION_VINCULO_NATIVO = 'vinculo_nativo';
 
 /**
  * ¿Las aldeas nativas tratan al jugador como a uno de los suyos?
  * Sí, si su sobrenombre es "el nativo", si lleva el amuleto kalinago o si le acompaña un seguidor nativo.
- * De momento sirve para que acepten su oro a cambio de comida; más reglas de aldea lo usarán en el Sprint 6.
+ * Sirve para que acepten su oro a cambio de comida y para otras reglas de aldea.
+ * (Los +1 de aldea NO salen de aquí: cada fuente da el suyo y se suman.)
  */
 export function tieneVinculoNativo(jugador: Jugador): boolean {
-  return (
-    jugador.sobrenombre === SOBRENOMBRE_NATIVO ||
-    jugador.inventario.some(objeto => objeto.id === OBJETO_KALINAGO) ||
-    jugador.seguidores.some(seguidor => seguidor.tipo === TIPO_SEGUIDOR_NATIVO)
-  );
+  return tieneCondicion(jugador, CONDICION_VINCULO_NATIVO);
 }

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "pesca_abundante",
+    "nombre": "Pesca abundante",
+    "descripcion": "Cada vez que consigues pescar algo, ganas 1 reserva de comida más. Si no pescas nada, no da nada.",
+    "tipo": "pasiva",
+    "ajustes": { "reservasAlPescar": 1 }
+  },
+  {
+    "id": "guia_nativo",
+    "nombre": "Guía nativo",
+    "descripcion": "Las aldeas te tratan como a uno de los suyos: +1 al solicitar audiencia y al buscar información en aldeas. Conoce a los espíritus: +1 contra el mal que se esconde a bordo.",
+    "tipo": "pasiva",
+    "modificadores": { "audiencia_aldea": 1, "buscar_info_aldea": 1, "el_mal": 1 },
+    "otorga": ["vinculo_nativo"]
+  },
+  {
+    "id": "mendigar",
+    "nombre": "Mendigar",
+    "descripcion": "En un puerto puedes gastar tu acción en que actúe en la calle: ganas 2d6 de oro, pero puede descubrirte un guardia.",
+    "tipo": "activa"
+  },
+  {
+    "id": "cirujano",
+    "nombre": "Cirujano",
+    "descripcion": "+1 al solicitar cualquier audiencia. Con la acción Reposar, el grupo recupera 1 punto de vida más.",
+    "tipo": "pasiva",
+    "ajustes": { "curaAlReposar": 1 },
+    "modificadores": { "audiencia_puerto": 1, "audiencia_aldea": 1, "audiencia_guarida": 1 }
+  },
+  {
+    "id": "navegacion",
+    "nombre": "Navegación",
+    "descripcion": "Puedes avanzar 2 hexágonos al viajar por mar.",
+    "tipo": "pasiva"
+  },
+  {
+    "id": "manos_largas",
+    "nombre": "Manos largas",
+    "descripcion": "Cuando buscas información en un puerto, roba para ti 1d6 de oro. Con un 1 lo pillan y pagas 1d6 de oro de multa.",
+    "tipo": "pasiva"
+  },
+  {
+    "id": "magia_vudu",
+    "nombre": "Magia vudú",
+    "descripcion": "Conoce a los espíritus: +1 contra el mal que se esconde a bordo.",
+    "tipo": "pasiva",
+    "modificadores": { "el_mal": 1 }
+  }
+]

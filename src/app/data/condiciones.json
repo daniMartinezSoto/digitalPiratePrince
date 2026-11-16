@@ -50,5 +50,57 @@
     "descripcion": "Llueve a cántaros. Si mañana las lluvias persisten, perderás tu fase de acción.",
     "categoria": "clima",
     "cadaTurno": { "tabla": "lluvias_persisten" }
+  },
+  {
+    "id": "vinculo_nativo",
+    "nombre": "Vínculo nativo",
+    "descripcion": "Las aldeas nativas te tratan como a uno de los suyos: aceptan tu oro a cambio de comida.",
+    "categoria": "otra"
+  },
+  {
+    "id": "amuleto_maldito",
+    "nombre": "Amuleto maldito",
+    "descripcion": "Llevas un amuleto que no puedes quitarte. Te da una bendición y una maldición. Cuenta como una maldición: si te libras de él, pierdes las dos.",
+    "categoria": "maldicion"
+  },
+  {
+    "id": "hambre_insaciable",
+    "nombre": "Hambre insaciable",
+    "descripcion": "Necesitas 1 reserva de comida más al día.",
+    "categoria": "maldicion",
+    "ajustes": { "comidaPorDia": 1 }
+  },
+  {
+    "id": "muy_mala_suerte",
+    "nombre": "Muy mala suerte",
+    "descripcion": "−3 en las tablas de objetos y de objetos mágicos.",
+    "categoria": "maldicion"
+  },
+  {
+    "id": "ambicion_desmedida",
+    "nombre": "Ambición desmedida",
+    "descripcion": "Necesitas 2 puntos de fama más para ganar.",
+    "categoria": "maldicion",
+    "ajustes": { "famaObjetivo": 2 }
+  },
+  {
+    "id": "odio_al_dinero",
+    "nombre": "Odio al dinero",
+    "descripcion": "Rechazas el oro: cada vez que ganas oro, ganas 1d6 menos.",
+    "categoria": "maldicion"
+  },
+  {
+    "id": "hedor_nauseabundo",
+    "nombre": "Hedor nauseabundo",
+    "descripcion": "Nadie quiere acercarse a ti: no puedes conseguir más seguidores.",
+    "categoria": "maldicion",
+    "prohibe": ["nuevos_seguidores"]
+  },
+  {
+    "id": "rechazo_a_la_autoridad",
+    "nombre": "Rechazo a la autoridad",
+    "descripcion": "No puedes solicitar audiencias en ningún sitio.",
+    "categoria": "maldicion",
+    "prohibe": ["solicitar_audiencia"]
   }
 ]

@@ -25,6 +25,24 @@ export interface Ajustes {
   probabilidadEventoNocturno: number;
 
   /**
+   * Porcentaje (0-100) de "dormir genial" en la fase de descanso cuando se duerme a bordo o bajo techo.
+   * Solo si se duerme genial se recupera 1 PV esa noche (una tirada para todo el grupo).
+   */
+  probabilidadDormirGenial: number;
+
+  /** PV que recuperan el jugador y sus seguidores con la ACCIÓN "Reposar" (pasar el día recuperándose). */
+  curaAlReposar: number;
+
+  /**
+   * Porcentaje (0-100) de que pase algo mientras se usa la acción "Reposar" en el barco o a la intemperie
+   * (dejas el mando de lado...). En puertos, aldeas y monasterios no hay riesgo.
+   */
+  probabilidadEventoAlReposar: number;
+
+  /** Seguidores que pueden acompañar al jugador a la vez. */
+  maximoSeguidores: number;
+
+  /**
    * Tiradas que dan +1 por cada X puntos de fama. { "audiencia_guarida": 2 } = +1 por cada 2 de fama
    * al pedir audiencia al capitán pirata (con 5 de fama, +2).
    */

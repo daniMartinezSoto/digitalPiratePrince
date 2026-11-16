@@ -27,10 +27,12 @@ const CATALOGOS_DEL_JUEGO: CatalogosDescanso = {
 };
 
 // Dónde pasa la noche el jugador:
-//   a_bordo:     en el barco. Gratis. Cura 1 PV al jugador y a sus seguidores.
-//   techo_solo:  paga su cama (posada en un puerto, celda en un monasterio). Cura 1 PV solo al jugador.
-//   techo_todos: paga su cama y la de cada seguidor. Cura 1 PV a todos.
-//   intemperie:  al raso. Gratis. No cura. Fuera de los puertos puede haber un evento nocturno.
+//   a_bordo:     en el barco. Gratis. Si duerme genial, cura 1 PV al jugador y a sus seguidores.
+//   techo_solo:  paga su cama (posada en un puerto, celda en un monasterio). Si duerme genial, cura 1 PV solo al jugador.
+//   techo_todos: paga su cama y la de cada seguidor. Si duermen genial, cura 1 PV a todos.
+//   intemperie:  al raso. Gratis. No cura nunca. Fuera de los puertos puede haber un evento nocturno.
+// "Dormir genial" no es seguro: pasa con AJUSTES.probabilidadDormirGenial (una tirada para todo el grupo).
+// Para curarse seguro está la ACCIÓN "Reposar" (core/acciones/reposar.ts), que gasta el día.
 export const ELECCIONES_DE_DESCANSO = ['a_bordo', 'techo_solo', 'techo_todos', 'intemperie'] as const;
 export type EleccionDeDescanso = (typeof ELECCIONES_DE_DESCANSO)[number];
 
@@ -45,6 +47,9 @@ export interface OpcionDeDescanso {
 export interface ResultadoDescanso {
   estado: Estado;
   cambios: Cambio[];  // cambios reales (oro pagado, vida curada...)
+  // true = "Has dormido genial (+1 PV)"; false = noche normal, sin curar.
+  // No aparece si ha dormido a la intemperie (ahí no se tira: nunca se duerme genial).
+  haDormidoGenial?: boolean;
   eventos: string[];  // id del evento nocturno, si ha saltado alguno
 }
 
@@ -78,16 +83,18 @@ export function opcionesDeDescanso(estado: Estado, lugar: Lugar): OpcionDeDescan
 /**
  * FASE DE DESCANSO. Solo se puede llamar con la partida en la fase "descanso".
  *
- * 1. Cobra y cura según la elección (ver ELECCIONES_DE_DESCANSO). La elección tiene que ser
+ * 1. Cobra según la elección (ver ELECCIONES_DE_DESCANSO). La elección tiene que ser
  *    una de las de opcionesDeDescanso y, si cuesta oro, tiene que llegar (si no, error:
  *    la interfaz no debe dejar pulsar el botón).
+ *    A bordo o bajo techo: tira si duerme genial (AJUSTES.probabilidadDormirGenial); solo entonces cura 1 PV.
  * 2. A la intemperie, salvo en un puerto: puede saltar un evento nocturno
  *    (AJUSTES.probabilidadEventoNocturno), elegido de la lista de eventos nocturnos.
  *    Se devuelve como evento pendiente.
  * 3. SE ACABA EL DÍA: el día sube en 1 y la partida vuelve a la fase "inicio".
  *
  * NO toca el estado que recibe: devuelve uno nuevo.
- * Dados: solo se gastan a la intemperie fuera de un puerto (1 número si no pasa nada, 2 si hay evento).
+ * Dados: a bordo o bajo techo, 1 número (dormir genial). A la intemperie fuera de un puerto,
+ * 1 número si no pasa nada y 2 si hay evento. A la intemperie en un puerto, ninguno.
  */
 export function descansar(
   estado: Estado,
@@ -111,15 +118,17 @@ export function descansar(
     throw new Error(`descansar: "${eleccion}" cuesta ${opcion.precio} de oro y el jugador solo tiene ${estado.jugador.oro}`);
   }
 
-  // 1. Cobrar y curar.
+  // 1. Cobrar y, si duerme genial, curar.
   const efectos: Efecto[] = [];
   if (opcion.precio > 0) {
     efectos.push({ tipo: 'oro', cantidad: -opcion.precio });
   }
-  if (eleccion === 'techo_solo') {
-    efectos.push({ tipo: 'vida', cantidad: 1 });
-  } else if (eleccion === 'a_bordo' || eleccion === 'techo_todos') {
-    efectos.push({ tipo: 'vida', cantidad: 1, destino: 'todos' });
+  let haDormidoGenial: boolean | undefined;
+  if (eleccion !== 'intemperie') {
+    haDormidoGenial = dados.probabilidad(AJUSTES.probabilidadDormirGenial / 100);
+    if (haDormidoGenial) {
+      efectos.push(eleccion === 'techo_solo' ? { tipo: 'vida', cantidad: 1 } : { tipo: 'vida', cantidad: 1, destino: 'todos' });
+    }
   }
   const resultado = aplicarEfectos(estado, efectos, dados, catalogos);
 
@@ -143,5 +152,7 @@ export function descansar(
     },
   };
 
-  return { estado: nuevo, cambios: resultado.cambios, eventos };
+  return haDormidoGenial === undefined
+    ? { estado: nuevo, cambios: resultado.cambios, eventos }
+    : { estado: nuevo, cambios: resultado.cambios, haDormidoGenial, eventos };
 }

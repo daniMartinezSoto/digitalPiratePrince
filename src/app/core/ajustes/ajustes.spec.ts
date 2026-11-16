@@ -33,6 +33,23 @@ describe('ajustes', () => {
     expect(AJUSTES.probabilidadEventoNocturno).toBeLessThanOrEqual(100);
   });
 
+  it('las probabilidades de dormir genial y de evento al reposar son porcentajes entre 0 y 100', () => {
+    for (const porcentaje of [AJUSTES.probabilidadDormirGenial, AJUSTES.probabilidadEventoAlReposar]) {
+      expect(porcentaje).toBeGreaterThanOrEqual(0);
+      expect(porcentaje).toBeLessThanOrEqual(100);
+    }
+  });
+
+  it('la acción "Reposar" cura un número entero de PV, 1 o más', () => {
+    expect(Number.isInteger(AJUSTES.curaAlReposar)).toBe(true);
+    expect(AJUSTES.curaAlReposar).toBeGreaterThanOrEqual(1);
+  });
+
+  it('el máximo de seguidores es un número entero de 1 o más', () => {
+    expect(Number.isInteger(AJUSTES.maximoSeguidores)).toBe(true);
+    expect(AJUSTES.maximoSeguidores).toBeGreaterThanOrEqual(1);
+  });
+
   it('el bonificador por fama solo usa tiradas que existen y "cada X" es un entero de 1 o más', () => {
     const conocidas: readonly string[] = IDS_TIRADA;
     for (const [tirada, cada] of Object.entries(AJUSTES.bonificadorPorFama)) {
