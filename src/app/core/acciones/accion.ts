@@ -13,9 +13,11 @@ import type { Lugar } from '../turno/lugar';
 // Acciones que existen por ahora. (Viajar, buscar información, contratar... irán llegando.)
 // "reposar" es la ACCIÓN de pasar el día recuperándose (core/acciones/reposar.ts).
 // "ir_al_mercado": entrar en el mercado de un puerto (core/mercado/mercado.ts).
+// "dar_discurso", "contratar_marineros", "buscar_seguidor": las tres formas de contratar en un
+// puerto (core/contratar/contratar.ts). Cada día solo una: son acciones distintas.
 // No confundir con la FASE de descanso, que es dormir por la noche (core/turno/descansar.ts):
 // son dos cosas distintas y por eso tienen nombres distintos.
-export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado'] as const;
+export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado', 'dar_discurso', 'contratar_marineros', 'buscar_seguidor'] as const;
 export type IdAccion = (typeof ACCIONES)[number];
 
 /**
@@ -46,8 +48,8 @@ export interface ResultadoAccion {
 }
 
 /**
- * Paso 1 del molde: si la partida ha terminado, no es la fase de acción o ya está dentro del
- * mercado (la acción de hoy ya está elegida: primero hay que salir), error.
+ * Paso 1 del molde: si la partida ha terminado, no es la fase de acción o hay una acción a medias
+ * (dentro del mercado, eligiendo marineros...: la acción de hoy ya está elegida), error.
  */
 export function comprobarQueSePuedeActuar(estado: Estado, accion: string): void {
   if (estado.mundo.finPartida) {
@@ -56,8 +58,8 @@ export function comprobarQueSePuedeActuar(estado: Estado, accion: string): void 
   if (estado.mundo.fase !== 'accion') {
     throw new Error(`${accion}: solo se puede hacer en la fase "accion" (la partida está en "${estado.mundo.fase}")`);
   }
-  if (estado.mundo.mercado) {
-    throw new Error(`${accion}: está dentro del mercado (la acción de hoy ya está elegida); primero hay que salir`);
+  if (estado.mundo.accionEnCurso) {
+    throw new Error(`${accion}: hay una acción a medias ("${estado.mundo.accionEnCurso.tipo}"); primero hay que terminarla`);
   }
 }
 

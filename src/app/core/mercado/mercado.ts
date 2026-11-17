@@ -41,7 +41,7 @@ export function irAlMercado(estado: Estado, sitio: Sitio, dados: Dados, rastrill
   }
 
   const elegido = rastrillo.objetos.length > 0 ? dados.elegirPonderado(rastrillo.objetos) : null;
-  const visita: VisitaMercado = { rastrillo: elegido ? { objeto: elegido.objeto, precio: elegido.precio } : null };
+  const visita: VisitaMercado = { tipo: 'mercado', rastrillo: elegido ? { objeto: elegido.objeto, precio: elegido.precio } : null };
 
   return { estado: conVisita(estado, visita, dados), cambios: [], eventos: [] };
 }
@@ -109,13 +109,13 @@ export function comprarEnRastrillo(
   }
 
   const pagado = aplicarEfectos(conObjeto.estado, [{ tipo: 'oro', cantidad: -oferta.precio }], dados, catalogos);
-  return { estado: conVisita(pagado.estado, { rastrillo: null }, dados), cambios: [...conObjeto.cambios, ...pagado.cambios] };
+  return { estado: conVisita(pagado.estado, { tipo: 'mercado', rastrillo: null }, dados), cambios: [...conObjeto.cambios, ...pagado.cambios] };
 }
 
 /** Sale del mercado: termina la acción del día y toca comer. */
 export function salirDelMercado(estado: Estado, dados: Dados): ResultadoMercado {
   comprobarQueEstaEnElMercado(estado, 'salirDelMercado');
-  const fuera: Estado = { ...estado, mundo: { ...estado.mundo, mercado: null } };
+  const fuera: Estado = { ...estado, mundo: { ...estado.mundo, accionEnCurso: null } };
   return { estado: cerrarFaseDeAccion(fuera, dados), cambios: [] };
 }
 
@@ -190,10 +190,11 @@ function comprobarQueEstaEnElMercado(estado: Estado, que: string): VisitaMercado
   if (estado.mundo.finPartida) {
     throw new Error(`${que}: la partida ya ha terminado`);
   }
-  if (estado.mundo.fase !== 'accion' || !estado.mundo.mercado) {
+  const enCurso = estado.mundo.accionEnCurso;
+  if (estado.mundo.fase !== 'accion' || enCurso?.tipo !== 'mercado') {
     throw new Error(`${que}: no está dentro del mercado`);
   }
-  return estado.mundo.mercado;
+  return enCurso;
 }
 
 /** Aplica los efectos de un botón y sigue dentro del mercado (la misma visita). */
@@ -210,7 +211,7 @@ function aplicarYSeguir(
 
 /** El estado con esa visita al mercado apuntada y por dónde van los dados. */
 function conVisita(estado: Estado, visita: VisitaMercado, dados: Dados): Estado {
-  return { ...estado, mundo: { ...estado.mundo, mercado: visita, estadoDados: dados.obtenerEstado() } };
+  return { ...estado, mundo: { ...estado.mundo, accionEnCurso: visita, estadoDados: dados.obtenerEstado() } };
 }
 
 function fichaDe(id: string, catalogos: CatalogosEfectos) {

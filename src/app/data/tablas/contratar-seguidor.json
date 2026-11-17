@@ -1,0 +1,16 @@
+{
+  "id": "contratar_seguidor",
+  "dado": "2d6",
+  "filas": [
+    { "min": 2, "max": 3, "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "pirata_anciano" }] },
+    { "min": 4, "max": 4, "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "pescador" }] },
+    { "min": 5, "max": 5, "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "nativo" }] },
+    { "min": 6, "max": 6, "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "forzudo" }] },
+    { "min": 7, "max": 7, "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "artista" }] },
+    { "min": 8, "max": 8, "texto": "Un cartógrafo quiere hablar contigo.", "evento": "cartografo" },
+    { "min": 9, "max": 9, "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "barbero_cirujano" }] },
+    { "min": 10, "max": 10, "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "navegante" }] },
+    { "min": 11, "max": 11, "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "mono" }] },
+    { "min": 12, "max": 12, "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "pirata_experto" }] }
+  ]
+}

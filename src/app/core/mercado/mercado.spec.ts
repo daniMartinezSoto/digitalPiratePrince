@@ -45,7 +45,7 @@ describe('irAlMercado', () => {
   it('entra en el mercado con el objeto del rastrillo de hoy; sigue en la fase de acción', () => {
     const { estado } = irAlMercado(estadoCon(), EN_PUERTO, new Dados(1), BRUJULA_HOY);
 
-    expect(estado.mundo.mercado).toEqual({ rastrillo: { objeto: 'brujula_magica', precio: 200 } });
+    expect(estado.mundo.accionEnCurso).toEqual({ tipo: 'mercado', rastrillo: { objeto: 'brujula_magica', precio: 200 } });
     expect(estado.mundo.fase).toBe('accion');
   });
 
@@ -67,7 +67,10 @@ describe('irAlMercado', () => {
   it('con muchas semillas salen todos los objetos del rastrillo', () => {
     const vistos = new Set<string>();
     for (let semilla = 1; semilla <= 60; semilla++) {
-      vistos.add(irAlMercado(estadoCon(), EN_PUERTO, new Dados(semilla)).estado.mundo.mercado!.rastrillo!.objeto);
+      const enCurso = irAlMercado(estadoCon(), EN_PUERTO, new Dados(semilla)).estado.mundo.accionEnCurso;
+      if (enCurso?.tipo === 'mercado' && enCurso.rastrillo) {
+        vistos.add(enCurso.rastrillo.objeto);
+      }
     }
 
     expect(vistos.size).toBe(RASTRILLO.objetos.length);
@@ -78,16 +81,16 @@ describe('irAlMercado', () => {
     const antes = dados.obtenerEstado();
     const { estado } = irAlMercado(estadoCon(), EN_PUERTO, dados, { objetos: [] });
 
-    expect(estado.mundo.mercado).toEqual({ rastrillo: null });
+    expect(estado.mundo.accionEnCurso).toEqual({ tipo: 'mercado', rastrillo: null });
     expect(dados.obtenerEstado()).toBe(antes);
   });
 
   it('dentro del mercado no se puede hacer otra acción, ni volver a entrar, ni usar objetos', () => {
     const estado = dentro();
 
-    expect(() => pescar(estado, { lugar: 'puerto', juntoAlAgua: true }, new Dados(1))).toThrow(/dentro del mercado/);
-    expect(() => irAlMercado(estado, EN_PUERTO, new Dados(1))).toThrow(/dentro del mercado/);
-    expect(() => usarObjeto(estado, 0, new Dados(1))).toThrow(/dentro del mercado/);
+    expect(() => pescar(estado, { lugar: 'puerto', juntoAlAgua: true }, new Dados(1))).toThrow(/acción a medias \("mercado"\)/);
+    expect(() => irAlMercado(estado, EN_PUERTO, new Dados(1))).toThrow(/acción a medias/);
+    expect(() => usarObjeto(estado, 0, new Dados(1))).toThrow(/acción a medias/);
     expect(objetosUsablesAhora(estado)).toEqual([]);
   });
 
@@ -104,7 +107,7 @@ describe('comprar y vender comida, de una en una', () => {
 
     expect(estado.jugador.oro).toBe(50 - AJUSTES.precioComprarComida);
     expect(estado.jugador.comida).toBe(4);
-    expect(estado.mundo.mercado).toEqual({ rastrillo: { objeto: 'brujula_magica', precio: 200 } });
+    expect(estado.mundo.accionEnCurso).toEqual({ tipo: 'mercado', rastrillo: { objeto: 'brujula_magica', precio: 200 } });
     expect(cambios).toEqual([
       { tipo: 'recurso', recurso: 'oro', antes: 50, despues: 45 },
       { tipo: 'recurso', recurso: 'comida', antes: 3, despues: 4 },
@@ -182,7 +185,7 @@ describe('el rastrillo', () => {
 
     expect(estado.jugador.inventario).toEqual([{ id: 'brujula_magica' }]);
     expect(estado.jugador.oro).toBe(50);
-    expect(estado.mundo.mercado).toEqual({ rastrillo: null });
+    expect(estado.mundo.accionEnCurso).toEqual({ tipo: 'mercado', rastrillo: null });
     expect(cambios.map(c => c.tipo)).toEqual(['objeto_ganado', 'recurso', 'recurso']); // objeto, +1 fama (mágico), −oro
   });
 
@@ -202,7 +205,7 @@ describe('el rastrillo', () => {
     const { estado, cambios } = comprarEnRastrillo(lleno, new Dados(1));
 
     expect(estado.jugador.oro).toBe(250);
-    expect(estado.mundo.mercado).toEqual({ rastrillo: { objeto: 'brujula_magica', precio: 200 } });
+    expect(estado.mundo.accionEnCurso).toEqual({ tipo: 'mercado', rastrillo: { objeto: 'brujula_magica', precio: 200 } });
     expect(cambios).toEqual([{ tipo: 'objeto_no_cabe', objeto: 'brujula_magica' }]);
   });
 
@@ -220,7 +223,7 @@ describe('salirDelMercado', () => {
     const { estado } = salirDelMercado(dentro(), new Dados(1));
 
     expect(estado.mundo.fase).toBe('comida');
-    expect(estado.mundo.mercado).toBeNull();
+    expect(estado.mundo.accionEnCurso).toBeNull();
   });
 
   it('fuera del mercado, los botones de dentro dan error', () => {

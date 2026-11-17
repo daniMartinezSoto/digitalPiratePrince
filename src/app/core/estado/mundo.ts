@@ -1,13 +1,33 @@
 import type { Fase } from './fase';
 import type { FinPartida } from './fin-partida';
 
-// Una visita al mercado en curso (acción "Ir al mercado"). Mientras dura, el jugador puede
-// comprar y vender cosas de una en una; al salir, se borra y termina la acción del día.
+// ACCIONES A MEDIAS. Algunas acciones tienen varios pasos: primero se tira o se entra, y después
+// el jugador decide (ir al mercado, contratar marineros, buscar un seguidor). Lo que salió se guarda
+// aquí para que no se pueda volver a tirar hasta que guste, y para que un guardado a mitad lo conserve.
+// Mientras hay una acción a medias, no se puede hacer otra acción ni usar objetos: hay que terminarla.
+
+// Visita al mercado. rastrillo: lo que hay hoy (se saca al entrar y no cambia durante la visita);
+// null = ya lo ha comprado (o el rastrillo está vacío).
 export interface VisitaMercado {
-  // Lo que hay hoy en el rastrillo: se saca al entrar y no cambia durante la visita.
-  // null = ya lo ha comprado (o el rastrillo está vacío).
+  tipo: 'mercado';
   rastrillo: { objeto: string; precio: number } | null;
 }
+
+// Contratar marineros: cuántos hay disponibles hoy (falta decir cuántos se contratan).
+export interface MarinerosDisponibles {
+  tipo: 'marineros';
+  disponibles: number;
+}
+
+// Buscar un seguidor: el que ha salido en la tabla, esperando a que el jugador lo contrate o no.
+// seguidor = id del TIPO en el catálogo ("forzudo"); precio = lo que pide.
+export interface SeguidorEnEspera {
+  tipo: 'seguidor';
+  seguidor: string;
+  precio: number;
+}
+
+export type AccionEnCurso = VisitaMercado | MarinerosDisponibles | SeguidorEnEspera;
 
 export interface Mundo {
   // Identificador del mapa en el que se encuentra el jugador.
@@ -63,7 +83,6 @@ export interface Mundo {
   // Si la partida ha terminado, cómo y por qué. null mientras se sigue jugando.
   finPartida: FinPartida | null;
 
-  // La visita al mercado en curso. null si no está en el mercado.
-  // Va en el estado para que, si se guarda a mitad de la visita, siga dentro con el mismo rastrillo.
-  mercado: VisitaMercado | null;
+  // La acción a medias (ver AccionEnCurso arriba). null si no hay ninguna.
+  accionEnCurso: AccionEnCurso | null;
 }

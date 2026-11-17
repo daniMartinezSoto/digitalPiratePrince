@@ -10,6 +10,8 @@ export const IDS_TIRADA = [
   'pesca',
   'caza',
   'el_mal', // la tabla diaria de "el mal está a bordo"
+  'discurso', // contratar: dar un discurso a los marineros del puerto
+  'contratar_seguidor', // contratar: buscar un seguidor (2d6)
 ] as const;
 
 export type IdTirada = (typeof IDS_TIRADA)[number];

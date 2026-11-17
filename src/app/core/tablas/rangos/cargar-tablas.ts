@@ -2,6 +2,8 @@ import type { Tabla } from './tabla';
 
 import buscarInformacion from '../../../data/tablas/buscar-informacion.json';
 import caza from '../../../data/tablas/caza.json';
+import contratarSeguidor from '../../../data/tablas/contratar-seguidor.json';
+import discurso from '../../../data/tablas/discurso.json';
 import elMal from '../../../data/tablas/el-mal.json';
 import escorbuto from '../../../data/tablas/escorbuto.json';
 import lluviasPersisten from '../../../data/tablas/lluvias-persisten.json';
@@ -19,6 +21,8 @@ const comoTabla = (json: unknown) => json as Tabla;
 export const TABLAS: readonly Tabla[] = [
   comoTabla(buscarInformacion),
   comoTabla(caza),
+  comoTabla(contratarSeguidor),
+  comoTabla(discurso),
   comoTabla(elMal),
   comoTabla(escorbuto),
   comoTabla(lluviasPersisten),

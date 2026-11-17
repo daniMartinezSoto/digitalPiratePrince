@@ -9,8 +9,8 @@ import { resolverEfecto } from '../tablas/rangos/resolver-tabla';
  * El jugador usa un objeto en la fase de acción, ANTES de elegir qué hace ese día
  * (un ungüento que cura). No gasta la acción: la partida sigue en la fase "accion",
  * y puede usar varios seguidos.
- *   1. Comprueba que se puede: la partida sigue, está en la fase "accion" (sin haber entrado ya
- *      en el mercado), en esa posición hay
+ *   1. Comprueba que se puede: la partida sigue, está en la fase "accion" (sin ninguna acción
+ *      a medias), en esa posición hay
  *      un objeto y es de los que se usan en la acción ("cuandoSeUsa": "accion"). Si no, error:
  *      la interfaz solo debe ofrecer los de objetosUsablesAhora.
  *   2. Gasta un uso (a 0 se tira solo) y aplica sus efectos de "alUsar", con sus dados ya tirados.
@@ -23,8 +23,8 @@ export function usarObjeto(estado: Estado, posicion: number, dados: Dados, catal
   if (estado.mundo.fase !== 'accion') {
     throw new Error(`usarObjeto: los objetos se usan en la fase "accion" (la partida está en "${estado.mundo.fase}")`);
   }
-  if (estado.mundo.mercado) {
-    throw new Error('usarObjeto: los objetos se usan antes de elegir la acción, y ya está dentro del mercado');
+  if (estado.mundo.accionEnCurso) {
+    throw new Error(`usarObjeto: los objetos se usan antes de elegir la acción, y hay una acción a medias ("${estado.mundo.accionEnCurso.tipo}")`);
   }
   const llevado = estado.jugador.inventario[posicion];
   if (!llevado) {

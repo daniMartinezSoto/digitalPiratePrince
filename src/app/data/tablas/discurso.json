@@ -1,0 +1,11 @@
+{
+  "id": "discurso",
+  "dado": "1d6",
+  "filas": [
+    { "min": 1, "max": 1, "texto": "Tu discurso altera el orden público: te multan.", "efectos": [{ "tipo": "oro", "cantidad": "-1d6" }] },
+    { "min": 2, "max": 3, "texto": "Nadie te hace caso." },
+    { "min": 4, "max": 4, "texto": "Algunos marineros se animan a unirse.", "efectos": [{ "tipo": "tripulacion", "cantidad": "1d6" }] },
+    { "min": 5, "max": 5, "texto": "Tu discurso convence a muchos.", "efectos": [{ "tipo": "tripulacion", "cantidad": "1d6+3" }] },
+    { "min": 6, "max": 6, "texto": "¡Un discurso memorable! Se te une una multitud.", "efectos": [{ "tipo": "tripulacion", "cantidad": "1d6+6" }] }
+  ]
+}

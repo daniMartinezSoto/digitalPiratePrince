@@ -37,7 +37,7 @@ export function cabeObjeto(jugador: Jugador, idObjeto: string, objetos: readonly
  * Lista vacía = no hay nada que usar ahora.
  */
 export function objetosUsablesAhora(estado: Estado, objetos: readonly Objeto[] = OBJETOS): number[] {
-  if (estado.mundo.finPartida || estado.mundo.fase !== 'accion' || estado.mundo.mercado) {
+  if (estado.mundo.finPartida || estado.mundo.fase !== 'accion' || estado.mundo.accionEnCurso) {
     return [];
   }
   return estado.jugador.inventario.flatMap((llevado, posicion) => (fichaDe(llevado.id, objetos).cuandoSeUsa === 'accion' ? [posicion] : []));

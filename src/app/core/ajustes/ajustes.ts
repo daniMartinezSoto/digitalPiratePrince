@@ -45,6 +45,12 @@ export interface Ajustes {
   /** Oro que te dan por vender UNA reserva de comida en el mercado de un puerto. */
   precioVenderComida: number;
 
+  /** Marineros que hay disponibles al ir a contratarlos (expresión de dados, p. ej. "1d6x3+4"). */
+  marinerosDisponibles: string;
+
+  /** Oro que cuesta cada marinero contratado (+1 de tripulación). */
+  precioMarinero: number;
+
   /** Seguidores que pueden acompañar al jugador a la vez (sin contar condiciones como el carisma: ver maximoSeguidoresActual). */
   maximoSeguidores: number;
 

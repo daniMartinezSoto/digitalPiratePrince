@@ -11,5 +11,7 @@
   "maximoSeguidores": 3,
   "precioComprarComida": 5,
   "precioVenderComida": 2,
+  "marinerosDisponibles": "1d6x3+4",
+  "precioMarinero": 2,
   "bonificadorPorFama": { "audiencia_guarida": 2 }
 }

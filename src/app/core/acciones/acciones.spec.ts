@@ -72,6 +72,9 @@ describe('dónde se puede cada acción', () => {
       { accion: 'cazar', disponible: false, motivo: 'solo_salvaje' },
       { accion: 'reposar', disponible: true },
       { accion: 'ir_al_mercado', disponible: false, motivo: 'solo_puerto' },
+      { accion: 'dar_discurso', disponible: false, motivo: 'solo_puerto' },
+      { accion: 'contratar_marineros', disponible: false, motivo: 'solo_puerto' },
+      { accion: 'buscar_seguidor', disponible: false, motivo: 'solo_puerto' },
     ]);
   });
 
@@ -81,6 +84,9 @@ describe('dónde se puede cada acción', () => {
       { accion: 'cazar', disponible: true },
       { accion: 'reposar', disponible: true },
       { accion: 'ir_al_mercado', disponible: false, motivo: 'solo_puerto' },
+      { accion: 'dar_discurso', disponible: false, motivo: 'solo_puerto' },
+      { accion: 'contratar_marineros', disponible: false, motivo: 'solo_puerto' },
+      { accion: 'buscar_seguidor', disponible: false, motivo: 'solo_puerto' },
     ]);
   });
 
