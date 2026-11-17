@@ -4,7 +4,8 @@ import type { IdAccion, Sitio } from './accion';
 // Por qué una acción no se puede hacer aquí:
 //   sin_agua:    para pescar hay que estar a bordo o en tierra junto al agua.
 //   solo_salvaje: cazar es solo en tierra salvaje (ni a bordo, ni en puertos, aldeas o monasterios).
-export type MotivoNoDisponible = 'sin_agua' | 'solo_salvaje';
+//   solo_puerto:  el mercado solo está en los puertos.
+export type MotivoNoDisponible = 'sin_agua' | 'solo_salvaje' | 'solo_puerto';
 
 /** Una acción tal como la enseña la interfaz: si no está disponible, sale desactivada con su motivo. */
 export interface AccionDisponible {
@@ -34,5 +35,8 @@ export function accionesDisponibles(_estado: Estado, sitio: Sitio): AccionDispon
     sePuedePescar(sitio) ? { accion: 'pescar', disponible: true } : { accion: 'pescar', disponible: false, motivo: 'sin_agua' },
     sePuedeCazar(sitio) ? { accion: 'cazar', disponible: true } : { accion: 'cazar', disponible: false, motivo: 'solo_salvaje' },
     { accion: 'reposar', disponible: true }, // reposar se puede en cualquier sitio
+    sitio.lugar === 'puerto'
+      ? { accion: 'ir_al_mercado', disponible: true }
+      : { accion: 'ir_al_mercado', disponible: false, motivo: 'solo_puerto' },
   ];
 }

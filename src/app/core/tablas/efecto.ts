@@ -72,7 +72,8 @@ export type CantidadDefinicion = number | string;
 // inventario (0 = el primero) en el momento de aplicar el efecto.
 //   gastar_uso:   gasta un uso de ese objeto; a 0 usos se tira solo (core/objetos/usar-objeto.ts).
 //   tirar_objeto: el jugador tira ese objeto (core/objetos/tirar-objeto.ts).
-export const EFECTOS_INTERNOS = ['gastar_uso', 'tirar_objeto'] as const;
+//   vender_objeto: el jugador lo vende en el mercado: sale del inventario (el oro va en otro efecto).
+export const EFECTOS_INTERNOS = ['gastar_uso', 'tirar_objeto', 'vender_objeto'] as const;
 
 // Efectos que son iguales en el JSON y ya resueltos (no llevan dados).
 type EfectoSinDados =
@@ -104,6 +105,7 @@ export type Efecto =
   | EfectoSinDados
   | { tipo: 'gastar_uso'; posicion: number }
   | { tipo: 'tirar_objeto'; posicion: number }
+  | { tipo: 'vender_objeto'; posicion: number }
   | { tipo: TipoRecurso; operacion: 'mitad' | 'maximo' | 'todo'; destino?: Destino; siNoHay?: Efecto[] }
   | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: number; destino?: Destino; siNoHay?: Efecto[] }
   | { tipo: 'poner_condicion'; condicion: string; turnos?: number; partes?: string[] }

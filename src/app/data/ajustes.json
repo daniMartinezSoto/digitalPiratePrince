@@ -9,5 +9,7 @@
   "curaAlReposar": 2,
   "probabilidadEventoAlReposar": 20,
   "maximoSeguidores": 3,
+  "precioComprarComida": 5,
+  "precioVenderComida": 2,
   "bonificadorPorFama": { "audiencia_guarida": 2 }
 }

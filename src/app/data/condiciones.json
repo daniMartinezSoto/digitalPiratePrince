@@ -118,10 +118,11 @@
     "ajustes": { "famaObjetivo": 2 }
   },
   {
-    "id": "odio_al_dinero",
-    "nombre": "Odio al dinero",
-    "descripcion": "Rechazas el oro: cada vez que ganas oro, ganas 1d6 menos.",
-    "categoria": "maldicion"
+    "id": "avaricioso",
+    "nombre": "Avaricioso",
+    "descripcion": "No soportas desprenderte de tu oro: no puedes enterrar tesoros.",
+    "categoria": "maldicion",
+    "prohibe": ["enterrar_tesoro"]
   },
   {
     "id": "hedor_nauseabundo",

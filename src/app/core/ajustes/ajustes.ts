@@ -39,6 +39,12 @@ export interface Ajustes {
    */
   probabilidadEventoAlReposar: number;
 
+  /** Oro que cuesta comprar UNA reserva de comida en el mercado de un puerto. */
+  precioComprarComida: number;
+
+  /** Oro que te dan por vender UNA reserva de comida en el mercado de un puerto. */
+  precioVenderComida: number;
+
   /** Seguidores que pueden acompañar al jugador a la vez (sin contar condiciones como el carisma: ver maximoSeguidoresActual). */
   maximoSeguidores: number;
 

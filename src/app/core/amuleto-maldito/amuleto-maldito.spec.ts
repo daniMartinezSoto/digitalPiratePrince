@@ -19,7 +19,7 @@ import { validarAmuletoMaldito } from './validar-amuleto-maldito';
 
 // Semillas de crearPartida que dan "el maldito" (comprobadas): con cada una sale un amuleto distinto.
 const MALDITO_DESEO_Y_HEDOR = 7;
-const MALDITO_FORTALEZA_Y_ODIO = 87;
+const MALDITO_FORTALEZA_Y_AVARICIA = 87; // gran fortaleza + avaricioso
 const MALDITO_CARISMA_Y_AMBICION = 45;
 
 function estadoCon(cambios: Partial<Jugador> = {}): Estado {
@@ -270,21 +270,13 @@ describe('recibirAmuletoMaldito', () => {
     expect(estado.jugador.vidaMax).toBe(15);
   });
 
-  it('odio al dinero: al recibirlo pierde todo su oro', () => {
+  it('avaricioso: no puede enterrar tesoros, y al recibirlo no pierde nada', () => {
     const amuleto = amuletoFijo({ condicion: 'fuerza_letal' }, AMULETO_MALDITO.maldiciones[3]);
-    const { estado, cambios } = recibirAmuletoMaldito(estadoCon({ oro: 80 }), new Dados(1), undefined, amuleto);
+    const { estado } = recibirAmuletoMaldito(estadoCon({ oro: 80 }), new Dados(1), undefined, amuleto);
 
-    expect(estado.jugador.oro).toBe(0);
-    expect(cambios).toContainEqual({ tipo: 'recurso', recurso: 'oro', antes: 80, despues: 0 });
-  });
-
-  it('odio al dinero: después, cada vez que gana oro gana 1d6 menos', () => {
-    const amuleto = amuletoFijo({ condicion: 'fuerza_letal' }, AMULETO_MALDITO.maldiciones[3]);
-    const conAmuletoPuesto = recibirAmuletoMaldito(estadoCon(), new Dados(1), undefined, amuleto).estado;
-    const { estado } = aplicarEfectos(conAmuletoPuesto, [{ tipo: 'oro', cantidad: 20 }], new Dados(1));
-
-    expect(estado.jugador.oro).toBeGreaterThanOrEqual(14);
-    expect(estado.jugador.oro).toBeLessThanOrEqual(19);
+    expect(AMULETO_MALDITO.maldiciones[3]).toEqual({ condicion: 'avaricioso' });
+    expect(estaProhibido(estado.jugador, 'enterrar_tesoro')).toBe(true);
+    expect(estado.jugador.oro).toBe(80);
   });
 
   it('deseo: el amuleto lleva solo la maldición y el deseo queda como evento pendiente', () => {
@@ -449,36 +441,31 @@ describe('"el maldito" empieza con su amuleto', () => {
   });
 
   it('con la misma semilla sale siempre el mismo amuleto, y estadoDados continúa la secuencia', () => {
-    const a = crearPartida(MALDITO_FORTALEZA_Y_ODIO, 'Marta');
-    const b = crearPartida(MALDITO_FORTALEZA_Y_ODIO, 'Marta');
+    const a = crearPartida(MALDITO_FORTALEZA_Y_AVARICIA, 'Marta');
+    const b = crearPartida(MALDITO_FORTALEZA_Y_AVARICIA, 'Marta');
     const recuperado = new Dados(a.estado.mundo.estadoDados);
 
     expect(a.estado).toEqual(b.estado);
     expect(recuperado.tirar('2d6')).toEqual(a.dados.tirar('2d6'));
   });
 
-  it('de principio a fin: empieza fuerte y sin oro, gana menos oro, y en el monasterio vuelve todo a lo normal', () => {
-    // Gran fortaleza + odio al dinero.
-    const { estado: inicial, dados } = crearPartida(MALDITO_FORTALEZA_Y_ODIO, 'Marta');
-    expect(inicial.jugador.condiciones).toEqual([{ id: 'amuleto_maldito', partes: ['gran_fortaleza', 'odio_al_dinero'] }]);
+  it('de principio a fin: empieza más fuerte y avaricioso, y en el monasterio vuelve todo a lo normal', () => {
+    const { estado: inicial, dados } = crearPartida(MALDITO_FORTALEZA_Y_AVARICIA, 'Marta');
+    expect(inicial.jugador.condiciones).toEqual([{ id: 'amuleto_maldito', partes: ['gran_fortaleza', 'avaricioso'] }]);
     expect(inicial.jugador.vida).toBe(19);
-    expect(inicial.jugador.oro).toBe(0);
+    expect(inicial.jugador.oro).toBe(50);
+    expect(estaProhibido(inicial.jugador, 'enterrar_tesoro')).toBe(true);
 
-    // Gana 30 de oro: le llega 1d6 menos.
-    const conOro = aplicarEfectos(inicial, [{ tipo: 'oro', cantidad: 30 }], dados).estado;
-    expect(conOro.jugador.oro).toBeGreaterThanOrEqual(24);
-    expect(conOro.jugador.oro).toBeLessThan(30);
+    // Le hieren y se cura: puede llegar hasta 19.
+    const herido = aplicarEfectos(inicial, [{ tipo: 'vida', cantidad: -6 }, { tipo: 'vida', cantidad: 10 }], dados).estado;
+    expect(herido.jugador.vida).toBe(19);
 
     // "Rezar" en el monasterio: quita una maldición, y se lleva el amuleto entero.
-    const { estado: libre, cambios } = aplicarEfectos(conOro, [QUITAR_UNA_MALDICION], dados);
+    const { estado: libre, cambios } = aplicarEfectos(herido, [QUITAR_UNA_MALDICION], dados);
     expect(libre.jugador.condiciones).toEqual([]);
     expect(libre.jugador.vida).toBe(15);
     expect(vidaMaxActual(libre.jugador)).toBe(15);
     expect(cambios.map(c => c.tipo)).toEqual(['condicion_quitada', 'recurso']);
-
-    // Ya sin odio al dinero, gana el oro entero.
-    const despues = aplicarEfectos(libre, [{ tipo: 'oro', cantidad: 30 }], dados).estado;
-    expect(despues.jugador.oro).toBe(libre.jugador.oro + 30);
-    expect(estaProhibido(despues.jugador, 'nuevos_seguidores')).toBe(false);
+    expect(estaProhibido(libre.jugador, 'enterrar_tesoro')).toBe(false);
   });
 });

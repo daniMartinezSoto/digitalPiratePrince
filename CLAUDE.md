@@ -42,7 +42,7 @@
   - ✅ `core/turno/`: `iniciarTurno` (amanecer), `comer` + `opcionesDeComida`, `descansar` + `opcionesDeDescanso` (cierra el día: `dia + 1`, fase `inicio`), `lugar.ts` (`LUGARES`) y un test de día completo. `core/personaje/vinculo-nativo.ts` (`tieneVinculoNativo`).
   - ✅ Estado: `Seguidor.inseparable?`. Cambio nuevo `seguidor_se_marcha`. `data/ajustes.json`: `precioTaberna` (5), `precioPosada` (5), `precioMonasterio` (7), `probabilidadEventoNocturno` (33).
   - **La fase de acción sigue siendo un hueco:** `iniciarTurno` deja el día en `accion` y todavía nada lo pasa a `comida`; lo harán las acciones del Sprint 6.
-- **Tests:** tras el paso 5b del Sprint 6, a Claude le pasan 746 en 40 archivos (sin `app.spec.ts`; al autor le deberían salir 748 en 41).
+- **Tests:** tras el paso 6 del Sprint 6, a Claude le pasan 770 en 41 archivos (sin `app.spec.ts`; al autor le deberían salir 772 en 42).
 
 **Siguiente:** Sprint 6 (seguidores, objetos y acciones sin eventos, sección 9). El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
@@ -146,7 +146,8 @@ Mundo   { mapaId: string | null;
           puertosVisitados: string[];                            // ids de puertos principales
           estadoDados: number;                                   // dados.obtenerEstado()
           finPartida: { resultado: 'victoria' | 'derrota';       // null mientras se juega
-                        motivo: 'vida' | 'tripulacion' | 'evento' } | null }
+                        motivo: 'vida' | 'tripulacion' | 'seguidor' | 'evento' } | null;
+          mercado: { rastrillo: { objeto, precio } | null } | null }   // visita al mercado en curso (Sprint 6)
 
 Seguidor { id: string; tipo: string; nombre: string; ataque: number;   // ataque = daño que hace si acierta
            resistencia, resistenciaMaxima: number;                     // resistencia = su vida
@@ -163,7 +164,7 @@ Objeto    { id, nombre, descripcion; imagen?; tipo: 'pasivo' | 'activo'; usosMax
 Habilidad { id, nombre, descripcion; imagen?; tipo: 'pasiva' | 'activa'; modificadores? }  // sin cooldowns
 Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicion' | 'enfermedad' | 'clima' | 'otra';
             modificadores?;                       // bonificadores a tiradas mientras dura
-            prohibe?: Prohibicion[];              // 'viajar' | 'solicitar_audiencia' | 'ganar_oro' | 'nuevos_seguidores'
+            prohibe?: Prohibicion[];              // 'viajar' | 'solicitar_audiencia' | 'enterrar_tesoro' | 'nuevos_seguidores'
             ajustes?: { famaObjetivo?, comidaPorDia? };   // reglas que cambian mientras dura (se suman a la regla normal)
             cadaTurno?: { efectos?, tabla? };     // qué pasa cada amanecer (lo ejecuta iniciarTurno)
             alLlegar?: { lugar: 'tierra' | 'puerto' | 'aldea' | 'naufragio'; efectos?; evento? } }   // al llegar, SE QUITA (y puede pasar algo)
@@ -303,16 +304,16 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 - **Vínculo nativo = condición `vinculo_nativo`** (categoría `otra`), otorgada por "el nativo", el amuleto kalinago y la habilidad `guia_nativo` del seguidor nativo (ya no se mira el nombre del tipo). `tieneVinculoNativo` sigue existiendo. Los +1 de aldea se quedan en cada fuente y suman.
 - **Partes:** `CondicionActiva.partes` = condiciones que una apuntada lleva DENTRO; funcionan mientras dure y se van con ella. Efecto: `{ "tipo": "poner_condicion", "condicion": "amuleto_maldito", "partes": [...] }`.
 - **Amuleto maldito (decidido por el autor): es UNA condición "maldición-bendición"** (`amuleto_maldito`, categoría `maldicion`) con dos partes: la bendición y la maldición que tocaron en los dados. **Cuenta como maldición:** monasterio, bruja o cualquier "quitar una maldición" se la llevan ENTERA (se pierde también lo bueno; la única excepción es el deseo, que pasa una vez). **No es un objeto ni ocupa hueco del inventario.** Si ya tienes uno, el nuevo se ignora.
-- **Maldiciones del amuleto en `data/condiciones.json`:** `hambre_insaciable` (+1 comida al día), `ambicion_desmedida` (+2 fama objetivo), `hedor_nauseabundo` (prohíbe nuevos seguidores), `rechazo_a_la_autoridad` (prohíbe audiencias), `odio_al_dinero` y `muy_mala_suerte` (ficha escrita; el −3 se activa cuando existan las tablas de objetos).
-- **Odio al dinero (decidido por el autor):** al recibirla pierdes todo tu oro (efecto de la tabla del amuleto) y, mientras dure, **cada vez que ganas oro ganas 1d6 menos** (como mucho, lo que ese efecto daba). Lo aplica `aplicarEfectos`, después del contable; cambio con motivo `odio_al_dinero`. La prohibición `ganar_oro` queda sin usar.
+- **Maldiciones del amuleto en `data/condiciones.json`:** `hambre_insaciable` (+1 comida al día), `ambicion_desmedida` (+2 fama objetivo), `hedor_nauseabundo` (prohíbe nuevos seguidores), `rechazo_a_la_autoridad` (prohíbe audiencias), `avaricioso` (prohíbe enterrar tesoros) y `muy_mala_suerte` (ficha escrita; el −3 se activa cuando existan las tablas de objetos).
+- **Avaricioso sustituye a odio al dinero (decidido por el autor, 17-nov):** prohíbe la acción enterrar tesoro (prohibición nueva `enterrar_tesoro`, que reemplaza a `ganar_oro`); al recibirla no pasa nada más. Odio al dinero y su código se han quitado.
 - **Amuleto maldito completo (paso 5a hecho, 17-nov).**
   - **Bendiciones** en `data/condiciones.json` (categoría `bendicion`): `fuerza_letal` (+1 fuerza), `super_cerebro` (+2 ingenio), `gran_fortaleza` (+4 vida máxima), `piel_de_piedra` (solo la ficha; la regla, en el combate del Sprint 7) y `carisma` (+1 seguidor; **sustituye a "alma del fénix", eliminada**). El 6 es el **deseo**: no es una condición sino el evento `deseo`, pendiente hasta el Sprint 10 (el amuleto lleva solo la maldición).
-  - **Tablas del amuleto:** `data/amuleto-maldito.json` (`bendiciones` y `maldiciones`; el dado elige la POSICIÓN en la lista, 1d6 con 6 resultados). Cada resultado lleva `condicion` o `evento` y, opcional, `alRecibir` (efectos de una sola vez: gran fortaleza cura del todo; odio al dinero deja el oro a 0). Código en `core/amuleto-maldito/`: formato, cargador (`AMULETO_MALDITO`) y revisor (`validarAmuletoMaldito`: condición o evento, que exista y sea de su categoría, efectos y campos que sobran).
+  - **Tablas del amuleto:** `data/amuleto-maldito.json` (`bendiciones` y `maldiciones`; el dado elige la POSICIÓN en la lista, 1d6 con 6 resultados). Cada resultado lleva `condicion` o `evento` y, opcional, `alRecibir` (efectos de una sola vez: gran fortaleza cura del todo). Código en `core/amuleto-maldito/`: formato, cargador (`AMULETO_MALDITO`) y revisor (`validarAmuletoMaldito`: condición o evento, que exista y sea de su categoría, efectos y campos que sobran).
   - **`recibirAmuletoMaldito(estado, dados)`**: si ya lleva uno, no recibe otro (no tira dados) y devuelve el aviso `condicion_no_puesta` (motivo `ya_la_tiene`; la interfaz dirá "No puedes recibir otro amuleto maldito: ya llevas uno"). `aplicarEfectos` avisa igual si un `poner_condicion` con `partes` intenta poner un segundo amuleto. Una condición normal repetida (otra tormenta) no avisa: se queda la que dure más; si no, tira los dos dados (gasta dos números), pone `amuleto_maldito` con sus partes y aplica `alRecibir`, todo por `aplicarEfectos`. Devuelve `{ estado, cambios, tiradas, eventos }`.
   - **Los stats se calculan:** ajustes de condición nuevos `fuerza`, `ingenio`, `vidaMax`, `maximoSeguidores` y consultas `fuerzaActual`, `ingenioActual`, `vidaMaxActual`, `maximoSeguidoresActual` (`core/condiciones/consultas.ts`). La hoja (`jugador.fuerza`...) guarda solo su valor; un "+1 de fuerza" de un evento cambia la hoja y se suma al del amuleto. `aplicarEfectos` usa `vidaMaxActual` como tope de vida y `maximoSeguidoresActual` para el grupo; `grupoLleno` también.
   - **Al quitar una condición o perder un objeto** (`ajustarALosTopes` en `aplicarEfectos`): si la vida pasa del tope nuevo, baja; si sobran seguidores, se marcha uno al azar (los inseparables no entran en el sorteo; si todos lo son, no se va nadie). Cambio `seguidor_se_marcha` con `motivo: 'carisma_perdido'`.
   - **`el_maldito`**: `crearPartida` le da el amuleto al empezar (aquí y no en `crearPersonaje`, porque pasa por `aplicarEfectos`, que trabaja con el estado). `Partida` tiene un campo nuevo `eventos` (el deseo, si toca). `estadoDados` se apunta después del amuleto.
-  - Tests en `core/amuleto-maldito/amuleto-maldito.spec.ts` (47). Semillas de "el maldito": 7 (deseo + hedor), 45 (carisma + ambición), 87 (gran fortaleza + odio al dinero).
+  - Tests en `core/amuleto-maldito/amuleto-maldito.spec.ts` (47). Semillas de "el maldito": 7 (deseo + hedor), 45 (carisma + ambición), 87 (gran fortaleza + avaricioso).
 - **Objetos (paso 5b hecho, 17-nov).**
   - **Cuándo se usa cada objeto activo:** campo `cuandoSeUsa` en la ficha (`MOMENTOS_DE_USO`): `accion` (al empezar la fase de acción, antes de elegir; **no gasta la acción** y se pueden usar varios), `evento` (botón al tirar los dados de un evento: mano de mono, amuleto del destino; Sprint 10) y `combate` (botón junto a "Atacar"; Sprint 7). Solo `accion` está programado. Campo `alUsar`: efectos al usarlo, escritos como los de las tablas. El revisor exige `cuandoSeUsa` en los activos y prohíbe `cuandoSeUsa`/`alUsar` en los pasivos.
   - **Precio obligatorio** (`precioVenta`) en todos los objetos, mágicos incluidos (provisionales: ídolo 800, brújula 100, mano de mono 80, amuleto del destino 60, kalinago 40). Vender no quita la fama del objeto mágico.
@@ -320,11 +321,14 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
   - **Elegir qué tiras si no cabe** (como `despedir`): el juego pregunta antes y añade `tirar: [posiciones]` al `ganar_objeto` (puede ser más de uno: el ídolo ocupa 4). Si tirándolos cabe, se tiran y entra; si no, no se tira nada y no entra. `tirar` no se escribe en el JSON.
   - **Efectos internos** (`EFECTOS_INTERNOS`, no se escriben en el JSON; el revisor los rechaza): `gastar_uso` y `tirar_objeto`. Cambios nuevos: `objeto_tirado`, `objeto_usado` (con `usosRestantes`) y `objeto_agotado`.
   - **Amuleto kalinago:** solo bonificadores y vínculo nativo (ya no se entrega en la aldea para dormir gratis).
-- **SIGUIENTE PASO, 6: acciones de comercio en puertos (por planificar con el autor).**
-  - **"Ir al mercado":** comprar y vender comida (la reserva a 5 de oro o más) y vender objetos. Quizá objetos básicos o mejoras del barco a la venta.
-  - **"Ir al rastrillo" (de segunda mano):** acción aparte; cada día hay un objeto especial sacado de una lista.
-  - Por decidir: si sigue la tirada de papel del mercado ("hoy solo hay alguien que compra"...), qué se vende y cómo funcionaría una mejora del barco.
-- Luego los pasos 7-11 del plan (contratar, monasterio, enterrar tesoro, dormir en la aldea, tablas que mandan a eventos).
+- **Acción "Ir al mercado" (paso 6 hecho, 17-nov; `core/mercado/`).** Solo en puertos. **Lo que gasta el día es entrar**; dentro, cada cosa es un botón aparte y se pulsa tantas veces como se quiera hasta "Salir del mercado" (decisión del autor: nada de "todo en un clic").
+  - `irAlMercado(estado, sitio, dados)`: saca el objeto del rastrillo de hoy (1 número del generador) y lo guarda en `mundo.mercado` (`{ rastrillo: { objeto, precio } | null }`), para que no cambie durante la visita y sobreviva a un guardado. Mientras está dentro, ni otra acción, ni volver a entrar, ni usar objetos (`comprobarQueSePuedeActuar` lo impide).
+  - Botones: `comprarComida` y `venderComida` (1 reserva por clic; `AJUSTES.precioComprarComida` 5 y `precioVenderComida` 2), `venderObjeto(posicion)` (uno a uno, a su `precioVenta`; efecto interno `vender_objeto` y cambio `objeto_vendido`), `comprarEnRastrillo(tirar?)` (si no cabe, se pregunta qué tira; si ni así cabe, ni se compra ni se cobra) y `salirDelMercado` (fase `comida`). `opcionesDelMercado` dice a la interfaz qué está activo y por qué no (`sin_oro`, `comida_al_maximo`, `sin_comida`).
+  - Vender cuenta como ganar oro: el contable gana sus 2d6 en cada venta.
+  - **Sin tirada de papel** ("hoy solo hay alguien que compra"): siempre se puede comprar y vender comida. **No hay tienda fija:** objetos solo en el rastrillo (o en eventos como el emporio de Bob). En las aldeas no hay mercado.
+  - **Rastrillo:** `data/rastrillo.json` (`objetos: [{ objeto, peso, precio }]`, elegido con pesos). El revisor exige que cueste más que su `precioVenta`. Provisional: los 4 objetos sin el ídolo, a precio doble.
+  - **Mejoras del barco (RECORDAR AL AUTOR EN EL SPRINT DEL COMBATE NAVAL):** se conseguirán en el rastrillo, en el emporio de Bob y en eventos; no ocupan inventario (como las bendiciones: probablemente condiciones de una categoría nueva `mejora`). Su efecto depende de cómo sea el combate naval (quizá con minijuego), así que no se ha programado nada.
+- **SIGUIENTE PASO, 7:** contratar (discurso, tripulación con oro y seguidores). Después: monasterio, enterrar tesoro (respetando `enterrar_tesoro`), dormir en la aldea y tablas que mandan a eventos.
 - **Cómo comprueba Claude los tests sin `ng test`:** compila `src/app/core` con `tsc` a una carpeta temporal fuera del repo (commonjs) y carga los `.spec.js` con un corredor mínimo que usa el `expect` de `vitest/dist/index.js`. No incluye `app.spec.ts` (por eso le salen 2 tests menos que al autor). La comprobación oficial sigue siendo el `ng test --watch=false` del autor.
 - **Límite conocido:** al amanecer (`iniciarTurno`) solo actúan las condiciones apuntadas; las partes y las otorgadas no ejecutan `cadaTurno` (hoy ninguna lo tiene).
 
@@ -752,7 +756,7 @@ Hasta el punto 8 no hace falta ni mapa ni libro de eventos. El 9 necesita el `.w
 - Completar y equilibrar las **listas de eventos por terreno** (ya pasadas del papel, faltan algunos eventos).
 - **Libro de eventos**, empezando por 3-4 muestras variadas (tirada, decisión, combinado, con llamada y vuelta, y una con regla especial como el mapa del tesoro).
 - Tabla de objetos mágicos (E037), lista de objetos y estadísticas de enemigos y barcos.
-- Decidir cómo encaja el guardado con el diseño roguelike (sección 3.7), el momento exacto de la **victoria** y el diseño del **minijuego naval**.
+- Decidir cómo encaja el guardado con el diseño roguelike (sección 3.7), el momento exacto de la **victoria** y el diseño del **minijuego naval** (y con él, las **mejoras del barco**).
 - Decidir qué **eventos solo pueden salir una vez por partida** (de momento, el mal está a bordo).
 - Retocar la **tabla para dormir en la aldea** (sección 4.7).
 - Equilibrar jugando los precios de `data/ajustes.json`: taberna (5), posada (5) y monasterio (7).

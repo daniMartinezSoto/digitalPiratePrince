@@ -10,10 +10,10 @@ export type CategoriaCondicion = (typeof CATEGORIAS_CONDICION)[number];
 // escribir en el JSON una prohibición que el juego no entienda ("viajarr").
 //   viajar:              la tormenta no te deja moverte.
 //   solicitar_audiencia: "rechazo a la autoridad" (amuleto maldito).
-//   ganar_oro:           "odio al dinero" (amuleto maldito).
+//   enterrar_tesoro:     "avaricioso" (amuleto maldito).
 //   nuevos_seguidores:   "hedor nauseabundo" (amuleto maldito).
-// Cada una se hará cumplir cuando exista su acción (viajar: Sprint 9; audiencias y seguidores: Sprint 6).
-export const PROHIBICIONES = ['viajar', 'solicitar_audiencia', 'ganar_oro', 'nuevos_seguidores'] as const;
+// Cada una se hará cumplir cuando exista su acción (viajar: Sprint 9; audiencias, seguidores y enterrar tesoro: Sprint 6).
+export const PROHIBICIONES = ['viajar', 'solicitar_audiencia', 'enterrar_tesoro', 'nuevos_seguidores'] as const;
 export type Prohibicion = (typeof PROHIBICIONES)[number];
 
 // Reglas con número que una condición CAMBIA mientras dura. Se suman a la regla normal:

@@ -12,9 +12,10 @@ import type { Lugar } from '../turno/lugar';
 
 // Acciones que existen por ahora. (Viajar, buscar información, contratar... irán llegando.)
 // "reposar" es la ACCIÓN de pasar el día recuperándose (core/acciones/reposar.ts).
+// "ir_al_mercado": entrar en el mercado de un puerto (core/mercado/mercado.ts).
 // No confundir con la FASE de descanso, que es dormir por la noche (core/turno/descansar.ts):
 // son dos cosas distintas y por eso tienen nombres distintos.
-export const ACCIONES = ['pescar', 'cazar', 'reposar'] as const;
+export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado'] as const;
 export type IdAccion = (typeof ACCIONES)[number];
 
 /**
@@ -44,13 +45,19 @@ export interface ResultadoAccion {
   eventos: string[];        // ids de eventos pendientes (hasta que exista el motor de eventos)
 }
 
-/** Paso 1 del molde: si la partida ha terminado o no es la fase de acción, error. */
+/**
+ * Paso 1 del molde: si la partida ha terminado, no es la fase de acción o ya está dentro del
+ * mercado (la acción de hoy ya está elegida: primero hay que salir), error.
+ */
 export function comprobarQueSePuedeActuar(estado: Estado, accion: string): void {
   if (estado.mundo.finPartida) {
     throw new Error(`${accion}: la partida ya ha terminado`);
   }
   if (estado.mundo.fase !== 'accion') {
     throw new Error(`${accion}: solo se puede hacer en la fase "accion" (la partida está en "${estado.mundo.fase}")`);
+  }
+  if (estado.mundo.mercado) {
+    throw new Error(`${accion}: está dentro del mercado (la acción de hoy ya está elegida); primero hay que salir`);
   }
 }
 

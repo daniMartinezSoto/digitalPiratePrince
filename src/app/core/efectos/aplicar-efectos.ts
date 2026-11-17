@@ -15,7 +15,6 @@ import { espaciosOcupados } from '../objetos/consultas';
 import { crearSeguidor } from '../seguidores/crear-seguidor';
 import { LISTAS_DE_NOMBRES } from '../seguidores/nombres';
 import { CARACTERISTICAS, type Efecto, type TipoRecurso } from '../tablas/efecto';
-import { tieneCondicion } from '../condiciones/condiciones-vigentes';
 import type { Cambio, MotivoDeRecurso } from './cambio';
 
 /** Catálogos en los que buscar las fichas. Por defecto, los del juego; los tests pueden pasar otros. */
@@ -52,7 +51,7 @@ export interface ResultadoEfectos {
  *   - Seguidores nuevos: entran si hay sitio (maximoSeguidoresActual: 3, o 4 con carisma) y ninguna condición lo prohíbe.
  *     Con el grupo lleno solo entran si el efecto dice a quién se despide (nunca a un inseparable).
  *   - "Un seguidor al azar" sin seguidores: no pasa nada, salvo que el efecto traiga "siNoHay".
- *   - El contable: cada vez que gana oro, gana 2d6 más. Odio al dinero: gana 1d6 menos.
+ *   - El contable: cada vez que gana oro, gana 2d6 más.
  *   - Fin de partida: vida o tripulación a 0 (derrota), la muerte de un seguidor "vital" (derrota),
  *     o un efecto ganar_partida / perder_partida.
  *     Cuando la partida termina, los efectos que quedan ya no se aplican.
@@ -114,6 +113,13 @@ function aplicarUno(estado: Estado, efecto: Efecto, dados: Dados, catalogos: Cat
       tirarObjeto(jugador, efecto.posicion, cambios);
       ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
       return;
+    case 'vender_objeto': {
+      comprobarPosiciones(jugador, [efecto.posicion]);
+      const [vendido] = jugador.inventario.splice(efecto.posicion, 1);
+      cambios.push({ tipo: 'objeto_vendido', objeto: vendido.id });
+      ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
+      return;
+    }
     case 'perder_objeto':
       perderObjeto(jugador, efecto.objeto, cambios);
       ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
@@ -164,7 +170,6 @@ function aplicarARecurso(estado: Estado, efecto: EfectoDeRecurso, dados: Dados, 
   if (destino === 'jugador') {
     cambiarRecursoDelJugador(jugador, efecto, catalogos.condiciones, cambios);
     aplicarContable(jugador, efecto, dados, catalogos.condiciones, cambios);
-    aplicarOdioAlDinero(jugador, efecto, dados, catalogos.condiciones, cambios);
     return;
   }
 
@@ -221,22 +226,6 @@ function aplicarContable(jugador: Jugador, efecto: EfectoDeRecurso, dados: Dados
   }
   const extra = dados.tirar('2d6').total;
   apuntarRecurso(jugador, 'oro', jugador.oro + extra, condiciones, cambios, 'contable');
-}
-
-const CONDICION_ODIO_AL_DINERO = 'odio_al_dinero';
-
-/**
- * Odio al dinero (maldición del amuleto maldito): cada vez que GANA oro, gana 1d6 menos.
- * Como mucho pierde lo que ese efecto le daba: si le dan 4 y sale un 5, se queda sin esos 4,
- * pero no le quita del oro que ya tenía. Es el contable al revés (y va después de él).
- */
-function aplicarOdioAlDinero(jugador: Jugador, efecto: EfectoDeRecurso, dados: Dados, condiciones: readonly Condicion[], cambios: Cambio[]): void {
-  const ganado = oroGanado(efecto);
-  if (ganado === 0 || !tieneCondicion(jugador, CONDICION_ODIO_AL_DINERO)) {
-    return;
-  }
-  const menos = Math.min(dados.tirar('1d6').total, ganado);
-  apuntarRecurso(jugador, 'oro', jugador.oro - menos, condiciones, cambios, 'odio_al_dinero');
 }
 
 /** Oro que GANA con ese efecto (sumar con cantidad positiva). 0 si no es ganar oro ("fijar" no es ganar). */

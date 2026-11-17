@@ -4,8 +4,7 @@ import type { TipoRecurso } from '../tablas/efecto';
 // Por qué cambia un recurso, cuando no es por el efecto en sí:
 //   contable:       el contable gana 2d6 de oro más cada vez que gana oro.
 //   objeto_magico:  +1 de fama al conseguir un objeto mágico.
-//   odio_al_dinero: con esa maldición, cada vez que gana oro gana 1d6 menos.
-export type MotivoDeRecurso = 'contable' | 'objeto_magico' | 'odio_al_dinero';
+export type MotivoDeRecurso = 'contable' | 'objeto_magico';
 
 /**
  * Un cambio REAL que ha hecho aplicarEfectos: el "chivato" para avisar al jugador.
@@ -39,6 +38,8 @@ export type Cambio =
   | { tipo: 'objeto_usado'; objeto: string; usosRestantes: number }
   // Se ha quedado sin usos y se tira solo.
   | { tipo: 'objeto_agotado'; objeto: string }
+  // Lo ha vendido en el mercado (el oro que le dan viene en un cambio de recurso aparte).
+  | { tipo: 'objeto_vendido'; objeto: string }
   // partes: las condiciones que lleva dentro (las dos mitades del amuleto maldito).
   | { tipo: 'condicion_puesta'; condicion: string; turnos?: number; partes?: string[] }
   | { tipo: 'condicion_quitada'; condicion: string }

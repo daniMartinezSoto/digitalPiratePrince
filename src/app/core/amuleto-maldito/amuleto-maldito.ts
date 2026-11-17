@@ -16,8 +16,7 @@ export interface ResultadoDelAmuleto {
   // sale como evento pendiente.
   evento?: string;
 
-  // Lo que pasa UNA SOLA VEZ, al recibirlo: gran fortaleza te cura del todo;
-  // odio al dinero te hace tirar todo tu oro por la borda.
+  // Lo que pasa UNA SOLA VEZ, al recibirlo: gran fortaleza te cura del todo.
   alRecibir?: EfectoDefinicion[];
 }
 

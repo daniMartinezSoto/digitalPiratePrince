@@ -11,7 +11,7 @@
     { "condicion": "hambre_insaciable" },
     { "condicion": "muy_mala_suerte" },
     { "condicion": "ambicion_desmedida" },
-    { "condicion": "odio_al_dinero", "alRecibir": [{ "tipo": "oro", "operacion": "todo" }] },
+    { "condicion": "avaricioso" },
     { "condicion": "hedor_nauseabundo" },
     { "condicion": "rechazo_a_la_autoridad" }
   ]

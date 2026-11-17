@@ -34,7 +34,7 @@ describe('consultas sobre condiciones', () => {
     it('una condición solo prohíbe lo suyo', () => {
       const jugador = jugadorCon(['tormenta']);
       expect(estaProhibido(jugador, 'solicitar_audiencia', CATALOGO)).toBe(false);
-      expect(estaProhibido(jugador, 'ganar_oro', CATALOGO)).toBe(false);
+      expect(estaProhibido(jugador, 'enterrar_tesoro', CATALOGO)).toBe(false);
     });
 
     it('una condición que no prohíbe nada no molesta', () => {

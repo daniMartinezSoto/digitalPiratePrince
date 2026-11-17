@@ -35,6 +35,7 @@ export function crearPartida(semilla: number, nombre: string): Partida {
       puertosVisitados: [],
       estadoDados: 0, // se apunta al final
       finPartida: null,
+      mercado: null,
     },
   };
 

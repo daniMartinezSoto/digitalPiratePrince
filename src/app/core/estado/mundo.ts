@@ -1,6 +1,14 @@
 import type { Fase } from './fase';
 import type { FinPartida } from './fin-partida';
 
+// Una visita al mercado en curso (acción "Ir al mercado"). Mientras dura, el jugador puede
+// comprar y vender cosas de una en una; al salir, se borra y termina la acción del día.
+export interface VisitaMercado {
+  // Lo que hay hoy en el rastrillo: se saca al entrar y no cambia durante la visita.
+  // null = ya lo ha comprado (o el rastrillo está vacío).
+  rastrillo: { objeto: string; precio: number } | null;
+}
+
 export interface Mundo {
   // Identificador del mapa en el que se encuentra el jugador.
   // Es null mientras todavía no se haya asignado ningún mapa.
@@ -54,4 +62,8 @@ export interface Mundo {
 
   // Si la partida ha terminado, cómo y por qué. null mientras se sigue jugando.
   finPartida: FinPartida | null;
+
+  // La visita al mercado en curso. null si no está en el mercado.
+  // Va en el estado para que, si se guarda a mitad de la visita, siga dentro con el mismo rastrillo.
+  mercado: VisitaMercado | null;
 }

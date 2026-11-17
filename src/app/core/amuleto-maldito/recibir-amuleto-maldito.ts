@@ -32,7 +32,7 @@ export interface ResultadoAmuleto {
  *      Si en una lista sale un evento (el deseo), esa parte no va dentro: el evento se devuelve
  *      en "eventos" y el amuleto lleva solo la otra.
  *   4. Aplica lo que pasa una sola vez al recibirlo ("alRecibir"): gran fortaleza te cura del todo
- *      (con la vida máxima ya aumentada); odio al dinero te deja sin oro.
+ *      (con la vida máxima ya aumentada).
  * Todo pasa por aplicarEfectos: no toca el estado recibido.
  */
 export function recibirAmuletoMaldito(

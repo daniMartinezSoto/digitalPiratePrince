@@ -71,6 +71,7 @@ describe('dónde se puede cada acción', () => {
       { accion: 'pescar', disponible: true },
       { accion: 'cazar', disponible: false, motivo: 'solo_salvaje' },
       { accion: 'reposar', disponible: true },
+      { accion: 'ir_al_mercado', disponible: false, motivo: 'solo_puerto' },
     ]);
   });
 
@@ -79,11 +80,13 @@ describe('dónde se puede cada acción', () => {
       { accion: 'pescar', disponible: false, motivo: 'sin_agua' },
       { accion: 'cazar', disponible: true },
       { accion: 'reposar', disponible: true },
+      { accion: 'ir_al_mercado', disponible: false, motivo: 'solo_puerto' },
     ]);
   });
 
-  it('accionesDisponibles: en la playa se pueden las tres', () => {
-    expect(accionesDisponibles(estadoCon(), EN_LA_PLAYA).every(a => a.disponible)).toBe(true);
+  it('accionesDisponibles: en la playa se pueden pescar, cazar y reposar (el mercado, no)', () => {
+    const disponibles = accionesDisponibles(estadoCon(), EN_LA_PLAYA).filter(a => a.disponible).map(a => a.accion);
+    expect(disponibles).toEqual(['pescar', 'cazar', 'reposar']);
   });
 });
 
