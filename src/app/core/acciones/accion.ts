@@ -15,9 +15,10 @@ import type { Lugar } from '../turno/lugar';
 // "ir_al_mercado": entrar en el mercado de un puerto (core/mercado/mercado.ts).
 // "dar_discurso", "contratar_marineros", "buscar_seguidor": las tres formas de contratar en un
 // puerto (core/contratar/contratar.ts). Cada día solo una: son acciones distintas.
+// "rezar", "descansar_en_monasterio": las dos acciones del monasterio (core/monasterio/monasterio.ts).
 // No confundir con la FASE de descanso, que es dormir por la noche (core/turno/descansar.ts):
 // son dos cosas distintas y por eso tienen nombres distintos.
-export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado', 'dar_discurso', 'contratar_marineros', 'buscar_seguidor'] as const;
+export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado', 'dar_discurso', 'contratar_marineros', 'buscar_seguidor', 'rezar', 'descansar_en_monasterio'] as const;
 export type IdAccion = (typeof ACCIONES)[number];
 
 /**

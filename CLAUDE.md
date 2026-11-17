@@ -42,7 +42,7 @@
   - ✅ `core/turno/`: `iniciarTurno` (amanecer), `comer` + `opcionesDeComida`, `descansar` + `opcionesDeDescanso` (cierra el día: `dia + 1`, fase `inicio`), `lugar.ts` (`LUGARES`) y un test de día completo. `core/personaje/vinculo-nativo.ts` (`tieneVinculoNativo`).
   - ✅ Estado: `Seguidor.inseparable?`. Cambio nuevo `seguidor_se_marcha`. `data/ajustes.json`: `precioTaberna` (5), `precioPosada` (5), `precioMonasterio` (7), `probabilidadEventoNocturno` (33).
   - **La fase de acción sigue siendo un hueco:** `iniciarTurno` deja el día en `accion` y todavía nada lo pasa a `comida`; lo harán las acciones del Sprint 6.
-- **Tests:** tras el paso 7 del Sprint 6, a Claude le pasan 801 en 42 archivos (sin `app.spec.ts`; al autor le deberían salir 803 en 43).
+- **Tests:** tras el paso 8 del Sprint 6, a Claude le pasan 819 en 43 archivos (sin `app.spec.ts`; al autor le deberían salir 821 en 44).
 
 **Siguiente:** Sprint 6 (seguidores, objetos y acciones sin eventos, sección 9). El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
@@ -147,7 +147,8 @@ Mundo   { mapaId: string | null;
           estadoDados: number;                                   // dados.obtenerEstado()
           finPartida: { resultado: 'victoria' | 'derrota';       // null mientras se juega
                         motivo: 'vida' | 'tripulacion' | 'seguidor' | 'evento' } | null;
-          accionEnCurso: AccionEnCurso | null }   // acción a medias: mercado, marineros o seguidor en espera (Sprint 6)
+          accionEnCurso: AccionEnCurso | null;    // acción a medias: mercado, marineros o seguidor en espera (Sprint 6)
+          nochePagada: boolean }                  // el grupo tiene pagada la noche en el monasterio; vuelve a false al acabar el día
 
 Seguidor { id: string; tipo: string; nombre: string; ataque: number;   // ataque = daño que hace si acierta
            resistencia, resistenciaMaxima: number;                     // resistencia = su vida
@@ -334,7 +335,11 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
   - **`dar_discurso`** (`darDiscurso`): 1d6 en `data/tablas/discurso.json` (id de tirada `discurso`): 1 multa de 1d6 de oro · 2-3 nadie te hace caso · 4 +1d6 de tripulación · 5 +1d6+3 · 6 +1d6+6 (confirmado por el autor). **Multa sin oro suficiente:** te quitan todo el oro y evento pendiente `arrestado` (E023).
   - **`contratar_marineros`**: `contratarMarineros` tira los disponibles (`AJUSTES.marinerosDisponibles`, "1d6x3+4") y `pagarMarineros(cantidad)`: **el jugador elige cuántos** (no está obligado a contratar a todos los disponibles), de 0 al máximo (`opcionesDeMarineros`: lo que hay, lo que puede pagar y lo que le cabe) a `AJUSTES.precioMarinero` (2). Desactivada con la tripulación al máximo o sin oro ni para uno.
   - **`buscar_seguidor`**: `buscarSeguidor` tira 2d6 en `data/tablas/contratar-seguidor.json` (id de tirada `contratar_seguidor`; 2-3 pirata anciano gratis, 4 pescador, 5 nativo, 6 forzudo, 7 artista, 8 cartógrafo = evento pendiente `cartografo`, 9 barbero, 10 navegante, 11 mono, 12 pirata experto; precios del catálogo). Después `contratarSeguidor(despedir?)` o `rechazarSeguidor`; `opcionesDelSeguidor` dice si llega el oro y si hay que despedir. Con el grupo lleno y sin despedir, no entra ni paga. Desactivada con hedor nauseabundo (motivo `prohibido` con la condición) o con el grupo lleno de inseparables.
-- **SIGUIENTE PASO, 8:** monasterio (rezar: quitar una maldición o el amuleto; descansar: 20 de oro por personaje, vida al máximo). Después: enterrar tesoro (respetando `enterrar_tesoro`), buscar información, audiencias, naufragio y ruinas, dormir en la aldea y mendigar (artista).
+- **Monasterio (paso 8 hecho, 17-nov; `core/monasterio/monasterio.ts`).** Dos acciones, solo en monasterios (motivo `solo_monasterio` fuera):
+  - **`rezar`**: te purificas: se quitan **TODAS** las maldiciones apuntadas (el amuleto maldito entero, el mal está a bordo, el maleficio del pirata...). Desactivada con `sin_maldiciones` ("No tienes ninguna maldición").
+  - **`descansar_en_monasterio`** (`descansarEnMonasterio(estado, sitio, dados)`): **descansa todo el grupo o nadie** (decidido por el autor: más simple y entendible). Cuesta `AJUSTES.precioDescansarMonasterio` (20) + `precioDescansarMonasterioPorSeguidor` (5) por cada seguidor (`precioDescansoEnMonasterio`); el jugador y cada seguidor recuperan **toda** la vida (con gran fortaleza, hasta 19). Desactivada con `nadie_herido` ("Nadie necesita descansar") o `sin_oro`.
+  - **El precio incluye dormir allí esa noche:** queda `mundo.nochePagada = true`; en la fase de descanso en el monasterio solo sale una opción, `techo_todos` gratis (sin eventos nocturnos y con su posibilidad de dormir genial). `descansar` lo vuelve a `false` al acabar el día.
+- **SIGUIENTE PASO, 9:** enterrar tesoro (respetando `enterrar_tesoro`). Después: buscar información, audiencias, naufragio y ruinas, dormir en la aldea y mendigar (artista).
 - **Cómo comprueba Claude los tests sin `ng test`:** compila `src/app/core` con `tsc` a una carpeta temporal fuera del repo (commonjs) y carga los `.spec.js` con un corredor mínimo que usa el `expect` de `vitest/dist/index.js`. No incluye `app.spec.ts` (por eso le salen 2 tests menos que al autor). La comprobación oficial sigue siendo el `ng test --watch=false` del autor.
 - **Límite conocido:** al amanecer (`iniciarTurno`) solo actúan las condiciones apuntadas; las partes y las otorgadas no ejecutan `cadaTurno` (hoy ninguna lo tiene).
 
@@ -456,7 +461,7 @@ Viajar · Buscar información (puertos y aldeas) · Descansar y cazar/pescar · 
 - *Capitán pirata (guarida):* +1 por cada 2 puntos de fama. 1-2 ofendes y no puedes volver · 3 no se permite · 4+ permitida (E045).
 - Otros modificadores: barbero-cirujano +1, influyente +1 en puertos y guaridas, nativo +1 en aldeas.
 
-**Visitar monasterio (una de dos) [digital, decidido en el Sprint 5; se programa en el Sprint 6]:** *Rezar* (descartar maldición, amuleto vudú o amuleto maldito; se pierden sus facultades) · *Descansar* (**20 de oro por personaje**: recupera toda la vida de ese personaje). **"Meditar" ya no existe.** Dormir en el monasterio en la fase de descanso **se paga** (ver 4.7).
+**Visitar monasterio (dos acciones; programadas en el Sprint 6, sección 3.11):** *Rezar* (te purificas: se quitan **todas** las maldiciones, el amuleto maldito incluido) · *Descansar* (**todo el grupo: 20 de oro + 5 por seguidor**; todos recuperan toda la vida y esa noche duermen allí sin volver a pagar). **"Meditar" ya no existe.** Sin haber descansado, dormir en el monasterio en la fase de descanso **se paga** (ver 4.7).
 
 **Investigar naufragio (1d6):** 1-2 barco maldito (1d6: 1-3 superar E078; 4 *corregido por el autor en su versión*; 5-6 superar E085), al superarlo 1d6×10 de oro y un tesoro (E036) · 3 guarida pirata (E038) · 4-5 hogar de alguien (1d6: 1 E086, 2 E071, 3 E076, 4 E072, 5 E083, 6 E075) · 6 restos antiguos (E053 y E021).
 

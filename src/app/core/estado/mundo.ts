@@ -85,4 +85,8 @@ export interface Mundo {
 
   // La acción a medias (ver AccionEnCurso arriba). null si no hay ninguna.
   accionEnCurso: AccionEnCurso | null;
+
+  // true = el grupo tiene ya pagada la noche en el monasterio: lo apunta la acción "Descansar en el
+  // monasterio" (su precio incluye dormir allí esa noche, todo el grupo). Vuelve a false al acabar el día.
+  nochePagada: boolean;
 }

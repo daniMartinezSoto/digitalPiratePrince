@@ -21,6 +21,15 @@ export interface Ajustes {
   /** Oro que cuesta dormir en un monasterio, por personaje. */
   precioMonasterio: number;
 
+  /**
+   * Oro que cuesta la ACCIÓN "Descansar en el monasterio" (todo el grupo recupera toda la vida y
+   * duerme allí esa noche): este precio + precioDescansarMonasterioPorSeguidor por cada seguidor.
+   */
+  precioDescansarMonasterio: number;
+
+  /** Oro de más por cada seguidor al "Descansar en el monasterio". */
+  precioDescansarMonasterioPorSeguidor: number;
+
   /** Porcentaje (0-100) de que pase un evento nocturno al dormir a la intemperie. En papel: 1-2 en 1d6 = 33. */
   probabilidadEventoNocturno: number;
 

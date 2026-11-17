@@ -75,6 +75,8 @@ describe('dónde se puede cada acción', () => {
       { accion: 'dar_discurso', disponible: false, motivo: 'solo_puerto' },
       { accion: 'contratar_marineros', disponible: false, motivo: 'solo_puerto' },
       { accion: 'buscar_seguidor', disponible: false, motivo: 'solo_puerto' },
+      { accion: 'rezar', disponible: false, motivo: 'solo_monasterio' },
+      { accion: 'descansar_en_monasterio', disponible: false, motivo: 'solo_monasterio' },
     ]);
   });
 
@@ -87,6 +89,8 @@ describe('dónde se puede cada acción', () => {
       { accion: 'dar_discurso', disponible: false, motivo: 'solo_puerto' },
       { accion: 'contratar_marineros', disponible: false, motivo: 'solo_puerto' },
       { accion: 'buscar_seguidor', disponible: false, motivo: 'solo_puerto' },
+      { accion: 'rezar', disponible: false, motivo: 'solo_monasterio' },
+      { accion: 'descansar_en_monasterio', disponible: false, motivo: 'solo_monasterio' },
     ]);
   });
 

@@ -36,6 +36,7 @@ export function crearPartida(semilla: number, nombre: string): Partida {
       estadoDados: 0, // se apunta al final
       finPartida: null,
       accionEnCurso: null,
+      nochePagada: false,
     },
   };
 

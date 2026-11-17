@@ -1,6 +1,7 @@
 import { AJUSTES } from '../ajustes/ajustes';
 import { condicionesQueProhiben, maximoSeguidoresActual } from '../condiciones/consultas';
 import type { Estado } from '../estado/estado';
+import { motivoParaNoDescansarEnMonasterio, motivoParaNoRezar } from '../monasterio/monasterio';
 import type { IdAccion, Sitio } from './accion';
 
 // REGLA DE LA INTERFAZ (decidida por el autor): una acción que no se puede hacer SIEMPRE se ve,
@@ -14,6 +15,9 @@ import type { IdAccion, Sitio } from './accion';
 //   tripulacion_al_maximo: ya tiene toda la tripulación que cabe en el barco.
 //   sin_oro:       no le llega el oro ni para lo más barato.
 //   grupo_lleno:   el grupo está lleno y no puede despedir a nadie (todos son inseparables).
+//   solo_monasterio: rezar y descansar en el monasterio solo en un monasterio.
+//   sin_maldiciones: rezar sin tener ninguna maldición ("No tienes ninguna maldición").
+//   nadie_herido:  descansar en el monasterio con todo el grupo con la vida al máximo ("Nadie necesita descansar").
 export type MotivoNoDisponible =
   | 'sin_agua'
   | 'solo_salvaje'
@@ -21,7 +25,10 @@ export type MotivoNoDisponible =
   | 'prohibido'
   | 'tripulacion_al_maximo'
   | 'sin_oro'
-  | 'grupo_lleno';
+  | 'grupo_lleno'
+  | 'solo_monasterio'
+  | 'sin_maldiciones'
+  | 'nadie_herido';
 
 /** Una acción tal como la enseña la interfaz: si no está disponible, sale desactivada con su motivo. */
 export interface AccionDisponible {
@@ -50,6 +57,7 @@ export function sePuedeCazar(sitio: Sitio): boolean {
  */
 export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponible[] {
   const enPuerto = sitio.lugar === 'puerto';
+  const enMonasterio = sitio.lugar === 'monasterio';
   return [
     sePuedePescar(sitio) ? { accion: 'pescar', disponible: true } : { accion: 'pescar', disponible: false, motivo: 'sin_agua' },
     sePuedeCazar(sitio) ? { accion: 'cazar', disponible: true } : { accion: 'cazar', disponible: false, motivo: 'solo_salvaje' },
@@ -58,6 +66,8 @@ export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponi
     enPuerto ? { accion: 'dar_discurso', disponible: true } : { accion: 'dar_discurso', disponible: false, motivo: 'solo_puerto' },
     enPuerto ? disponibleONo('contratar_marineros', motivoParaNoContratarMarineros(estado)) : noEnPuerto('contratar_marineros'),
     enPuerto ? disponibilidadDeBuscarSeguidor(estado) : noEnPuerto('buscar_seguidor'),
+    enMonasterio ? disponibleONo('rezar', motivoParaNoRezar(estado)) : noEnMonasterio('rezar'),
+    enMonasterio ? disponibleONo('descansar_en_monasterio', motivoParaNoDescansarEnMonasterio(estado)) : noEnMonasterio('descansar_en_monasterio'),
   ];
 }
 
@@ -95,4 +105,8 @@ function disponibleONo(accion: IdAccion, motivo: MotivoNoDisponible | undefined)
 
 function noEnPuerto(accion: IdAccion): AccionDisponible {
   return { accion, disponible: false, motivo: 'solo_puerto' };
+}
+
+function noEnMonasterio(accion: IdAccion): AccionDisponible {
+  return { accion, disponible: false, motivo: 'solo_monasterio' };
 }

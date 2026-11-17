@@ -4,6 +4,8 @@
   "precioTaberna": 4,
   "precioPosada": 5,
   "precioMonasterio": 7,
+  "precioDescansarMonasterio": 20,
+  "precioDescansarMonasterioPorSeguidor": 5,
   "probabilidadEventoNocturno": 33,
   "probabilidadDormirGenial": 50,
   "curaAlReposar": 2,
