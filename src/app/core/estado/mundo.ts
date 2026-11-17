@@ -29,6 +29,20 @@ export interface SeguidorEnEspera {
 
 export type AccionEnCurso = VisitaMercado | MarinerosDisponibles | SeguidorEnEspera;
 
+// MARCAS: cosas que quedan en una casilla concreta del mapa.
+//   evento:           al entrar en esa casilla salta ese evento (un tesoro señalado en un mapa...). Lleva "evento".
+//   tesoro_enterrado: el jugador enterró aquí un tesoro (no se puede enterrar otro ni desenterrarlo).
+// Irán llegando más tipos (casillas bloqueadas, aldeas ofendidas...).
+export const TIPOS_DE_MARCA = ['evento', 'tesoro_enterrado'] as const;
+export type TipoDeMarca = (typeof TIPOS_DE_MARCA)[number];
+
+export interface Marca {
+  col: number;
+  fila: number;
+  tipo: TipoDeMarca;
+  evento?: string; // solo en las marcas de tipo "evento"
+}
+
 export interface Mundo {
   // Identificador del mapa en el que se encuentra el jugador.
   // Es null mientras todavía no se haya asignado ningún mapa.
@@ -57,11 +71,7 @@ export interface Mundo {
 
   // Marcas: recuerdan elementos situados en posiciones concretas del mapa.
   // Por ejemplo, un tesoro que se encuentra en un hexágono.
-  marcas: {
-    col: number;
-    fila: number;
-    evento: string;
-  }[];
+  marcas: Marca[];
 
   // Pila de eventos: guarda los eventos que están pendientes de continuar
   // y el paso concreto en el que se encuentra cada uno.

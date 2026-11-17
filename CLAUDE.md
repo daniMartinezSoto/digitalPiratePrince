@@ -42,7 +42,7 @@
   - ✅ `core/turno/`: `iniciarTurno` (amanecer), `comer` + `opcionesDeComida`, `descansar` + `opcionesDeDescanso` (cierra el día: `dia + 1`, fase `inicio`), `lugar.ts` (`LUGARES`) y un test de día completo. `core/personaje/vinculo-nativo.ts` (`tieneVinculoNativo`).
   - ✅ Estado: `Seguidor.inseparable?`. Cambio nuevo `seguidor_se_marcha`. `data/ajustes.json`: `precioTaberna` (5), `precioPosada` (5), `precioMonasterio` (7), `probabilidadEventoNocturno` (33).
   - **La fase de acción sigue siendo un hueco:** `iniciarTurno` deja el día en `accion` y todavía nada lo pasa a `comida`; lo harán las acciones del Sprint 6.
-- **Tests:** tras el paso 8 del Sprint 6, a Claude le pasan 819 en 43 archivos (sin `app.spec.ts`; al autor le deberían salir 821 en 44).
+- **Tests:** tras el paso 8 del Sprint 6, a Claude le pasan 827 en 44 archivos (sin `app.spec.ts`; al autor le deberían salir 829 en 45).
 
 **Siguiente:** Sprint 6 (seguidores, objetos y acciones sin eventos, sección 9). El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
@@ -141,7 +141,7 @@ Mundo   { mapaId: string | null;
           dia: number;
           fase: 'inicio' | 'accion' | 'comida' | 'descanso';     // momento del día (core/estado/fase.ts)
           banderas: Record<string, boolean | number | string>;   // hechos generales
-          marcas: { col, fila, evento }[];                       // cosas colocadas en hexágonos
+          marcas: { col, fila, tipo: 'evento' | 'tesoro_enterrado', evento? }[];   // cosas en casillas concretas
           pilaEventos: { evento, paso }[];
           puertosVisitados: string[];                            // ids de puertos principales
           estadoDados: number;                                   // dados.obtenerEstado()
@@ -339,7 +339,8 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
   - **`rezar`**: te purificas: se quitan **TODAS** las maldiciones apuntadas (el amuleto maldito entero, el mal está a bordo, el maleficio del pirata...). Desactivada con `sin_maldiciones` ("No tienes ninguna maldición").
   - **`descansar_en_monasterio`** (`descansarEnMonasterio(estado, sitio, dados)`): **descansa todo el grupo o nadie** (decidido por el autor: más simple y entendible). Cuesta `AJUSTES.precioDescansarMonasterio` (20) + `precioDescansarMonasterioPorSeguidor` (5) por cada seguidor (`precioDescansoEnMonasterio`); el jugador y cada seguidor recuperan **toda** la vida (con gran fortaleza, hasta 19). Desactivada con `nadie_herido` ("Nadie necesita descansar") o `sin_oro`.
   - **El precio incluye dormir allí esa noche:** queda `mundo.nochePagada = true`; en la fase de descanso en el monasterio solo sale una opción, `techo_todos` gratis (sin eventos nocturnos y con su posibilidad de dormir genial). `descansar` lo vuelve a `false` al acabar el día.
-- **SIGUIENTE PASO, 9:** enterrar tesoro (respetando `enterrar_tesoro`). Después: buscar información, audiencias, naufragio y ruinas, dormir en la aldea y mendigar (artista).
+- **Enterrar tesoro (paso 9 hecho, 17-nov; `core/acciones/enterrar-tesoro.ts`).** Acción `enterrar_tesoro`: −`AJUSTES.oroAlEnterrarTesoro` (100) de oro, +1 de fama. Solo en tierra salvaje (lugar `intemperie`: playa, jungla, jungla profunda). **Sin objeto mágico** (decidido por el autor) y **nada se desentierra**. **Un tesoro por casilla:** queda una marca `tesoro_enterrado` en `mundo.marcas` (las marcas tienen ya `tipo`: `evento` o `tesoro_enterrado`); en esa casilla sale desactivada con `tesoro_ya_enterrado` ("Ya has enterrado un tesoro aquí"). `Sitio` lleva un `hex` opcional (lo dará el mapa); sin él no se puede comprobar ni marcar. Desactivada también con `prohibido` (avaricioso, con la condición) o `sin_oro`.
+- **SIGUIENTE PASO, 10:** buscar información. Después: audiencias, naufragio y ruinas, dormir en la aldea y mendigar (artista).
 - **Cómo comprueba Claude los tests sin `ng test`:** compila `src/app/core` con `tsc` a una carpeta temporal fuera del repo (commonjs) y carga los `.spec.js` con un corredor mínimo que usa el `expect` de `vitest/dist/index.js`. No incluye `app.spec.ts` (por eso le salen 2 tests menos que al autor). La comprobación oficial sigue siendo el `ng test --watch=false` del autor.
 - **Límite conocido:** al amanecer (`iniciarTurno`) solo actúan las condiciones apuntadas; las partes y las otorgadas no ejecutan `cadaTurno` (hoy ninguna lo tiene).
 
@@ -465,7 +466,7 @@ Viajar · Buscar información (puertos y aldeas) · Descansar y cazar/pescar · 
 
 **Investigar naufragio (1d6):** 1-2 barco maldito (1d6: 1-3 superar E078; 4 *corregido por el autor en su versión*; 5-6 superar E085), al superarlo 1d6×10 de oro y un tesoro (E036) · 3 guarida pirata (E038) · 4-5 hogar de alguien (1d6: 1 E086, 2 E071, 3 E076, 4 E072, 5 E083, 6 E075) · 6 restos antiguos (E053 y E021).
 
-**Enterrar tesoro (tierra, jungla, playa; no agua, puerto ni aldea):** 100 de oro = **1 de Fama**. Añadiendo un objeto mágico: +1 fama adicional (máximo 2 por entierro). No se puede enterrar solo un objeto mágico.
+**Enterrar tesoro [digital, Sprint 6]:** solo en playa, jungla o jungla profunda. 100 de oro = **1 de Fama**. Sin objetos mágicos. Un tesoro por casilla, y no se desentierra.
 
 **Registrar ruinas (2d6):** 2 E022 · 3 E049 · 4 E053 dos veces · 5 E078 y, si se supera, cofre E021 · 6-7 ciudad pirata neutral: E038 yendo directo al punto 3 · 8-9 E040 · 10 gruta E088 · 11 lámpara mágica: 1d6, con 3+ lee E045 · 12 recibes "el ídolo antediluviano" (si ya lo tienes, E037).
 

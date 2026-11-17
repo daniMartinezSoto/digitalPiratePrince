@@ -16,9 +16,10 @@ import type { Lugar } from '../turno/lugar';
 // "dar_discurso", "contratar_marineros", "buscar_seguidor": las tres formas de contratar en un
 // puerto (core/contratar/contratar.ts). Cada día solo una: son acciones distintas.
 // "rezar", "descansar_en_monasterio": las dos acciones del monasterio (core/monasterio/monasterio.ts).
+// "enterrar_tesoro": 100 de oro = 1 de fama, en tierra salvaje (core/acciones/enterrar-tesoro.ts).
 // No confundir con la FASE de descanso, que es dormir por la noche (core/turno/descansar.ts):
 // son dos cosas distintas y por eso tienen nombres distintos.
-export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado', 'dar_discurso', 'contratar_marineros', 'buscar_seguidor', 'rezar', 'descansar_en_monasterio'] as const;
+export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado', 'dar_discurso', 'contratar_marineros', 'buscar_seguidor', 'rezar', 'descansar_en_monasterio', 'enterrar_tesoro'] as const;
 export type IdAccion = (typeof ACCIONES)[number];
 
 /**
@@ -27,6 +28,10 @@ export type IdAccion = (typeof ACCIONES)[number];
  */
 export interface Sitio {
   lugar: Lugar;
+  // En qué casilla del mapa está. Lo dirá el mapa (Sprint 9); hasta entonces es opcional.
+  // Lo usan las reglas que recuerdan cosas por casilla (un tesoro enterrado por hexágono):
+  // sin casilla, esas reglas no pueden comprobar nada y no limitan.
+  hex?: { col: number; fila: number };
   // En tierra: ¿hay agua en una casilla de al lado? (Para pescar desde la orilla.)
   // A bordo no hace falta ponerlo: el barco siempre está en el agua.
   juntoAlAgua?: boolean;

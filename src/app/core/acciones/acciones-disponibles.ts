@@ -2,6 +2,7 @@ import { AJUSTES } from '../ajustes/ajustes';
 import { condicionesQueProhiben, maximoSeguidoresActual } from '../condiciones/consultas';
 import type { Estado } from '../estado/estado';
 import { motivoParaNoDescansarEnMonasterio, motivoParaNoRezar } from '../monasterio/monasterio';
+import { motivoParaNoEnterrar } from './enterrar-tesoro';
 import type { IdAccion, Sitio } from './accion';
 
 // REGLA DE LA INTERFAZ (decidida por el autor): una acción que no se puede hacer SIEMPRE se ve,
@@ -18,6 +19,7 @@ import type { IdAccion, Sitio } from './accion';
 //   solo_monasterio: rezar y descansar en el monasterio solo en un monasterio.
 //   sin_maldiciones: rezar sin tener ninguna maldición ("No tienes ninguna maldición").
 //   nadie_herido:  descansar en el monasterio con todo el grupo con la vida al máximo ("Nadie necesita descansar").
+//   tesoro_ya_enterrado: en esta casilla ya enterró un tesoro ("Ya has enterrado un tesoro aquí").
 export type MotivoNoDisponible =
   | 'sin_agua'
   | 'solo_salvaje'
@@ -28,7 +30,8 @@ export type MotivoNoDisponible =
   | 'grupo_lleno'
   | 'solo_monasterio'
   | 'sin_maldiciones'
-  | 'nadie_herido';
+  | 'nadie_herido'
+  | 'tesoro_ya_enterrado';
 
 /** Una acción tal como la enseña la interfaz: si no está disponible, sale desactivada con su motivo. */
 export interface AccionDisponible {
@@ -68,6 +71,7 @@ export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponi
     enPuerto ? disponibilidadDeBuscarSeguidor(estado) : noEnPuerto('buscar_seguidor'),
     enMonasterio ? disponibleONo('rezar', motivoParaNoRezar(estado)) : noEnMonasterio('rezar'),
     enMonasterio ? disponibleONo('descansar_en_monasterio', motivoParaNoDescansarEnMonasterio(estado)) : noEnMonasterio('descansar_en_monasterio'),
+    disponibilidadDeEnterrar(estado, sitio),
   ];
 }
 
@@ -97,6 +101,16 @@ export function disponibilidadDeBuscarSeguidor(estado: Estado): AccionDisponible
     return { accion: 'buscar_seguidor', disponible: false, motivo: 'grupo_lleno' };
   }
   return { accion: 'buscar_seguidor', disponible: true };
+}
+
+function disponibilidadDeEnterrar(estado: Estado, sitio: Sitio): AccionDisponible {
+  const noSePuede = motivoParaNoEnterrar(estado, sitio);
+  if (!noSePuede) {
+    return { accion: 'enterrar_tesoro', disponible: true };
+  }
+  return noSePuede.motivo === 'prohibido'
+    ? { accion: 'enterrar_tesoro', disponible: false, motivo: 'prohibido', condiciones: noSePuede.condiciones }
+    : { accion: 'enterrar_tesoro', disponible: false, motivo: noSePuede.motivo };
 }
 
 function disponibleONo(accion: IdAccion, motivo: MotivoNoDisponible | undefined): AccionDisponible {

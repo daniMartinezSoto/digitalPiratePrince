@@ -30,6 +30,9 @@ export interface Ajustes {
   /** Oro de más por cada seguidor al "Descansar en el monasterio". */
   precioDescansarMonasterioPorSeguidor: number;
 
+  /** Oro que se entierra con la acción "Enterrar tesoro" (a cambio de 1 punto de fama). */
+  oroAlEnterrarTesoro: number;
+
   /** Porcentaje (0-100) de que pase un evento nocturno al dormir a la intemperie. En papel: 1-2 en 1d6 = 33. */
   probabilidadEventoNocturno: number;
 
