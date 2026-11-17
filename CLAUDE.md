@@ -42,7 +42,7 @@
   - ✅ `core/turno/`: `iniciarTurno` (amanecer), `comer` + `opcionesDeComida`, `descansar` + `opcionesDeDescanso` (cierra el día: `dia + 1`, fase `inicio`), `lugar.ts` (`LUGARES`) y un test de día completo. `core/personaje/vinculo-nativo.ts` (`tieneVinculoNativo`).
   - ✅ Estado: `Seguidor.inseparable?`. Cambio nuevo `seguidor_se_marcha`. `data/ajustes.json`: `precioTaberna` (5), `precioPosada` (5), `precioMonasterio` (7), `probabilidadEventoNocturno` (33).
   - **La fase de acción sigue siendo un hueco:** `iniciarTurno` deja el día en `accion` y todavía nada lo pasa a `comida`; lo harán las acciones del Sprint 6.
-- **Tests:** tras el paso 5a del Sprint 6, a Claude le pasan 713 en 39 archivos (sin `app.spec.ts`; al autor le deberían salir 715 en 40).
+- **Tests:** tras el paso 5b del Sprint 6, a Claude le pasan 746 en 40 archivos (sin `app.spec.ts`; al autor le deberían salir 748 en 41).
 
 **Siguiente:** Sprint 6 (seguidores, objetos y acciones sin eventos, sección 9). El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
@@ -158,7 +158,8 @@ CondicionActiva { id: string; turnosRestantes?: number } // sin turnos = hasta q
 
 // Catálogos (core/catalogos/, datos en data/): lo que no cambia durante la partida
 Objeto    { id, nombre, descripcion; imagen?; tipo: 'pasivo' | 'activo'; usosMaximos?; espacios? (1);
-            precioVenta? (sin él no se vende); magico? (+1 fama al conseguirlo); modificadores? }
+            cuandoSeUsa? ('accion' | 'evento' | 'combate'; solo activos); alUsar? (efectos al usarlo; solo activos);
+            precioVenta (obligatorio, mágicos incluidos); magico? (+1 fama al conseguirlo); modificadores?; otorga? }
 Habilidad { id, nombre, descripcion; imagen?; tipo: 'pasiva' | 'activa'; modificadores? }  // sin cooldowns
 Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicion' | 'enfermedad' | 'clima' | 'otra';
             modificadores?;                       // bonificadores a tiradas mientras dura
@@ -224,7 +225,7 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 - **Condiciones activas (lo más importante):** maldiciones, bendiciones, enfermedades, tormenta, lluvias, escorbuto, "el mal está a bordo"... son **un solo sistema**. Cada condición está en `data/condiciones.json` y declara: **bonificadores** (campo `modificadores`, como los sobrenombres), **prohibiciones** (no solicitar audiencias, no conseguir oro, no viajar...), **cambios de regla** (fama objetivo 12, 2 reservas de comida al día...), **qué pasa al empezar cada turno** (normalmente llamar a un evento con su tirada) y **cómo se quita** (monasterio, bruja, biblia, cuando amaina, tras N turnos...). Se aplican y se quitan cuando toca, **avisando siempre al jugador**.
 - **Fases de acción perdidas** (E006, E007, E009, E013, E029...): contador en el estado; ese turno no hay acción, pero se gasta comida.
 - **Eventos aplazados descartados** ("lee E018 al principio del siguiente turno"): se llama al evento directamente.
-- **Objetos:** catálogo con dibujo (`imagen`), `espacios` (1 por defecto; p. ej. el ídolo dorado 4), `precioVenta`, permanentes o con usos. **Vender objetos** será una acción en puertos y aldeas (Sprint 6).
+- **Objetos:** catálogo con dibujo (`imagen`), `espacios` (1 por defecto; p. ej. el ídolo dorado 4), `precioVenta` (todos lo tienen), permanentes o con usos. **Vender objetos** será parte de la acción "Ir al mercado", solo en puertos (Sprint 6, paso 6). **En las aldeas no se cambian objetos por nada.**
 - **Seguidores sin inventario:** solo dan habilidades y combaten. Las reglas del libro sobre su inventario o sobre cargarlos (E039, E070...) se reescriben en cada evento.
 - **Bonificadores "por cada X de fama"** (audiencia con el capitán pirata, E038, E058, E074, E080): `calcularModificador` los admitirá (Sprint 4).
 - **Dados:** se admite `+N`; `1d6x1d6` se descarta y se sustituye por algo parecido (`2d6x3`).
@@ -312,7 +313,18 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
   - **Al quitar una condición o perder un objeto** (`ajustarALosTopes` en `aplicarEfectos`): si la vida pasa del tope nuevo, baja; si sobran seguidores, se marcha uno al azar (los inseparables no entran en el sorteo; si todos lo son, no se va nadie). Cambio `seguidor_se_marcha` con `motivo: 'carisma_perdido'`.
   - **`el_maldito`**: `crearPartida` le da el amuleto al empezar (aquí y no en `crearPersonaje`, porque pasa por `aplicarEfectos`, que trabaja con el estado). `Partida` tiene un campo nuevo `eventos` (el deseo, si toca). `estadoDados` se apunta después del amuleto.
   - Tests en `core/amuleto-maldito/amuleto-maldito.spec.ts` (47). Semillas de "el maldito": 7 (deseo + hedor), 45 (carisma + ambición), 87 (gran fortaleza + odio al dinero).
-- **SIGUIENTE PASO, 5b (objetos):** usar (gastar usos; a 0 se descarta), descartar, elegir qué tiras si no cabe (como `despedir` en los seguidores) y vender en puertos y aldeas. Luego los pasos 6-11 del plan (comprar/vender comida con la reserva a 5 de oro o más, contratar, monasterio, enterrar tesoro, dormir en la aldea, tablas que mandan a eventos).
+- **Objetos (paso 5b hecho, 17-nov).**
+  - **Cuándo se usa cada objeto activo:** campo `cuandoSeUsa` en la ficha (`MOMENTOS_DE_USO`): `accion` (al empezar la fase de acción, antes de elegir; **no gasta la acción** y se pueden usar varios), `evento` (botón al tirar los dados de un evento: mano de mono, amuleto del destino; Sprint 10) y `combate` (botón junto a "Atacar"; Sprint 7). Solo `accion` está programado. Campo `alUsar`: efectos al usarlo, escritos como los de las tablas. El revisor exige `cuandoSeUsa` en los activos y prohíbe `cuandoSeUsa`/`alUsar` en los pasivos.
+  - **Precio obligatorio** (`precioVenta`) en todos los objetos, mágicos incluidos (provisionales: ídolo 800, brújula 100, mano de mono 80, amuleto del destino 60, kalinago 40). Vender no quita la fama del objeto mágico.
+  - **`core/objetos/`:** `usarObjeto(estado, posicion, dados)` (solo en fase `accion` y con objetos de `accion`; gasta un uso, aplica `alUsar`; a 0 usos se tira solo), `tirarObjeto(estado, posicion, dados)` (cualquier fase, gratis) y consultas `espaciosOcupados`, `espaciosLibres`, `espaciosQueFaltan`, `cabeObjeto`, `objetosUsablesAhora`. Los objetos del inventario se señalan por su **posición** (0 = el primero).
+  - **Elegir qué tiras si no cabe** (como `despedir`): el juego pregunta antes y añade `tirar: [posiciones]` al `ganar_objeto` (puede ser más de uno: el ídolo ocupa 4). Si tirándolos cabe, se tiran y entra; si no, no se tira nada y no entra. `tirar` no se escribe en el JSON.
+  - **Efectos internos** (`EFECTOS_INTERNOS`, no se escriben en el JSON; el revisor los rechaza): `gastar_uso` y `tirar_objeto`. Cambios nuevos: `objeto_tirado`, `objeto_usado` (con `usosRestantes`) y `objeto_agotado`.
+  - **Amuleto kalinago:** solo bonificadores y vínculo nativo (ya no se entrega en la aldea para dormir gratis).
+- **SIGUIENTE PASO, 6: acciones de comercio en puertos (por planificar con el autor).**
+  - **"Ir al mercado":** comprar y vender comida (la reserva a 5 de oro o más) y vender objetos. Quizá objetos básicos o mejoras del barco a la venta.
+  - **"Ir al rastrillo" (de segunda mano):** acción aparte; cada día hay un objeto especial sacado de una lista.
+  - Por decidir: si sigue la tirada de papel del mercado ("hoy solo hay alguien que compra"...), qué se vende y cómo funcionaría una mejora del barco.
+- Luego los pasos 7-11 del plan (contratar, monasterio, enterrar tesoro, dormir en la aldea, tablas que mandan a eventos).
 - **Cómo comprueba Claude los tests sin `ng test`:** compila `src/app/core` con `tsc` a una carpeta temporal fuera del repo (commonjs) y carga los `.spec.js` con un corredor mínimo que usa el `expect` de `vitest/dist/index.js`. No incluye `app.spec.ts` (por eso le salen 2 tests menos que al autor). La comprobación oficial sigue siendo el `ng test --watch=false` del autor.
 - **Límite conocido:** al amanecer (`iniciarTurno`) solo actúan las condiciones apuntadas; las partes y las otorgadas no ejecutan `cadaTurno` (hoy ninguna lo tiene).
 
@@ -426,7 +438,7 @@ Viajar · Buscar información (puertos y aldeas) · Descansar y cazar/pescar · 
 - *Cazar:* en hex de tierra sin puerto ni aldea. Tirada (PDF: 2d6, tabla de 1 a 6: **por defecto 1d6**): 1 nada · 2-3 +10 reservas y −1 PV · 4-5 +10 reservas · 6 +15 reservas.
 - Las cantidades de pesca/caza estaban pensadas para un grupo que gastaba una reserva por miembro: **hay que reequilibrarlas** (sección 5).
 
-**Comprar y vender comida (puertos y aldeas).** 1d6: 1 alguien que solo compra · 2-3 alguien que solo vende · 4-6 mercado (compra y venta). En puertos: comprar a 2 de oro la reserva, vender a 1. En aldeas no aceptan monedas: objeto normal = 4 reservas, objeto mágico = 10 reservas (con seguidor nativo se puede usar oro como en los puertos).
+**Comprar y vender comida (puertos y aldeas).** 1d6: 1 alguien que solo compra · 2-3 alguien que solo vende · 4-6 mercado (compra y venta). En puertos: comprar a 2 de oro la reserva, vender a 1. ~~En aldeas: objetos por comida~~ **[Digital] eliminado: en las aldeas no se cambian objetos por nada.** Comprar y vender comida pasa a la acción "Ir al mercado" (Sprint 6, paso 6).
 
 **Solicitar audiencia (1d6).**
 - *Gobernador (puerto):* 1 guardia te reconoce (E057) y no puedes repetir en este puerto · 2-3 denegada hoy, mañana +1 (no acumulable, solo al día siguiente) · 4 atiende su hija (E044) · 5-6 permitida (E042).
@@ -476,7 +488,7 @@ Antes "alojamiento". **"Taberna" es donde se come en un puerto; "posada", donde 
 
 - **Evento nocturno:** a la intemperie, salvo en un puerto: `AJUSTES.probabilidadEventoNocturno` (33 %, el "1-2 en 1d6" del papel), elegido de la lista ponderada de eventos nocturnos.
 - Solo se curan los que duermen bajo techo (o a bordo).
-- **Tabla de papel para dormir en la aldea (a retocar en el Sprint 6):** con vínculo nativo se descansa como en el barco; con amuleto kalinago se puede entregar para dormir gratis siempre. Si no, 1d6 (+1 por cada objeto entregado como regalo): 1 ofendes (chequeo de Ingenio: éxito → noche a la intemperie pero puedes seguir en la aldea; fallo → debes irte y la aldea queda bloqueada) · 2 duermes a la intemperie con tirada de evento nocturno · 3 duermes a las afueras sin evento nocturno pero sin descanso · 4-7 descansas · 8+ descansas y un nativo se une (seguidor nativo). Las deserciones de esa tabla se eliminan.
+- **Tabla de papel para dormir en la aldea (a retocar en el Sprint 6):** con vínculo nativo se descansa como en el barco. Si no, 1d6 (+1 por cada objeto entregado como regalo, **a revisar**: en las aldeas ya no se cambian objetos por nada): 1 ofendes (chequeo de Ingenio: éxito → noche a la intemperie pero puedes seguir en la aldea; fallo → debes irte y la aldea queda bloqueada) · 2 duermes a la intemperie con tirada de evento nocturno · 3 duermes a las afueras sin evento nocturno pero sin descanso · 4-7 descansas · 8+ descansas y un nativo se une (seguidor nativo). Las deserciones de esa tabla se eliminan.
 
 ### 4.8 Combate
 Por rondas hasta que un bando huye o es eliminado. **El daño se aplica a la vez.** Cada ronda se emparejan luchadores (si un bando supera al otro, uno puede enfrentarse a varios). Todos lanzan 1d6 y restan daño a la resistencia del rival.

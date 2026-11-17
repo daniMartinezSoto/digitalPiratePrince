@@ -13,6 +13,8 @@
     "descripcion": "Concede dos deseos: puedes evitar hasta dos eventos. Se descarta después.",
     "tipo": "activo",
     "usosMaximos": 2,
+    "cuandoSeUsa": "evento",
+    "precioVenta": 80,
     "magico": true
   },
   {
@@ -21,6 +23,8 @@
     "descripcion": "Te permite elegir el resultado del dado en un evento. Se descarta después.",
     "tipo": "activo",
     "usosMaximos": 1,
+    "cuandoSeUsa": "evento",
+    "precioVenta": 60,
     "magico": true
   },
   {
@@ -28,14 +32,21 @@
     "nombre": "Brújula mágica",
     "descripcion": "Puedes mover 1 hexágono más al viajar en barco y el evento \"perdidos\" no te afecta.",
     "tipo": "pasivo",
+    "precioVenta": 100,
     "magico": true
   },
   {
     "id": "amuleto_kalinago",
     "nombre": "Amuleto kalinago",
-    "descripcion": "Los nativos te reciben mejor. Puedes entregarlo en una aldea a cambio de descansar gratis allí para siempre.",
+    "descripcion": "Los nativos te reciben mejor: +1 al solicitar audiencia y al buscar información en las aldeas. Te da el vínculo nativo.",
     "tipo": "pasivo",
-    "modificadores": { "audiencia_aldea": 1, "buscar_info_aldea": 1 },
-    "otorga": ["vinculo_nativo"]
+    "precioVenta": 40,
+    "modificadores": {
+      "audiencia_aldea": 1,
+      "buscar_info_aldea": 1
+    },
+    "otorga": [
+      "vinculo_nativo"
+    ]
   }
 ]

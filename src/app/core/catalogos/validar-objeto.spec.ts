@@ -9,6 +9,8 @@ function manoDeMono(): Objeto {
     descripcion: 'Puedes evitar hasta dos eventos. Descártala después.',
     tipo: 'activo',
     usosMaximos: 2,
+    cuandoSeUsa: 'evento',
+    precioVenta: 80,
     magico: true,
   };
 }
@@ -30,6 +32,7 @@ function amuletoKalinago(): Objeto {
     nombre: 'Amuleto kalinago',
     descripcion: 'Los nativos te reciben mejor.',
     tipo: 'pasivo',
+    precioVenta: 40,
     modificadores: { audiencia_aldea: 1 },
   };
 }

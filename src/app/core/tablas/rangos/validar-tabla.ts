@@ -6,6 +6,7 @@ import { CATEGORIAS_CONDICION } from '../../catalogos/condicion';
 import {
   CARACTERISTICAS,
   DESTINOS,
+  EFECTOS_INTERNOS,
   FINES_DE_PARTIDA,
   OPERACIONES,
   OTROS_EFECTOS,
@@ -118,6 +119,9 @@ function validarFila(fila: Fila, nombre: string): string[] {
 export function validarEfecto(efecto: unknown, donde: string): string[] {
   const e = efecto as Record<string, unknown> & { tipo: string };
 
+  if ((EFECTOS_INTERNOS as readonly string[]).includes(e.tipo)) {
+    return [`${donde}: "${e.tipo}" es un efecto interno del juego (lo usa el inventario): no se escribe en el JSON.`];
+  }
   if (!TIPOS_EFECTO.includes(e.tipo)) {
     return [`${donde}: el tipo de efecto "${e.tipo}" no existe (válidos: ${TIPOS_EFECTO.join(', ')}).`];
   }
@@ -128,6 +132,7 @@ export function validarEfecto(efecto: unknown, donde: string): string[] {
       return soloEstosCampos(e, [], donde);
     case 'ganar_objeto':
     case 'perder_objeto':
+      // "tirar" no se escribe en el JSON (lo elige el jugador cuando no cabe): aquí sobra.
       return [...soloEstosCampos(e, ['objeto'], donde), ...validarIdObjeto(e['objeto'], donde)];
     case 'poner_condicion':
       return [

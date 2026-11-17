@@ -33,6 +33,12 @@ export type Cambio =
   | { tipo: 'objeto_ganado'; objeto: string }
   | { tipo: 'objeto_no_cabe'; objeto: string }
   | { tipo: 'objeto_perdido'; objeto: string }
+  // El jugador lo ha tirado (porque quiere o para hacer sitio a otro).
+  | { tipo: 'objeto_tirado'; objeto: string }
+  // Ha usado un objeto: le quedan esos usos (0 = se ha agotado, y a continuación viene objeto_agotado).
+  | { tipo: 'objeto_usado'; objeto: string; usosRestantes: number }
+  // Se ha quedado sin usos y se tira solo.
+  | { tipo: 'objeto_agotado'; objeto: string }
   // partes: las condiciones que lleva dentro (las dos mitades del amuleto maldito).
   | { tipo: 'condicion_puesta'; condicion: string; turnos?: number; partes?: string[] }
   | { tipo: 'condicion_quitada'; condicion: string }

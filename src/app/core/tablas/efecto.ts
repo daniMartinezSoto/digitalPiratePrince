@@ -67,10 +67,19 @@ export const OTROS_EFECTOS = [
 // ("2d6", "1d6x10", "1d6+1", "-1d6"). El signo menos delante = se pierde.
 export type CantidadDefinicion = number | string;
 
+// Efectos INTERNOS: los usa el propio juego cuando el jugador hace algo con su inventario.
+// NO se escriben en el JSON (el revisor los rechaza). "posicion" = el lugar del objeto en el
+// inventario (0 = el primero) en el momento de aplicar el efecto.
+//   gastar_uso:   gasta un uso de ese objeto; a 0 usos se tira solo (core/objetos/usar-objeto.ts).
+//   tirar_objeto: el jugador tira ese objeto (core/objetos/tirar-objeto.ts).
+export const EFECTOS_INTERNOS = ['gastar_uso', 'tirar_objeto'] as const;
+
 // Efectos que son iguales en el JSON y ya resueltos (no llevan dados).
 type EfectoSinDados =
   | { tipo: FinDePartida }
-  | { tipo: 'ganar_objeto'; objeto: string }
+  // tirar NO se escribe en el JSON: lo añade el juego cuando el objeto no cabe y el jugador elige
+  // qué tira para hacerle sitio (posiciones en el inventario; pueden ser varias: el ídolo ocupa 4).
+  | { tipo: 'ganar_objeto'; objeto: string; tirar?: number[] }
   | { tipo: 'perder_objeto'; objeto: string }
   | { tipo: 'quitar_condicion'; condicion: string }
   | { tipo: 'quitar_condicion'; categoria: CategoriaCondicion }
@@ -90,8 +99,11 @@ export type EfectoDefinicion =
 
 // Efecto ya resuelto por resolverTabla: igual que en el JSON, pero las cantidades y los turnos
 // son siempre números concretos (en los recursos: positivo = ganar, negativo = perder).
+// Incluye los efectos internos, que solo crea el juego.
 export type Efecto =
   | EfectoSinDados
+  | { tipo: 'gastar_uso'; posicion: number }
+  | { tipo: 'tirar_objeto'; posicion: number }
   | { tipo: TipoRecurso; operacion: 'mitad' | 'maximo' | 'todo'; destino?: Destino; siNoHay?: Efecto[] }
   | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: number; destino?: Destino; siNoHay?: Efecto[] }
   | { tipo: 'poner_condicion'; condicion: string; turnos?: number; partes?: string[] }

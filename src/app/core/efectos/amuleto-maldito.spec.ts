@@ -214,7 +214,7 @@ describe('revisores: "partes" en las tablas y "otorga" en objetos y habilidades'
   });
 
   const objeto = (otorga: unknown) =>
-    ({ id: 'collar', nombre: 'Collar', descripcion: 'x', tipo: 'pasivo', otorga }) as unknown as Objeto;
+    ({ id: 'collar', nombre: 'Collar', descripcion: 'x', tipo: 'pasivo', precioVenta: 10, otorga }) as unknown as Objeto;
   const habilidad = (otorga: unknown) =>
     ({ id: 'guia', nombre: 'Guía', descripcion: 'x', tipo: 'pasiva', otorga }) as unknown as Habilidad;
 

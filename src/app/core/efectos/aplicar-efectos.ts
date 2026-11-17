@@ -11,6 +11,7 @@ import type { Estado } from '../estado/estado';
 import type { FinPartida } from '../estado/fin-partida';
 import type { Jugador } from '../estado/jugador';
 import type { Seguidor } from '../estado/seguidor';
+import { espaciosOcupados } from '../objetos/consultas';
 import { crearSeguidor } from '../seguidores/crear-seguidor';
 import { LISTAS_DE_NOMBRES } from '../seguidores/nombres';
 import { CARACTERISTICAS, type Efecto, type TipoRecurso } from '../tablas/efecto';
@@ -42,7 +43,9 @@ export interface ResultadoEfectos {
  *   - Topes: vida ≤ vida máxima ACTUAL (con gran fortaleza, +4), tripulación ≤ tripulación máxima,
  *     comida ≤ AJUSTES.comidaMaxima.
  *   - Ningún recurso baja de 0; las características (fuerza, ingenio, vidaMax) nunca bajan de 1.
- *   - Objetos: solo entran si caben; los mágicos dan +1 de fama.
+ *   - Objetos: solo entran si caben; los mágicos dan +1 de fama. Si no caben, entran solo si el efecto
+ *     dice qué se tira para hacerles sitio (lo ha elegido el jugador antes) y con eso ya caben.
+ *     Efectos internos del inventario: gastar un uso (a 0 se tira solo) y tirar un objeto.
  *   - Condiciones, turnos perdidos y banderas. Al quitar una condición o perder un objeto, si los topes
  *     bajan (se va el amuleto con gran fortaleza o carisma), la vida baja al tope nuevo y, si sobran
  *     seguidores, se marcha uno al azar (nunca un inseparable).
@@ -100,7 +103,16 @@ function aplicarUno(estado: Estado, efecto: Efecto, dados: Dados, catalogos: Cat
 
   switch (efecto.tipo) {
     case 'ganar_objeto':
-      ganarObjeto(jugador, efecto.objeto, catalogos, cambios);
+      ganarObjeto(jugador, efecto.objeto, efecto.tirar, catalogos, cambios);
+      ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
+      return;
+    case 'gastar_uso':
+      gastarUso(jugador, efecto.posicion, catalogos.objetos, cambios);
+      ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
+      return;
+    case 'tirar_objeto':
+      tirarObjeto(jugador, efecto.posicion, cambios);
+      ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
       return;
     case 'perder_objeto':
       perderObjeto(jugador, efecto.objeto, cambios);
@@ -316,15 +328,35 @@ function recortar(valor: number, minimo: number, maximo: number): number {
 // Objetos
 // ---------------------------------------------------------------------------
 
-function ganarObjeto(jugador: Jugador, idObjeto: string, catalogos: CatalogosEfectos, cambios: Cambio[]): void {
+/**
+ * Consigue un objeto.
+ *   - Si cabe, entra (aunque el efecto diga que se tire algo: no hace falta, no se tira nada).
+ *   - Si no cabe, se tiran los objetos de "tirar" (posiciones que ha elegido el jugador) y entra.
+ *     Si ni tirándolos cabe (o no ha elegido nada), no se tira nada y el objeto no entra.
+ */
+function ganarObjeto(
+  jugador: Jugador,
+  idObjeto: string,
+  tirar: readonly number[] | undefined,
+  catalogos: CatalogosEfectos,
+  cambios: Cambio[],
+): void {
   const objetos = catalogos.objetos;
   const ficha = buscarFicha(objetos, idObjeto, 'objeto');
   const espacios = ficha.espacios ?? 1;
+  const libres = jugador.capacidadInventario - espaciosOcupados(jugador, objetos);
 
-  // Si no cabe, no entra. (Elegir qué tirar para hacerle sitio llegará en el Sprint 6.)
-  if (espaciosOcupados(jugador, objetos) + espacios > jugador.capacidadInventario) {
-    cambios.push({ tipo: 'objeto_no_cabe', objeto: ficha.id });
-    return;
+  if (espacios > libres) {
+    const posiciones = comprobarPosiciones(jugador, tirar ?? []);
+    const liberados = posiciones.reduce((total, p) => total + (buscarFicha(objetos, jugador.inventario[p].id, 'objeto').espacios ?? 1), 0);
+    if (espacios > libres + liberados) {
+      cambios.push({ tipo: 'objeto_no_cabe', objeto: ficha.id });
+      return;
+    }
+    // De la última posición a la primera, para que al quitar uno no se muevan los demás.
+    for (const posicion of [...posiciones].sort((a, b) => b - a)) {
+      tirarObjeto(jugador, posicion, cambios);
+    }
   }
 
   jugador.inventario.push(ficha.usosMaximos === undefined ? { id: ficha.id } : { id: ficha.id, usosRestantes: ficha.usosMaximos });
@@ -345,8 +377,42 @@ function perderObjeto(jugador: Jugador, idObjeto: string, cambios: Cambio[]): vo
   }
 }
 
-function espaciosOcupados(jugador: Jugador, objetos: readonly Objeto[]): number {
-  return jugador.inventario.reduce((total, llevado) => total + (buscarFicha(objetos, llevado.id, 'objeto').espacios ?? 1), 0);
+/** El jugador tira el objeto de esa posición del inventario. */
+function tirarObjeto(jugador: Jugador, posicion: number, cambios: Cambio[]): void {
+  comprobarPosiciones(jugador, [posicion]);
+  const [tirado] = jugador.inventario.splice(posicion, 1);
+  cambios.push({ tipo: 'objeto_tirado', objeto: tirado.id });
+}
+
+/** Gasta un uso del objeto de esa posición. Si se queda sin usos, se tira solo (se ha agotado). */
+function gastarUso(jugador: Jugador, posicion: number, objetos: readonly Objeto[], cambios: Cambio[]): void {
+  comprobarPosiciones(jugador, [posicion]);
+  const llevado = jugador.inventario[posicion];
+  if (llevado.usosRestantes === undefined) {
+    throw new Error(`aplicarEfectos: "${llevado.id}" no tiene usos que gastar (es permanente)`);
+  }
+  buscarFicha(objetos, llevado.id, 'objeto'); // comprueba que existe
+  const quedan = llevado.usosRestantes - 1;
+  cambios.push({ tipo: 'objeto_usado', objeto: llevado.id, usosRestantes: quedan });
+  if (quedan <= 0) {
+    jugador.inventario.splice(posicion, 1);
+    cambios.push({ tipo: 'objeto_agotado', objeto: llevado.id });
+  } else {
+    llevado.usosRestantes = quedan;
+  }
+}
+
+/** Las posiciones tienen que existir en el inventario y no repetirse. Si no, es un fallo del programa: error. */
+function comprobarPosiciones(jugador: Jugador, posiciones: readonly number[]): readonly number[] {
+  for (const posicion of posiciones) {
+    if (!Number.isInteger(posicion) || posicion < 0 || posicion >= jugador.inventario.length) {
+      throw new Error(`aplicarEfectos: no hay ningún objeto en la posición ${posicion} del inventario`);
+    }
+  }
+  if (new Set(posiciones).size !== posiciones.length) {
+    throw new Error(`aplicarEfectos: hay posiciones repetidas en el inventario: ${posiciones.join(', ')}`);
+  }
+  return posiciones;
 }
 
 // ---------------------------------------------------------------------------

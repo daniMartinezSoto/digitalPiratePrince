@@ -1,6 +1,9 @@
 import { validarOtorga } from '../condiciones/validar-otorga';
 import { validarModificadores } from '../modificadores/validar-modificadores';
-import type { Objeto } from './objeto';
+import { validarEfecto } from '../tablas/rangos/validar-tabla';
+import { MOMENTOS_DE_USO, type Objeto } from './objeto';
+
+const MOMENTOS_TEXTO: readonly string[] = MOMENTOS_DE_USO;
 
 // Formato de los ids: minúsculas, números y guiones bajos ("mano_de_mono").
 const FORMATO_ID = /^[a-z][a-z0-9_]*$/;
@@ -48,14 +51,22 @@ function validarObjeto(objeto: Objeto): string[] {
     errores.push(`${nombre}: la imagen debe ser la ruta del dibujo (un texto).`);
   }
 
-  // Activos: se usan y se gastan, así que necesitan usos. Pasivos: permanentes, sin usos.
+  // Activos: se usan y se gastan, así que necesitan usos y decir cuándo se usan.
+  // Pasivos: permanentes y funcionan solos: sin usos, sin momento de uso y sin "alUsar".
   if (o['tipo'] === 'activo') {
     if (!esEnteroDesde(o['usosMaximos'], 1)) {
       errores.push(`${nombre}: es activo, así que necesita "usosMaximos" (un número entero de 1 o más).`);
     }
+    if (typeof o['cuandoSeUsa'] !== 'string' || !MOMENTOS_TEXTO.includes(o['cuandoSeUsa'])) {
+      errores.push(`${nombre}: es activo, así que necesita "cuandoSeUsa" (válidos: ${MOMENTOS_DE_USO.join(', ')}).`);
+    }
+    errores.push(...validarAlUsar(o['alUsar'], nombre));
   } else if (o['tipo'] === 'pasivo') {
     if (o['usosMaximos'] !== undefined) {
       errores.push(`${nombre}: es pasivo (permanente), así que no lleva "usosMaximos".`);
+    }
+    if (o['cuandoSeUsa'] !== undefined || o['alUsar'] !== undefined) {
+      errores.push(`${nombre}: es pasivo (funciona solo), así que no lleva "cuandoSeUsa" ni "alUsar".`);
     }
   } else {
     errores.push(`${nombre}: el tipo "${String(o['tipo'])}" no existe (válidos: pasivo, activo).`);
@@ -64,8 +75,8 @@ function validarObjeto(objeto: Objeto): string[] {
   if (o['espacios'] !== undefined && !esEnteroDesde(o['espacios'], 1)) {
     errores.push(`${nombre}: los espacios deben ser un número entero de 1 o más.`);
   }
-  if (o['precioVenta'] !== undefined && !esEnteroDesde(o['precioVenta'], 1)) {
-    errores.push(`${nombre}: el precio de venta debe ser un número entero de 1 o más (si no se vende, no lo pongas).`);
+  if (!esEnteroDesde(o['precioVenta'], 1)) {
+    errores.push(`${nombre}: le falta el precio de venta ("precioVenta", un número entero de 1 o más). Todos los objetos se pueden vender.`);
   }
   if (o['magico'] !== undefined && typeof o['magico'] !== 'boolean') {
     errores.push(`${nombre}: "magico" debe ser true o false.`);
@@ -78,6 +89,17 @@ function validarObjeto(objeto: Objeto): string[] {
   errores.push(...validarOtorga(o['otorga'], nombre));
 
   return errores;
+}
+
+/** "alUsar": una lista de efectos bien escritos (opcional). */
+function validarAlUsar(alUsar: unknown, nombre: string): string[] {
+  if (alUsar === undefined) {
+    return [];
+  }
+  if (!Array.isArray(alUsar)) {
+    return [`${nombre}: "alUsar" debe ser una lista de efectos.`];
+  }
+  return alUsar.flatMap(efecto => validarEfecto(efecto, `${nombre}, alUsar`));
 }
 
 function esTextoConContenido(valor: unknown): boolean {
