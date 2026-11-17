@@ -17,11 +17,16 @@ export const PROHIBICIONES = ['viajar', 'solicitar_audiencia', 'ganar_oro', 'nue
 export type Prohibicion = (typeof PROHIBICIONES)[number];
 
 // Reglas con número que una condición CAMBIA mientras dura. Se suman a la regla normal:
-//   famaObjetivo: 2  -> necesitas 2 puntos de fama más para ganar ("ambición desmedida").
-//   comidaPorDia: 1  -> gastas 1 reserva más al día ("hambre insaciable").
-// No se guardan en el personaje: se calculan mirando las condiciones activas,
-// así que al quitarse la condición la regla vuelve sola a su valor.
-export const AJUSTES_DE_CONDICION = ['famaObjetivo', 'comidaPorDia'] as const;
+//   famaObjetivo: 2      -> necesitas 2 puntos de fama más para ganar ("ambición desmedida").
+//   comidaPorDia: 1      -> gastas 1 reserva más al día ("hambre insaciable").
+//   fuerza: 1            -> +1 de fuerza ("fuerza letal").
+//   ingenio: 2           -> +2 de ingenio ("súper cerebro").
+//   vidaMax: 4           -> +4 de vida máxima ("gran fortaleza").
+//   maximoSeguidores: 1  -> puedes llevar 1 seguidor más ("carisma").
+// No se guardan en el personaje: se calculan mirando las condiciones activas (fuerzaActual,
+// vidaMaxActual... en condiciones/consultas.ts), así que al quitarse la condición la regla
+// vuelve sola a su valor. La hoja del personaje guarda solo SU valor, sin las condiciones.
+export const AJUSTES_DE_CONDICION = ['famaObjetivo', 'comidaPorDia', 'fuerza', 'ingenio', 'vidaMax', 'maximoSeguidores'] as const;
 export type AjusteDeCondicion = (typeof AJUSTES_DE_CONDICION)[number];
 export type AjustesDeCondicion = Partial<Record<AjusteDeCondicion, number>>;
 

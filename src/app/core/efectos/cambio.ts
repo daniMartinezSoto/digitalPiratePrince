@@ -19,8 +19,10 @@ export type Cambio =
   // La resistencia (vida) de un seguidor.
   | { tipo: 'resistencia_seguidor'; seguidor: string; antes: number; despues: number }
   | { tipo: 'seguidor_muerto'; seguidor: string }
-  // Un seguidor se va por su cuenta (hambre, dormir en la calle). No es lo mismo que morir.
-  | { tipo: 'seguidor_se_marcha'; seguidor: string }
+  // Un seguidor se va por su cuenta (hambre). No es lo mismo que morir.
+  // motivo carisma_perdido: al perder el carisma (amuleto maldito) llevaba más seguidores de los
+  // que puede, y uno al azar le abandona ("Al perder tu carisma, uno de tus seguidores te abandona").
+  | { tipo: 'seguidor_se_marcha'; seguidor: string; motivo?: 'carisma_perdido' }
   // Un seguidor nuevo entra en el grupo (seguidor = su id en la partida, p. ej. "forzudo_1").
   | { tipo: 'seguidor_se_une'; seguidor: string }
   // Iba a unirse uno de ese tipo del catálogo, pero no ha entrado: el grupo está lleno
@@ -34,6 +36,10 @@ export type Cambio =
   // partes: las condiciones que lleva dentro (las dos mitades del amuleto maldito).
   | { tipo: 'condicion_puesta'; condicion: string; turnos?: number; partes?: string[] }
   | { tipo: 'condicion_quitada'; condicion: string }
+  // No se ha puesto porque ya la tenía y la nueva traía cosas dentro que se pierden: un segundo
+  // amuleto maldito no entra ("No puedes recibir otro amuleto maldito: ya llevas uno").
+  // Una condición normal repetida (otra tormenta) no avisa: se queda la que dure más y no se pierde nada.
+  | { tipo: 'condicion_no_puesta'; condicion: string; motivo: 'ya_la_tiene' }
   | { tipo: 'turnos_perdidos'; cantidad: number }
   | { tipo: 'bandera'; bandera: string }
   | { tipo: 'fin_partida'; fin: FinPartida };

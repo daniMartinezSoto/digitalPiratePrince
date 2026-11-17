@@ -1,3 +1,4 @@
+import { AJUSTES } from '../ajustes/ajustes';
 import { CONDICIONES } from '../catalogos/cargar-condiciones';
 import type { AjusteDeCondicion, Condicion, Prohibicion } from '../catalogos/condicion';
 import type { Jugador } from '../estado/jugador';
@@ -53,6 +54,32 @@ export function famaObjetivoActual(jugador: Jugador, condiciones: readonly Condi
  */
 export function comidaPorDia(jugador: Jugador, condiciones: readonly Condicion[] = CONDICIONES): number {
   return Math.max(0, COMIDA_POR_DIA_NORMAL + sumaDeAjustes(jugador, 'comidaPorDia', condiciones));
+}
+
+// Fuerza, ingenio, vida máxima y máximo de seguidores ACTUALES: el valor de la hoja del personaje
+// más lo que den sus condiciones (las bendiciones del amuleto maldito). La hoja no cambia nunca
+// por una condición: así, al quitarse el amuleto, todo vuelve solo a su valor.
+// Las reglas y la interfaz deben usar estas funciones, no leer jugador.fuerza directamente
+// (también los futuros chequeos de Fuerza e Ingenio).
+
+/** Fuerza de ahora: la del personaje + sus condiciones (fuerza letal: +1). Nunca menos de 1. */
+export function fuerzaActual(jugador: Jugador, condiciones: readonly Condicion[] = CONDICIONES): number {
+  return Math.max(1, jugador.fuerza + sumaDeAjustes(jugador, 'fuerza', condiciones));
+}
+
+/** Ingenio de ahora: el del personaje + sus condiciones (súper cerebro: +2). Nunca menos de 1. */
+export function ingenioActual(jugador: Jugador, condiciones: readonly Condicion[] = CONDICIONES): number {
+  return Math.max(1, jugador.ingenio + sumaDeAjustes(jugador, 'ingenio', condiciones));
+}
+
+/** Vida máxima de ahora: la del personaje + sus condiciones (gran fortaleza: +4). Nunca menos de 1. Es el tope de la vida. */
+export function vidaMaxActual(jugador: Jugador, condiciones: readonly Condicion[] = CONDICIONES): number {
+  return Math.max(1, jugador.vidaMax + sumaDeAjustes(jugador, 'vidaMax', condiciones));
+}
+
+/** Seguidores que puede llevar ahora: AJUSTES.maximoSeguidores (3) + sus condiciones (carisma: +1). Nunca menos de 0. */
+export function maximoSeguidoresActual(jugador: Jugador, condiciones: readonly Condicion[] = CONDICIONES): number {
+  return Math.max(0, AJUSTES.maximoSeguidores + sumaDeAjustes(jugador, 'maximoSeguidores', condiciones));
 }
 
 /** Suma lo que aportan a una regla todas las condiciones activas. */

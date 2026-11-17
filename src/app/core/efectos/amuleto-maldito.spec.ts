@@ -14,7 +14,7 @@ import { aplicarEfectos } from './aplicar-efectos';
 
 // El amuleto maldito es UNA condición (cuenta como maldición) que lleva dentro dos mitades:
 // una bendición y una maldición. Si se quita, se van las dos. Y la maldición "odio al dinero".
-// (Las bendiciones llegan más adelante: aquí se prueban con dos maldiciones dentro.)
+// (Aquí se prueba con dos maldiciones dentro; las bendiciones, en amuleto-maldito/amuleto-maldito.spec.ts.)
 
 function estadoCon(cambios: Partial<Jugador> = {}): Estado {
   const { estado } = crearPartida(1, 'Prueba');
@@ -78,13 +78,14 @@ describe('amuleto maldito: una condición con dos mitades dentro', () => {
     expect(nuevo.jugador.condiciones.map(c => c.id)).toEqual(['amuleto_maldito']);
   });
 
-  it('si ya tiene un amuleto, se queda con el suyo: el nuevo se ignora', () => {
+  it('si ya tiene un amuleto, se queda con el suyo: el nuevo no entra y se avisa', () => {
     const otro: Efecto = { tipo: 'poner_condicion', condicion: 'amuleto_maldito', partes: ['ambicion_desmedida', 'muy_mala_suerte'] };
 
     const { estado, cambios } = aplicarEfectos(estadoCon(), [PONER_AMULETO, otro], new Dados(1));
 
     expect(estado.jugador.condiciones).toEqual([{ id: 'amuleto_maldito', partes: ['hambre_insaciable', 'hedor_nauseabundo'] }]);
-    expect(cambios).toHaveLength(1);
+    expect(cambios).toHaveLength(2);
+    expect(cambios[1]).toEqual({ tipo: 'condicion_no_puesta', condicion: 'amuleto_maldito', motivo: 'ya_la_tiene' });
   });
 
   it('las partes son una copia: no se comparten con el efecto', () => {

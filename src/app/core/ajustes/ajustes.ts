@@ -39,7 +39,7 @@ export interface Ajustes {
    */
   probabilidadEventoAlReposar: number;
 
-  /** Seguidores que pueden acompañar al jugador a la vez. */
+  /** Seguidores que pueden acompañar al jugador a la vez (sin contar condiciones como el carisma: ver maximoSeguidoresActual). */
   maximoSeguidores: number;
 
   /**

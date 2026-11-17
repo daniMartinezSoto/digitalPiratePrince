@@ -1,0 +1,18 @@
+{
+  "bendiciones": [
+    { "condicion": "fuerza_letal" },
+    { "condicion": "super_cerebro" },
+    { "condicion": "gran_fortaleza", "alRecibir": [{ "tipo": "vida", "operacion": "maximo" }] },
+    { "condicion": "piel_de_piedra" },
+    { "condicion": "carisma" },
+    { "evento": "deseo" }
+  ],
+  "maldiciones": [
+    { "condicion": "hambre_insaciable" },
+    { "condicion": "muy_mala_suerte" },
+    { "condicion": "ambicion_desmedida" },
+    { "condicion": "odio_al_dinero", "alRecibir": [{ "tipo": "oro", "operacion": "todo" }] },
+    { "condicion": "hedor_nauseabundo" },
+    { "condicion": "rechazo_a_la_autoridad" }
+  ]
+}

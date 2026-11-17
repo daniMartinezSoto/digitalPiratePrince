@@ -1,15 +1,15 @@
-import { AJUSTES } from '../ajustes/ajustes';
 import { HABILIDADES } from '../catalogos/cargar-habilidades';
 import type { AjusteDeHabilidad, Habilidad } from '../catalogos/habilidad';
+import { maximoSeguidoresActual } from '../condiciones/consultas';
 import type { Jugador } from '../estado/jugador';
 import type { Seguidor } from '../estado/seguidor';
 
 // Preguntas sobre el grupo de seguidores. Solo consultan: no cambian nada.
 // Sirven para que la interfaz sepa cuándo preguntar "¿despides a alguien para que entre el nuevo?".
 
-/** ¿Lleva ya el máximo de seguidores (AJUSTES.maximoSeguidores)? */
+/** ¿Lleva ya el máximo de seguidores? (3, o más con el carisma del amuleto maldito: maximoSeguidoresActual) */
 export function grupoLleno(jugador: Jugador): boolean {
-  return jugador.seguidores.length >= AJUSTES.maximoSeguidores;
+  return jugador.seguidores.length >= maximoSeguidoresActual(jugador);
 }
 
 /**

@@ -64,6 +64,40 @@
     "categoria": "maldicion"
   },
   {
+    "id": "fuerza_letal",
+    "nombre": "Fuerza letal",
+    "descripcion": "+1 de fuerza.",
+    "categoria": "bendicion",
+    "ajustes": { "fuerza": 1 }
+  },
+  {
+    "id": "super_cerebro",
+    "nombre": "Súper cerebro",
+    "descripcion": "+2 de ingenio.",
+    "categoria": "bendicion",
+    "ajustes": { "ingenio": 2 }
+  },
+  {
+    "id": "gran_fortaleza",
+    "nombre": "Gran fortaleza",
+    "descripcion": "Tu vida máxima aumenta en 4 puntos.",
+    "categoria": "bendicion",
+    "ajustes": { "vidaMax": 4 }
+  },
+  {
+    "id": "piel_de_piedra",
+    "nombre": "Piel de piedra",
+    "descripcion": "En combate, los enemigos siempre te hacen 1 de daño menos.",
+    "categoria": "bendicion"
+  },
+  {
+    "id": "carisma",
+    "nombre": "Carisma",
+    "descripcion": "Puedes llevar 1 seguidor más.",
+    "categoria": "bendicion",
+    "ajustes": { "maximoSeguidores": 1 }
+  },
+  {
     "id": "hambre_insaciable",
     "nombre": "Hambre insaciable",
     "descripcion": "Necesitas 1 reserva de comida más al día.",

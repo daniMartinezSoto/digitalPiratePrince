@@ -5,7 +5,7 @@ import { TIPOS_SEGUIDOR } from '../catalogos/cargar-seguidores';
 import type { Condicion } from '../catalogos/condicion';
 import type { Objeto } from '../catalogos/objeto';
 import type { TipoSeguidor } from '../catalogos/tipo-seguidor';
-import { estaProhibido } from '../condiciones/consultas';
+import { estaProhibido, maximoSeguidoresActual, vidaMaxActual } from '../condiciones/consultas';
 import type { Dados } from '../dados/dados';
 import type { Estado } from '../estado/estado';
 import type { FinPartida } from '../estado/fin-partida';
@@ -39,11 +39,14 @@ export interface ResultadoEfectos {
  *
  * NO toca el estado que recibe: hace una copia, cambia la copia y la devuelve.
  * Aplica los efectos en orden, uno detrás de otro, respetando las reglas:
- *   - Topes: vida ≤ vida máxima, tripulación ≤ tripulación máxima, comida ≤ AJUSTES.comidaMaxima.
+ *   - Topes: vida ≤ vida máxima ACTUAL (con gran fortaleza, +4), tripulación ≤ tripulación máxima,
+ *     comida ≤ AJUSTES.comidaMaxima.
  *   - Ningún recurso baja de 0; las características (fuerza, ingenio, vidaMax) nunca bajan de 1.
  *   - Objetos: solo entran si caben; los mágicos dan +1 de fama.
- *   - Condiciones, turnos perdidos y banderas.
- *   - Seguidores nuevos: entran si hay sitio (AJUSTES.maximoSeguidores) y ninguna condición lo prohíbe.
+ *   - Condiciones, turnos perdidos y banderas. Al quitar una condición o perder un objeto, si los topes
+ *     bajan (se va el amuleto con gran fortaleza o carisma), la vida baja al tope nuevo y, si sobran
+ *     seguidores, se marcha uno al azar (nunca un inseparable).
+ *   - Seguidores nuevos: entran si hay sitio (maximoSeguidoresActual: 3, o 4 con carisma) y ninguna condición lo prohíbe.
  *     Con el grupo lleno solo entran si el efecto dice a quién se despide (nunca a un inseparable).
  *   - "Un seguidor al azar" sin seguidores: no pasa nada, salvo que el efecto traiga "siNoHay".
  *   - El contable: cada vez que gana oro, gana 2d6 más. Odio al dinero: gana 1d6 menos.
@@ -51,7 +54,8 @@ export interface ResultadoEfectos {
  *     o un efecto ganar_partida / perder_partida.
  *     Cuando la partida termina, los efectos que quedan ya no se aplican.
  * Devuelve también la lista de cambios reales, para avisar al jugador.
- * Los dados se usan para "un seguidor al azar", para el contable y para el nombre de un seguidor nuevo.
+ * Los dados se usan para "un seguidor al azar", para el contable, para el nombre de un seguidor nuevo
+ * y para elegir qué seguidor se marcha al perder el carisma.
  */
 export function aplicarEfectos(
   estado: Estado,
@@ -96,10 +100,11 @@ function aplicarUno(estado: Estado, efecto: Efecto, dados: Dados, catalogos: Cat
 
   switch (efecto.tipo) {
     case 'ganar_objeto':
-      ganarObjeto(jugador, efecto.objeto, catalogos.objetos, cambios);
+      ganarObjeto(jugador, efecto.objeto, catalogos, cambios);
       return;
     case 'perder_objeto':
       perderObjeto(jugador, efecto.objeto, cambios);
+      ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
       return;
     case 'poner_condicion':
       ponerCondicion(jugador, efecto.condicion, efecto.turnos, efecto.partes, catalogos.condiciones, cambios);
@@ -110,6 +115,7 @@ function aplicarUno(estado: Estado, efecto: Efecto, dados: Dados, catalogos: Cat
       } else {
         quitarUnaDeCategoria(jugador, efecto.categoria, catalogos.condiciones, cambios);
       }
+      ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
       return;
     case 'perder_turnos':
       jugador.fasesAccionPerdidas += efecto.cantidad;
@@ -144,15 +150,15 @@ function aplicarARecurso(estado: Estado, efecto: EfectoDeRecurso, dados: Dados, 
   const jugador = estado.jugador;
 
   if (destino === 'jugador') {
-    cambiarRecursoDelJugador(jugador, efecto, cambios);
-    aplicarContable(jugador, efecto, dados, cambios);
-    aplicarOdioAlDinero(jugador, efecto, dados, cambios);
+    cambiarRecursoDelJugador(jugador, efecto, catalogos.condiciones, cambios);
+    aplicarContable(jugador, efecto, dados, catalogos.condiciones, cambios);
+    aplicarOdioAlDinero(jugador, efecto, dados, catalogos.condiciones, cambios);
     return;
   }
 
   // A partir de aquí, el efecto es sobre la vida y afecta a seguidores (lo garantiza el revisor de tablas).
   if (destino === 'todos') {
-    cambiarRecursoDelJugador(jugador, efecto, cambios);
+    cambiarRecursoDelJugador(jugador, efecto, catalogos.condiciones, cambios);
     for (const seguidor of jugador.seguidores) {
       cambiarResistencia(seguidor, efecto, cambios);
     }
@@ -197,12 +203,12 @@ function aplicarReemplazo(estado: Estado, efectos: readonly Efecto[], dados: Dad
  * El contable: cada vez que GANA oro (sumar con cantidad positiva), gana 2d6 más.
  * No cuenta "fijar": eso no es ganar, es quedarse con una cantidad.
  */
-function aplicarContable(jugador: Jugador, efecto: EfectoDeRecurso, dados: Dados, cambios: Cambio[]): void {
+function aplicarContable(jugador: Jugador, efecto: EfectoDeRecurso, dados: Dados, condiciones: readonly Condicion[], cambios: Cambio[]): void {
   if (oroGanado(efecto) === 0 || jugador.sobrenombre !== 'el_contable') {
     return;
   }
   const extra = dados.tirar('2d6').total;
-  apuntarRecurso(jugador, 'oro', jugador.oro + extra, cambios, 'contable');
+  apuntarRecurso(jugador, 'oro', jugador.oro + extra, condiciones, cambios, 'contable');
 }
 
 const CONDICION_ODIO_AL_DINERO = 'odio_al_dinero';
@@ -212,13 +218,13 @@ const CONDICION_ODIO_AL_DINERO = 'odio_al_dinero';
  * Como mucho pierde lo que ese efecto le daba: si le dan 4 y sale un 5, se queda sin esos 4,
  * pero no le quita del oro que ya tenía. Es el contable al revés (y va después de él).
  */
-function aplicarOdioAlDinero(jugador: Jugador, efecto: EfectoDeRecurso, dados: Dados, cambios: Cambio[]): void {
+function aplicarOdioAlDinero(jugador: Jugador, efecto: EfectoDeRecurso, dados: Dados, condiciones: readonly Condicion[], cambios: Cambio[]): void {
   const ganado = oroGanado(efecto);
   if (ganado === 0 || !tieneCondicion(jugador, CONDICION_ODIO_AL_DINERO)) {
     return;
   }
   const menos = Math.min(dados.tirar('1d6').total, ganado);
-  apuntarRecurso(jugador, 'oro', jugador.oro - menos, cambios, 'odio_al_dinero');
+  apuntarRecurso(jugador, 'oro', jugador.oro - menos, condiciones, cambios, 'odio_al_dinero');
 }
 
 /** Oro que GANA con ese efecto (sumar con cantidad positiva). 0 si no es ganar oro ("fijar" no es ganar). */
@@ -227,21 +233,28 @@ function oroGanado(efecto: EfectoDeRecurso): number {
   return esGanarOro && 'cantidad' in efecto ? efecto.cantidad : 0;
 }
 
-function cambiarRecursoDelJugador(jugador: Jugador, efecto: EfectoDeRecurso, cambios: Cambio[]): void {
+function cambiarRecursoDelJugador(jugador: Jugador, efecto: EfectoDeRecurso, condiciones: readonly Condicion[], cambios: Cambio[]): void {
   const tipo = efecto.tipo;
-  const { maximo } = limitesDe(jugador, tipo);
+  const { maximo } = limitesDe(jugador, tipo, condiciones);
 
-  apuntarRecurso(jugador, tipo, nuevoValor(jugador[tipo], efecto, maximo), cambios);
+  apuntarRecurso(jugador, tipo, nuevoValor(jugador[tipo], efecto, maximo), condiciones, cambios);
 
   // Si baja la vida máxima por debajo de la vida actual, la vida baja con ella.
-  if (tipo === 'vidaMax' && jugador.vida > jugador.vidaMax) {
-    apuntarRecurso(jugador, 'vida', jugador.vidaMax, cambios);
+  if (tipo === 'vidaMax') {
+    apuntarRecurso(jugador, 'vida', jugador.vida, condiciones, cambios);
   }
 }
 
 /** Pone un recurso en un valor (recortado a sus límites) y, si cambia de verdad, lo apunta en el chivato. */
-function apuntarRecurso(jugador: Jugador, tipo: TipoRecurso, valor: number, cambios: Cambio[], motivo?: MotivoDeRecurso): void {
-  const { minimo, maximo } = limitesDe(jugador, tipo);
+function apuntarRecurso(
+  jugador: Jugador,
+  tipo: TipoRecurso,
+  valor: number,
+  condiciones: readonly Condicion[],
+  cambios: Cambio[],
+  motivo?: MotivoDeRecurso,
+): void {
+  const { minimo, maximo } = limitesDe(jugador, tipo, condiciones);
   const antes = jugador[tipo];
   const despues = recortar(valor, minimo, maximo);
   jugador[tipo] = despues;
@@ -275,12 +288,17 @@ function nuevoValor(actual: number, efecto: EfectoDeRecurso, maximo: number): nu
   }
 }
 
-/** Mínimo y máximo de cada recurso. Infinity = sin tope (oro, fama...). */
-function limitesDe(jugador: Jugador, tipo: TipoRecurso): { minimo: number; maximo: number } {
+/**
+ * Mínimo y máximo de cada recurso. Infinity = sin tope (oro, fama...).
+ * El tope de la vida es la vida máxima ACTUAL (la de la hoja + gran fortaleza, si la tiene).
+ * Ojo: fuerza, ingenio y vidaMax son aquí los valores de la HOJA (sin condiciones): un efecto
+ * "+1 de fuerza" cambia la hoja; lo que da el amuleto se suma aparte al consultar (fuerzaActual...).
+ */
+function limitesDe(jugador: Jugador, tipo: TipoRecurso, condiciones: readonly Condicion[]): { minimo: number; maximo: number } {
   const minimo = CARACTERISTICAS.includes(tipo) ? 1 : 0;
   switch (tipo) {
     case 'vida':
-      return { minimo, maximo: jugador.vidaMax };
+      return { minimo, maximo: vidaMaxActual(jugador, condiciones) };
     case 'tripulacion':
       return { minimo, maximo: jugador.tripulacionMax };
     case 'comida':
@@ -298,7 +316,8 @@ function recortar(valor: number, minimo: number, maximo: number): number {
 // Objetos
 // ---------------------------------------------------------------------------
 
-function ganarObjeto(jugador: Jugador, idObjeto: string, objetos: readonly Objeto[], cambios: Cambio[]): void {
+function ganarObjeto(jugador: Jugador, idObjeto: string, catalogos: CatalogosEfectos, cambios: Cambio[]): void {
+  const objetos = catalogos.objetos;
   const ficha = buscarFicha(objetos, idObjeto, 'objeto');
   const espacios = ficha.espacios ?? 1;
 
@@ -313,7 +332,7 @@ function ganarObjeto(jugador: Jugador, idObjeto: string, objetos: readonly Objet
 
   // Conseguir un objeto mágico da +1 de fama.
   if (ficha.magico) {
-    apuntarRecurso(jugador, 'fama', jugador.fama + 1, cambios, 'objeto_magico');
+    apuntarRecurso(jugador, 'fama', jugador.fama + 1, catalogos.condiciones, cambios, 'objeto_magico');
   }
 }
 
@@ -364,7 +383,12 @@ function ponerCondicion(
     return;
   }
 
-  // (Si ya tenía un amuleto maldito, se queda con el suyo: las partes del nuevo se ignoran.)
+  // Si la nueva lleva cosas dentro (un segundo amuleto maldito), no entra: se queda con el suyo
+  // y se avisa, porque la bendición y la maldición del nuevo se pierden.
+  if (partes !== undefined) {
+    cambios.push({ tipo: 'condicion_no_puesta', condicion: idCondicion, motivo: 'ya_la_tiene' });
+    return;
+  }
 
   // Ya la tiene: no se duplica, se queda la que dure más (sin turnos = dura para siempre).
   if (yaActiva.turnosRestantes !== undefined && (turnos === undefined || turnos > yaActiva.turnosRestantes)) {
@@ -387,6 +411,29 @@ function quitarCondicion(jugador: Jugador, posicion: number, cambios: Cambio[]):
   if (posicion !== -1) {
     const [quitada] = jugador.condiciones.splice(posicion, 1);
     cambios.push({ tipo: 'condicion_quitada', condicion: quitada.id });
+  }
+}
+
+/**
+ * Después de quitar una condición o perder un objeto, los topes pueden haber bajado
+ * (se va el amuleto maldito con "gran fortaleza" o con "carisma"). Entonces:
+ *   - Si tiene más vida que su vida máxima nueva, la vida baja hasta ella.
+ *   - Si lleva más seguidores de los que puede, se marcha UNO AL AZAR (gasta un número del generador)
+ *     y se repite mientras sobren. Los inseparables no entran en el sorteo; si solo quedan
+ *     inseparables, se quedan todos.
+ * Si nada ha bajado, no hace nada (ni gasta dados).
+ */
+function ajustarALosTopes(jugador: Jugador, dados: Dados, condiciones: readonly Condicion[], cambios: Cambio[]): void {
+  apuntarRecurso(jugador, 'vida', jugador.vida, condiciones, cambios); // recorta al tope si hace falta
+
+  while (jugador.seguidores.length > maximoSeguidoresActual(jugador, condiciones)) {
+    const candidatos = jugador.seguidores.filter(s => !s.inseparable);
+    if (candidatos.length === 0) {
+      return;
+    }
+    const seMarcha = candidatos[dados.entero(0, candidatos.length - 1)];
+    jugador.seguidores = jugador.seguidores.filter(s => s !== seMarcha);
+    cambios.push({ tipo: 'seguidor_se_marcha', seguidor: seMarcha.id, motivo: 'carisma_perdido' });
   }
 }
 
@@ -414,7 +461,7 @@ function ganarSeguidor(jugador: Jugador, efecto: EfectoGanarSeguidor, dados: Dad
     return;
   }
 
-  if (jugador.seguidores.length >= AJUSTES.maximoSeguidores) {
+  if (jugador.seguidores.length >= maximoSeguidoresActual(jugador, catalogos.condiciones)) {
     if (efecto.despedir === undefined) {
       cambios.push({ tipo: 'seguidor_no_se_une', tipoSeguidor: efecto.seguidor, motivo: 'grupo_lleno' });
       return;
