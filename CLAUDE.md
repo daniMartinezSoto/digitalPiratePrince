@@ -25,7 +25,7 @@
   - Dados: `tirar` y `rangoDeTirada` aceptan `+N` (`"1d6+1"`, `"1d6x10+5"`: primero multiplica, luego suma).
   - Efectos generales en `tablas/efecto.ts`: `operacion` (`sumar` por defecto, `fijar`, `mitad`, `maximo`, `todo`), `destino` (`jugador` por defecto, `todos`, `seguidor_azar`, `seguidor_elegido`; solo para la vida) y `ganar_partida` / `perder_partida`. Desaparece `perder_mitad_oro` (el robo de buscar información es ahora `{ "tipo": "oro", "operacion": "mitad" }`). `resolverTabla` copia el efecto y solo convierte la cantidad; `validarTabla` revisa todo lo nuevo.
   - Estado: el inventario guarda `ObjetoLlevado { id, usosRestantes? }`; nuevos `jugador.condiciones: CondicionActiva[]` (`{ id, turnosRestantes? }`) y `jugador.fasesAccionPerdidas`. Los seguidores guardan sus habilidades por id. `Objeto` y `Habilidad` pasan a `core/catalogos/` como formato de catálogo (`imagen`, `espacios`, `precioVenta`, `magico`, `modificadores`).
-  - `data/ajustes.json`: `comidaMaxima` (20, provisional).
+  - `data/ajustes.json`: `comidaMaxima` (20, provisional; hoy 12).
   - `Articulo`/`ArticuloLlevado` se renombran a `Objeto`/`ObjetoLlevado` (mismo vocabulario que el juego).
 - **Sprint 4: completado (efectos y estado ampliado).**
   - ✅ Catálogo de objetos: `data/objetos.json` (5 ejemplos: ídolo dorado, mano de mono, amuleto del destino, brújula mágica, amuleto kalinago), cargador `core/catalogos/cargar-objetos.ts` (`OBJETOS`, `obtenerObjeto(id)`) y revisor `validar-objeto.ts` (`validarObjetos`: ids repetidos o mal escritos, activos con usos y pasivos sin ellos, espacios ≥ 1, precio ≥ 1, `magico` booleano, bonificadores).
@@ -40,10 +40,10 @@
   - ✅ Efectos: campo `siNoHay` en los efectos con destino `seguidor_azar` (efectos de reemplazo si no hay seguidores). Sus dados se tiran siempre, se usen o no.
   - ✅ Consultas (`core/condiciones/consultas.ts`): `estaProhibido`, `condicionesQueProhiben`, `famaObjetivoActual`, `comidaPorDia`. Solo calculan; no guardan nada.
   - ✅ `core/turno/`: `iniciarTurno` (amanecer), `comer` + `opcionesDeComida`, `descansar` + `opcionesDeDescanso` (cierra el día: `dia + 1`, fase `inicio`), `lugar.ts` (`LUGARES`) y un test de día completo. `core/personaje/vinculo-nativo.ts` (`tieneVinculoNativo`).
-  - ✅ Estado: `Seguidor.inseparable?`. Cambio nuevo `seguidor_se_marcha`. `data/ajustes.json`: `precioTaberna` (5), `precioPosada` (5), `precioMonasterio` (7), `probabilidadEventoNocturno` (33).
+  - ✅ Estado: `Seguidor.inseparable?`. Cambio nuevo `seguidor_se_marcha`. `data/ajustes.json`: `precioTaberna` (5; hoy 4), `precioPosada` (5), `precioMonasterio` (7), `probabilidadEventoNocturno` (33).
   - **La fase de acción sigue siendo un hueco:** `iniciarTurno` deja el día en `accion` y todavía nada lo pasa a `comida`; lo harán las acciones del Sprint 6.
 - **Sprint 6: completado (seguidores, objetos y acciones sin eventos, 17-18 nov).** Todas las decisiones y lo programado, en la sección 3.11: seguidores y el hermano, condiciones vigentes (apuntadas, partes, otorgadas), amuleto maldito completo, objetos (usar, tirar, elegir qué tirar, precios), y las acciones pescar, cazar, reposar, ir al mercado (con rastrillo), contratar (discurso, marineros, seguidor), monasterio (rezar, descansar), enterrar tesoro, buscar información (puertos, aldeas y guaridas), solicitar audiencia, la guarida pirata (dados y pulso), investigar naufragio, registrar ruinas y mendigar; además dormir en la aldea (chequeo de Ingenio) y los chequeos.
-- **Tests:** a Claude le pasan 934 en 49 archivos (sin `app.spec.ts`; al autor le deberían salir 936 en 50).
+- **Tests:** a Claude le pasan 940 en 49 archivos (sin `app.spec.ts`; al autor le deberían salir 942 en 50).
 
 **Siguiente:** Sprint 7 (combate normal y naval provisional, sección 9; al empezar, recordar al autor las **mejoras del barco** y el diseño del combate naval). El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
@@ -59,7 +59,7 @@ Adaptación a videojuego de **Pirate Prince**, un juego de aventuras **en solita
 - **Objetivo:** conseguir **10 puntos de Fama** y haber visitado los 3 puertos principales (3 puertos concretos de los varios que hay). **Se pierde** si la vida del personaje o la tripulación del barco llegan a 0.
 - El autor puede **cambiar reglas al digitalizar**: lo que en papel existe para ahorrar cuentas o guiar al jugador puede automatizarse o simplificarse.
 
-En `docs/`: el PDF de reglas (24 páginas; **no incluye el libro de eventos**) y el mapa prototipo (hecho con Worldographer). El archivo `.wxx` del mapa está pendiente de añadir.
+En `docs/`: el PDF de reglas (24 páginas; **no incluye el libro de eventos**) y el mapa prototipo (hecho con Worldographer). El archivo `.wxx` del mapa está pendiente de añadir al repositorio (el autor ya ha comprobado que se lee bien: sección 6).
 
 **Libro de eventos:** `EVENTOS.pdf` (E001-E090, cuadrículas de terreno y hoja de personaje) está **en el proyecto de Claude, no en el repositorio** (el repo es público y el libro es contenido del autor; no subirlo a GitHub). Es la versión de papel: **si el libro o el PDF de reglas no coinciden con este documento, manda este documento.**
 
@@ -96,7 +96,7 @@ src/app/
 
 - **Aquí `core/` significa "lógica del juego", no "servicios globales de Angular".**
 - Reglas de oro: **`core/` no importa Angular** y **`ui/` no contiene reglas del juego.**
-- Los tests (`.spec.ts`) van junto al código. Las subcarpetas de `core/` se crean cuando toca su sprint. Existen ya: `core/dados/`, `core/estado/`, `core/personaje/`, `core/partida/`, `core/tablas/` (con `rangos/` y `listas-eventos/`), `core/modificadores/`, `core/ajustes/`, `core/catalogos/` (formatos, cargadores y revisores de catálogo: `objeto.ts`, `condicion.ts`, `habilidad.ts`), `core/efectos/` (`aplicarEfectos` y `Cambio`), `core/condiciones/` (consultas sobre las condiciones activas) y `core/turno/` (las fases del día: `iniciar-turno.ts`, `comer.ts`, `descansar.ts`, `lugar.ts`), `core/amuleto-maldito/` (tablas del amuleto maldito y `recibirAmuletoMaldito`); datos en `data/personaje/`, `data/tablas/`, `data/eventos-terreno/`, `data/objetos.json`, `data/condiciones.json` y `data/ajustes.json`.
+- Los tests (`.spec.ts`) van junto al código. Las subcarpetas de `core/` se crean cuando toca su sprint. Existen ya: `core/dados/`, `core/estado/`, `core/personaje/`, `core/partida/`, `core/tablas/` (con `rangos/` y `listas-eventos/`), `core/modificadores/`, `core/ajustes/`, `core/catalogos/` (formatos, cargadores y revisores de catálogo: `objeto.ts`, `condicion.ts`, `habilidad.ts`), `core/efectos/` (`aplicarEfectos` y `Cambio`), `core/condiciones/` (consultas sobre las condiciones activas) y `core/turno/` (las fases del día: `iniciar-turno.ts`, `comer.ts`, `descansar.ts`, `lugar.ts`), `core/amuleto-maldito/` (tablas del amuleto maldito y `recibirAmuletoMaldito`), `core/seguidores/`, `core/objetos/` (usar, tirar y consultas del inventario), `core/acciones/` (molde de acciones y las acciones sueltas), `core/mercado/`, `core/contratar/`, `core/monasterio/`, `core/guarida/` (dados y pulso) y `core/chequeos/`; datos en `data/personaje/`, `data/tablas/`, `data/eventos-terreno/`, `data/objetos.json`, `data/condiciones.json`, `data/seguidores.json`, `data/habilidades.json`, `data/nombres-seguidores.json`, `data/amuleto-maldito.json`, `data/rastrillo.json` y `data/ajustes.json`.
 - **Para añadir contenido:** cada cargador (`cargar-tablas.ts`, `cargar-listas-eventos.ts`, `cargar-objetos.ts`, `cargar-condiciones.ts`) explica arriba cómo añadir contenido nuevo (objetos y condiciones: solo escribir la ficha en su JSON). Los tests de los cargadores pasan el revisor por **todo** el contenido automáticamente.
 
 ### 3.3 Flujo de una acción
@@ -117,7 +117,7 @@ ui → store → core → store → ui
 ```ts
 // store/juego.store.ts
 estado = signal<Estado>(...);
-pescar() { this.estado.update(e => aplicarEfectos(e, pescar(e, this.dados))); }
+pescar(sitio: Sitio) { this.estado.update(e => pescar(e, sitio, this.dados).estado); }   // la acción ya aplica sus efectos y devuelve el estado nuevo
 ```
 
 ### 3.4 Estado (implementado en `core/estado/`)
@@ -156,20 +156,21 @@ Mundo   { mapaId: string | null;
 Seguidor { id: string; tipo: string; nombre: string; ataque: number;   // ataque = daño que hace si acierta
            resistencia, resistenciaMaxima: number;                     // resistencia = su vida
            habilidades: string[];                                      // ids del catálogo de habilidades
-           inseparable?: boolean }                                     // true = nunca se marcha por su cuenta (sí puede morir)
+           inseparable?: boolean;                                      // true = nunca se marcha por su cuenta (sí puede morir)
+           vital?: boolean }                                           // true = si muere, se pierde la partida (el del hermano)
 
 ObjetoLlevado   { id: string; usosRestantes?: number }   // en la partida solo esto; el resto, del catálogo
-CondicionActiva { id: string; turnosRestantes?: number } // sin turnos = hasta que algo la quite
+CondicionActiva { id: string; turnosRestantes?: number; partes?: string[] } // sin turnos = hasta que algo la quite; partes = lo que lleva dentro (amuleto)
 
 // Catálogos (core/catalogos/, datos en data/): lo que no cambia durante la partida
 Objeto    { id, nombre, descripcion; imagen?; tipo: 'pasivo' | 'activo'; usosMaximos?; espacios? (1);
             cuandoSeUsa? ('accion' | 'evento' | 'combate'; solo activos); alUsar? (efectos al usarlo; solo activos);
-            precioVenta (obligatorio, mágicos incluidos); magico? (+1 fama al conseguirlo); modificadores?; otorga? }
-Habilidad { id, nombre, descripcion; imagen?; tipo: 'pasiva' | 'activa'; modificadores? }  // sin cooldowns
+            precioVenta (obligatorio, mágicos incluidos); magico? (+1 fama al conseguirlo); modificadores?; otorga?; banderaAlVender? }
+Habilidad { id, nombre, descripcion; imagen?; tipo: 'pasiva' | 'activa'; modificadores?; ajustes?; otorga? }  // sin cooldowns
 Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicion' | 'enfermedad' | 'clima' | 'otra';
             modificadores?;                       // bonificadores a tiradas mientras dura
-            prohibe?: Prohibicion[];              // 'viajar' | 'solicitar_audiencia' | 'enterrar_tesoro' | 'nuevos_seguidores'
-            ajustes?: { famaObjetivo?, comidaPorDia? };   // reglas que cambian mientras dura (se suman a la regla normal)
+            prohibe?: Prohibicion[];              // 'viajar' | 'enterrar_tesoro' | 'nuevos_seguidores' (las audiencias no se prohíben)
+            ajustes?: { famaObjetivo?, comidaPorDia?, fuerza?, ingenio?, vidaMax?, maximoSeguidores? };   // se suman a la regla normal
             cadaTurno?: { efectos?, tabla? };     // qué pasa cada amanecer (lo ejecuta iniciarTurno)
             alLlegar?: { lugar: 'tierra' | 'puerto' | 'aldea' | 'naufragio'; efectos?; evento? } }   // al llegar, SE QUITA (y puede pasar algo)
 ```
@@ -192,14 +193,14 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
   - Operaciones: `mitad` redondea hacia abajo (15 → 7); `maximo` sube al máximo; `todo` deja a 0.
   - Destinos (solo vida): `todos` = jugador y cada seguidor; `seguidor_azar` elige con los dados; un seguidor a 0 de resistencia muere y sale del grupo. `seguidor_elegido` da error hasta el motor de eventos (Sprint 10).
   - **`siNoHay` (Sprint 5):** un efecto a `seguidor_azar` puede llevar los efectos que pasan en su lugar si no hay ningún seguidor (escorbuto: muere un seguidor; si no tienes, −1d6 de tripulación). Sin `siNoHay`, no pasa nada.
-  - Objetos: solo entran si caben (cuenta `espacios`); los activos entran con `usosMaximos`; **los mágicos dan +1 de fama**. Si no cabe, no entra (elegir qué tirar: Sprint 6). Perder un objeto quita uno si lo tienes.
+  - Objetos: solo entran si caben (cuenta `espacios`); los activos entran con `usosMaximos`; **los mágicos dan +1 de fama**. Si no cabe, no entra, salvo que el efecto diga qué se tira para hacerle sitio (`tirar`, Sprint 6). Perder un objeto quita uno si lo tienes.
   - Condiciones: **no se duplican** (se queda la que dure más; sin turnos = para siempre). Quitar por categoría quita **una, la más antigua**.
   - Turnos perdidos se suman a `fasesAccionPerdidas`; las banderas se apuntan en `mundo.banderas` (solo banderas generales; las de un hex concreto, Sprint 9).
   - **El contable:** cada vez que GANA oro (sumar positivo; no fijar) gana **1d6** más (era 2d6; cambiado por el autor el 18-nov).
   - **Fin de partida:** vida o tripulación a 0 → derrota; `ganar_partida` / `perder_partida` → victoria / derrota por evento. Se apunta en `mundo.finPartida` y **los efectos que quedan ya no se aplican**. Qué se hace después (pantalla, guardado) es de sprints posteriores. La victoria normal (fama + puertos) llega con el mapa (Sprint 9).
 - **El afortunado (decidido):** evita la muerte **una vez, solo en combate** (se queda con 1 PV). Se programa en el combate (Sprint 7), no en `aplicarEfectos`.
 - **Excepción: la contabilidad del turno (Sprint 5).** Las funciones de `core/turno/` cambian por su cuenta (siempre devolviendo una copia) lo que es del propio turno y no un efecto de juego: `mundo.fase`, `mundo.dia`, `mundo.estadoDados`, gastar una fase de acción perdida, restar turnos a las condiciones, `diasSinComer` y los seguidores que se marchan por hambre. Todo lo demás (recursos, condiciones, objetos, fin de partida) sigue pasando por `aplicarEfectos`.
-- **El chivato (`Cambio`, `core/efectos/cambio.ts`):** lista de **cambios reales** (con la tripulación en 38 y máximo 40, un +5 produce "de 38 a 40"; si no cambia nada, no se apunta). Tipos: `recurso` (con `motivo` opcional: `contable`, `objeto_magico`), `resistencia_seguidor`, `seguidor_muerto`, `seguidor_se_marcha` (se va por su cuenta; no es morir), `objeto_ganado`, `objeto_no_cabe`, `objeto_perdido`, `condicion_puesta`, `condicion_quitada`, `turnos_perdidos`, `bandera`, `fin_partida`. **Son datos, no mensajes:** la interfaz los convierte en notificaciones. Los mensajes narrativos pertenecen a los eventos; efectos y tablas no llevan mensajes.
+- **El chivato (`Cambio`, `core/efectos/cambio.ts`):** lista de **cambios reales** (con la tripulación en 38 y máximo 40, un +5 produce "de 38 a 40"; si no cambia nada, no se apunta). Tipos: `recurso` (con `motivo` opcional: `contable`, `objeto_magico`), `resistencia_seguidor`, `seguidor_muerto`, `seguidor_se_marcha` (se va por su cuenta; no es morir; `motivo` opcional `carisma_perdido`), `seguidor_se_une`, `seguidor_no_se_une`, `seguidor_despedido`, `objeto_ganado`, `objeto_no_cabe`, `objeto_perdido`, `objeto_tirado`, `objeto_usado`, `objeto_agotado`, `objeto_vendido`, `condicion_puesta`, `condicion_quitada`, `condicion_no_puesta`, `turnos_perdidos`, `bandera`, `fin_partida`. **Son datos, no mensajes:** la interfaz los convierte en notificaciones. Los mensajes narrativos pertenecen a los eventos; efectos y tablas no llevan mensajes.
 
 ### 3.6 Decisiones obligatorias desde el día uno
 1. **Estado serializable** (ver 3.4).
@@ -253,11 +254,11 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 | Fase | Función | Qué hace | Deja la fase en |
 |---|---|---|---|
 | `inicio` | `iniciarTurno(estado, dados)` | Las condiciones activas actúan; se gasta una fase de acción perdida si la hay | `accion` (o `comida` si la acción está perdida) |
-| `accion` | *(Sprint 6)* | La acción del jugador y sus eventos | `comida` |
+| `accion` | las acciones (Sprint 6, `core/acciones/` y demás) | La acción del jugador y sus eventos | `comida` |
 | `comida` | `comer(estado, eleccion, lugar, dados)` | Come o pasa hambre | `descanso` |
 | `descanso` | `descansar(estado, eleccion, lugar, dados)` | Duerme; puede saltar un evento nocturno; **cierra el día** | `inicio` del día siguiente |
 
-- **El lugar es un dato suelto** hasta que exista el mapa: `barco` (a bordo, en mar), `puerto`, `aldea`, `monasterio` o `intemperie` (playa, jungla, jungla profunda). Lo dice quien llama; después lo calculará el mapa.
+- **El lugar es un dato suelto** hasta que exista el mapa: `barco` (a bordo, en mar), `puerto`, `guarida` (guarida pirata neutral, desde el Sprint 6), `aldea`, `monasterio` o `intemperie` (playa, jungla, jungla profunda). Lo dice quien llama; después lo calculará el mapa.
 - **Opciones para la interfaz:** `opcionesDeComida` y `opcionesDeDescanso` dicen qué se puede elegir, cuánto cuesta y si llega el oro. **Una opción que no se puede pagar sale igual, pero desactivada** (decisión del autor).
 
 **Amanecer (`iniciarTurno`).** Recorre las condiciones que había al amanecer, **de la más antigua a la más nueva**. Cada una: (a) sus efectos fijos de `cadaTurno`, (b) su tirada diaria en su tabla y (c) si tiene turnos contados, uno menos (a 0 se quita; el último día todavía actúa). Devuelve un **parte** por condición (dados, texto de la fila, cambios reales).
@@ -269,7 +270,7 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 **Condiciones: cómo se quitan.** Por una fila de su tabla (`quitar_condicion`), por turnos, por categoría (monasterio, bruja, biblia: "una maldición") o **al llegar a un lugar** (`alLlegar`).
 - **"Al llegar" es un patrón del juego:** al llegar a ese tipo de lugar, la condición se quita y, si la ficha lo dice, da unos efectos o lanza un evento. Hoy solo lo usa el escorbuto (se cura al tocar tierra). Servirá para: carta de la hija del gobernador (E035: puerto → audiencia con +1), mensaje del nativo (aldea → seguidor nativo), mensaje del náufrago (naufragio → seguidor), esclavos por vender (E008: puerto → +100 de oro), "el poder de la amistad" (E074: puerto → seguidor gratis). Cada una con su icono mientras se lleva. Quien avisa de la llegada es viajar (Sprint 9).
 - **Los ajustes se calculan, no se guardan:** `famaObjetivoActual(jugador)` = la del personaje + lo que digan sus condiciones. `jugador.famaObjetivo` no cambia nunca; así no hay nada que deshacer al quitarse la condición. **La interfaz debe usar las funciones de `core/condiciones/consultas.ts`, no leer el campo directamente.**
-- **Las prohibiciones solo se declaran:** cada acción las hará cumplir cuando exista (viajar: Sprint 9; audiencias y seguidores: Sprint 6; ganar oro: en `aplicarEfectos`, con el amuleto maldito).
+- **Las prohibiciones solo se declaran:** cada acción las hace cumplir (nuevos seguidores y enterrar tesoro: Sprint 6, hecho; viajar: Sprint 9). Las de audiencias y ganar oro desaparecieron en el Sprint 6.
 
 **Decisiones del autor sobre las condiciones del libro:**
 - **El mal está a bordo (E018):** actúa también estando a pie. Cada amanecer −1 de tripulación y tirada en su tabla. La fila 4 da "pistas sobre la criatura" (+1 en la tirada, **una sola vez**; las condiciones acumulables se descartan mientras solo las use este evento). Al expulsar a la criatura (filas 5 y 6) se quitan el mal y las pistas. Falta el "+1 con seguidor nativo o bruja vudú" (bonificadores de seguidores, Sprint 6).
@@ -328,11 +329,12 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 - **Acción "Ir al mercado" (paso 6 hecho, 17-nov; `core/mercado/`).** Solo en puertos. **Lo que gasta el día es entrar**; dentro, cada cosa es un botón aparte y se pulsa tantas veces como se quiera hasta "Salir del mercado" (decisión del autor: nada de "todo en un clic").
   - `irAlMercado(estado, sitio, dados)`: saca el objeto del rastrillo de hoy (1 número del generador) y lo guarda en `mundo.accionEnCurso` (`{ tipo: 'mercado', rastrillo: { objeto, precio } | null }`), para que no cambie durante la visita y sobreviva a un guardado. Mientras está dentro, ni otra acción, ni volver a entrar, ni usar objetos (`comprobarQueSePuedeActuar` lo impide).
   - Botones: `comprarComida` y `venderComida` (1 reserva por clic; `AJUSTES.precioComprarComida` 5 y `precioVenderComida` 2), `venderObjeto(posicion)` (uno a uno, a su `precioVenta`; efecto interno `vender_objeto` y cambio `objeto_vendido`), `comprarEnRastrillo(tirar?)` (si no cabe, se pregunta qué tira; si ni así cabe, ni se compra ni se cobra) y `salirDelMercado` (fase `comida`). `opcionesDelMercado` dice a la interfaz qué está activo y por qué no (`sin_oro`, `comida_al_maximo`, `sin_comida`).
-  - Vender cuenta como ganar oro: el contable gana sus 2d6 en cada venta.
+  - Vender cuenta como ganar oro: el contable gana su 1d6 en cada venta.
   - **Sin tirada de papel** ("hoy solo hay alguien que compra"): siempre se puede comprar y vender comida. **No hay tienda fija:** objetos solo en el rastrillo (o en eventos como el emporio de Bob). En las aldeas no hay mercado.
   - **Rastrillo:** `data/rastrillo.json` (`objetos: [{ objeto, peso, precio }]`, elegido con pesos). El revisor exige que cueste más que su `precioVenta`. Provisional: los 4 objetos sin el ídolo, a precio doble.
   - **Mejoras del barco (RECORDAR AL AUTOR EN EL SPRINT DEL COMBATE NAVAL):** se conseguirán en el rastrillo, en el emporio de Bob, en eventos y quizá en un **astillero pirata** de las guaridas; no ocupan inventario (como las bendiciones: probablemente condiciones de una categoría nueva `mejora`). Su efecto depende de cómo sea el combate naval (quizá con minijuego), así que no se ha programado nada.
 - **Acciones a medias: `mundo.accionEnCurso` (paso 7, 17-nov).** Las acciones de varios pasos (primero se tira o se entra, después el jugador decide) guardan lo que salió en un único campo (`AccionEnCurso` en `core/estado/mundo.ts`): `{ tipo: 'mercado', rastrillo }`, `{ tipo: 'marineros', disponibles }` o `{ tipo: 'seguidor', seguidor, precio }`. Así no se puede volver a tirar hasta que guste y un guardado a mitad lo conserva. Mientras hay una, `comprobarQueSePuedeActuar` y `usarObjeto` dan error ("hay una acción a medias").
+- **Protección en `accionesDisponibles` (18-nov):** fuera de la fase de acción o con la partida terminada, todas salen desactivadas con `no_es_momento`; con una acción a medias, con `accion_a_medias`. La interfaz (y el store) solo deben ofrecer acciones cuando de verdad toca.
 - **REGLA DE LA INTERFAZ (decidida por el autor):** una acción que no se puede usar SIEMPRE se ve, desactivada (más clara) y con el motivo. `AccionDisponible` lleva `motivo` y, si es por una condición, `condiciones` (ids: "no puedes: Hedor nauseabundo"). Vale para todo el juego.
 - **Contratar (paso 7 hecho, 17-nov; `core/contratar/contratar.ts`).** Solo en puertos. Tres formas, cada una una ACCIÓN distinta en `accionesDisponibles` (cada día, solo una):
   - **`dar_discurso`** (`darDiscurso`): 1d6 en `data/tablas/discurso.json` (id de tirada `discurso`): 1 multa de 1d6 de oro · 2-3 nadie te hace caso · 4 +1d6 de tripulación · 5 +1d6+3 · 6 +1d6+6 (confirmado por el autor). **Multa sin oro suficiente:** te quitan todo el oro y evento pendiente `arrestado` (E023).
@@ -359,11 +361,11 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
   - **Acciones exclusivas de la guarida neutral** (sacadas de la taberna clandestina, E081; servirán también para ese evento):
     - **Jugar a los dados:** apuestas el oro que quieras; un dado para ti y otro para tu rival. Si el tuyo es mayor, ganas lo apostado; si es menor, lo pierdes; si empatan, se vuelve a tirar. Puedes jugar tantas veces como quieras (como el mercado: acción a medias hasta que te levantas de la mesa).
     - **Echar un pulso:** apuestas el oro que quieras y 1d6 para ver quién se sienta: 1-2 un borracho (−1 al dado) · 3-4 un parroquiano (tirada normal) · 5-6 el campeón de pulsos (+1 al dado). Chequeo de Fuerza con ese modificador (en un chequeo, −1 al dado ayuda y +1 lo hace más difícil). Si lo superas, ganas lo apostado; si no, lo pierdes. Si ganas al campeón, además **+1 de fama**.
-    - Por decidir al programarlas: si hay apuesta máxima (¿todo tu oro?), si el pulso también se repite en la misma visita y si ganar al campeón da fama más de una vez.
+    - Decidido al programarlas (paso 11b): apuestas con botones 10, 25, 50, 100 o todo; el pulso, un intento por día; el campeón, una vez vencido, no vuelve a salir en esa guarida.
   - **Ideas apuntadas para más adelante:** el **perista** (vender objetos a ~1,5 veces su precio), **invitar a una ronda** (pagas y +1 de fama, una vez por guarida), **encargos del capitán** (condición con `alLlegar` a un puerto que da recompensa) y el **astillero pirata** (donde comprar las mejoras del barco: ver el recordatorio del combate naval).
 - **Audiencias y guarida (paso 11a hecho, 18-nov).**
   - **Lugar nuevo `guarida`** (guarida pirata neutral) y `esPuerto(lugar)` en `core/turno/lugar.ts`: mercado, contratar, taberna, posada y "sin eventos nocturnos a la intemperie" valen en puertos y guaridas. Buscar información en la guarida: tabla de puertos, **sin sobornos**, tirada nueva `buscar_info_guarida` (+1 por cada 2 de fama en `AJUSTES.bonificadorPorFama`; el influyente también suma), y el mono roba.
-  - **`solicitar_audiencia`** (`core/acciones/audiencia.ts`): puerto → gobernador (`audiencia-gobernador.json`: 1 guardia te reconoce, evento `guardia` y vetada · 2-3 hoy no · 4 te atiende su hija, evento `hija_del_gobernador`, **no cuenta como concedida** · 5-6 concedida, evento `audiencia_gobernador`); aldea → jefe (`audiencia-jefe-aldea.json`: 1 vetada · 2 no se permite · 3 hoy no · 4-6 concedida, evento `audiencia_jefe_aldea`); guarida → capitán (`audiencia-capitan.json`: 1-2 vetada · 3 no se permite · 4+ concedida, evento `audiencia_capitan_pirata`). Bonificadores por tirada (`audiencia_puerto/aldea/guarida`): influyente, nativo, barbero-cirujano (+1 en las tres) y fama en la guarida.
+  - **`solicitar_audiencia`** (`core/acciones/audiencia.ts`): puerto → gobernador (`audiencia-gobernador.json`: 1 guardia te reconoce, evento `guardia` y vetada · 2-3 hoy no · 4 te atiende su hija, evento `hija_del_gobernador`, **no cuenta como concedida** (confirmado por el autor: el objetivo es ver al gobernador) · 5-6 concedida, evento `audiencia_gobernador`); aldea → jefe (`audiencia-jefe-aldea.json`: 1 vetada · 2 no se permite · 3 hoy no · 4-6 concedida, evento `audiencia_jefe_aldea`); guarida → capitán (`audiencia-capitan.json`: 1-2 vetada · 3 no se permite · 4+ concedida, evento `audiencia_capitan_pirata`). Bonificadores por tirada (`audiencia_puerto/aldea/guarida`): influyente, nativo, barbero-cirujano (+1 en las tres) y fama en la guarida.
   - **Reglas especiales nuevas de fila:** `audiencia_concedida` (marca: una por sitio y partida → desactivada con `audiencia_ya_concedida`), `audiencia_vetada` (marca: nunca más aquí → `audiencia_vetada`; bloquear la aldea, con el mapa) y `audiencia_aplazada` (marca con `dia`: +1 si la pide aquí al día siguiente; no se acumula y caduca). Las marcas pueden llevar `dia`.
   - **Rechazo a la autoridad desaparece** (decidido por el autor: las audiencias son llamativas y limitadas y no deben prohibirse). La sustituye **manos torpes** (−1 al pescar y al cazar) en el 6 de las maldiciones del amuleto. La prohibición `solicitar_audiencia` ya no existe.
 - **Dados y pulso en la guarida (paso 11b hecho, 18-nov; `core/guarida/`).** Dos acciones del día, solo en guaridas (motivo `solo_guarida`; `sin_oro` si no lleva nada):
@@ -379,17 +381,18 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
   - **Objeto nuevo, campo `banderaAlVender`:** al venderlo se apunta una bandera. El ídolo antediluviano apunta `idolo_antediluviano_vendido`: **en la ciudad perdida (E050), el juego debe dejar claro que lo necesitabas y que lo vendiste** (decidido por el autor: que el jugador lo aprenda para la siguiente partida).
   - **Límite conocido:** cuando una tabla da un objeto que no cabe, hoy se pierde (`objeto_no_cabe`): el "pregunta antes qué tiras" solo existe cuando se sabe antes (mercado, contratar). Para las tablas y los eventos, llegará con el motor de eventos (Sprint 10).
 - **Dormir en la aldea y mendigar (paso 13 hecho, 18-nov).**
-  - **Dormir en la aldea:** elección nueva `convencer_nativos` en la fase de descanso en una aldea (`descansar(..., hex?)`): chequeo de Ingenio; si lo supera, todo el grupo duerme allí esa noche (gratis, sin eventos, con posibilidad de dormir genial); si falla, le echan (marca `echado_de_la_aldea`: en esa aldea ya solo intemperie) y duerme a la intemperie con su posible evento nocturno. `descansar` devuelve `chequeo` y `echado`.
+  - **Con vínculo nativo (decidido por el autor, 18-nov):** en la aldea se ofrece **dormir en la aldea** (`techo_todos`, gratis, sin chequeo, sin eventos, con posibilidad de dormir genial) junto a la intemperie, en lugar de convencer a los nativos.
+  - **Dormir en la aldea sin vínculo:** elección nueva `convencer_nativos` en la fase de descanso en una aldea (`descansar(..., hex?)`): chequeo de Ingenio; si lo supera, todo el grupo duerme allí esa noche (gratis, sin eventos, con posibilidad de dormir genial); si falla, le echan (marca `echado_de_la_aldea`: en esa aldea ya solo intemperie) y duerme a la intemperie con su posible evento nocturno. `descansar` devuelve `chequeo` y `echado`.
   - **Mendigar** (`core/acciones/mendigar.ts`): la da el artista (con varios, la misma acción, una vez al día); en puertos y guaridas (motivos `sin_artista`, `solo_puerto`). 2d6 en `data/tablas/mendigar.json` (tirada `mendigar`): 2 guardia (evento) · 3 matones (−1d6) · 4-5 nada · 6-8 +1d6 · 9-10 +2d6 · 11 +3d6 · 12 +3d6 y hoy coméis gratis (especial nuevo `comida_gratis`).
   - **El contable pasa a +1d6** (decidido por el autor: 2d6 era demasiado).
 - **Sprint 6 cerrado.** Lo que queda para otros sprints está repartido en esta sección y en la 9.
 - **Cómo comprueba Claude los tests sin `ng test`:** compila `src/app/core` con `tsc` a una carpeta temporal fuera del repo (commonjs) y carga los `.spec.js` con un corredor mínimo que usa el `expect` de `vitest/dist/index.js`. No incluye `app.spec.ts` (por eso le salen 2 tests menos que al autor). La comprobación oficial sigue siendo el `ng test --watch=false` del autor.
 - **Límite conocido:** al amanecer (`iniciarTurno`) solo actúan las condiciones apuntadas; las partes y las otorgadas no ejecutan `cadaTurno` (hoy ninguna lo tiene).
 
-**Fase de acción (paso 4 hecho): `core/acciones/`.** Molde común en `accion.ts`: `comprobarQueSePuedeActuar` → lo suyo + `aplicarEfectos` → `cerrarFaseDeAccion` (fase `comida`). Todas devuelven `ResultadoAccion { estado, cambios, tirada?, eventos }`. El sitio es un dato suelto hasta el mapa: `Sitio { lugar, juntoAlAgua? }`. `accionesDisponibles(estado, sitio)` da todas las acciones; las que no se pueden, desactivadas con motivo.
+**Fase de acción (paso 4 hecho): `core/acciones/`.** Molde común en `accion.ts`: `comprobarQueSePuedeActuar` → lo suyo + `aplicarEfectos` → `cerrarFaseDeAccion` (fase `comida`). Todas devuelven `ResultadoAccion { estado, cambios, tirada?, eventos }`. El sitio es un dato suelto hasta el mapa: `Sitio { lugar, juntoAlAgua?, hex?, rasgo? }` (`hex` y `rasgo` desde los pasos 9 y 12). `accionesDisponibles(estado, sitio)` da todas las acciones; las que no se pueden, desactivadas con motivo.
 - **Pescar** (`pescar.ts`): a bordo o en tierra junto al agua. Tabla nueva (decidida por el autor): 1 nada · 2-3 → 3 · 4-5 → 5 · 6 → 7 reservas (viviendo solo de pescar, 1 día de cada 4; simulado en 60 días de mar. Con 2/4/6 era 1 de cada 3 y al autor le pareció pesado). Cada seguidor pescador da +1 **solo si se pesca algo**.
 - **Cazar** (`cazar.ts`): solo en tierra salvaje (`intemperie`). 1 nada · 2-3 → 4 y −1 PV · 4-5 → 5 · 6 → 8 (algo más que pescar, pero con riesgo).
-- **Acción "Reposar" (decidida por el autor; se llama así, en el juego y en el código, para no confundirla con la FASE de descanso, que es dormir):** acción independiente (en papel era "descansar" e iba unida a cazar/pescar). Pasas el día recuperándote: **+2 PV** (`AJUSTES.curaAlReposar`) al jugador y a cada seguidor, **+1 por cada barbero-cirujano** (su punto extra es SOLO con esta acción, no durmiendo). **Riesgo** (`AJUSTES.probabilidadEventoAlReposar`, 20 %): a bordo, lista nueva `descuido_a_bordo` (`data/eventos-terreno/descuido-a-bordo.json`: perdidos, rocas, vientos fuertes, polizón, imprevisto, traición y, con poco peso, motín, sirenas, monstruo y tormenta; puede salir algo bueno); a la intemperie, la lista de nocturnos; **en puerto, aldea y monasterio no hay riesgo**.
+- **Acción "Reposar" (decidida por el autor; se llama así, en el juego y en el código, para no confundirla con la FASE de descanso, que es dormir):** acción independiente (en papel era "descansar" e iba unida a cazar/pescar). Pasas el día recuperándote: **+2 PV** (`AJUSTES.curaAlReposar`) al jugador y a cada seguidor, **+1 por cada barbero-cirujano** (su punto extra es SOLO con esta acción, no durmiendo). **Riesgo** (`AJUSTES.probabilidadEventoAlReposar`, 20 %): a bordo, lista nueva `descuido_a_bordo` (`data/eventos-terreno/descuido-a-bordo.json`: perdidos, rocas, vientos fuertes, polizón, imprevisto, traición y, con poco peso, motín, sirenas, monstruo y tormenta; puede salir algo bueno); a la intemperie, la lista de nocturnos; **en puerto, guarida, aldea y monasterio no hay riesgo**.
 - **Dormir genial (decidido por el autor):** en la fase de descanso ya no se cura siempre. A bordo o bajo techo hay un `AJUSTES.probabilidadDormirGenial` (50 %) de "Has dormido genial (+1 PV)"; **una tirada para todo el grupo**. `descansar` devuelve `haDormidoGenial`. A la intemperie no se tira. Así la acción Reposar tiene más sentido.
 - **Ajustes de habilidad:** `Habilidad.ajustes` (`curaAlReposar`, `reservasAlPescar`), sumados con `ajusteDeSeguidores(jugador, regla)` (`core/seguidores/consultas.ts`). Reglas de seguidor en datos, sin `if`s.
 - **Economía de la comida (decidido por el autor):** `comidaMaxima` 12; `precioTaberna` 4; **comprar una reserva costará al menos 5 de oro** (paso de comprar y vender comida). Objetivo de diseño: que de vez en cuando haga falta pescar o cazar, salvo golpe de suerte.
@@ -429,7 +432,7 @@ Cada turno = un día, con cuatro fases en orden (`mundo.fase`):
 | El hermano | Empieza con un seguidor aleatorio gratuito. Si el seguidor muere, se pierde la partida |
 | El heredero | Empieza con un objeto mágico de la lista del evento E037 (no puede salir el ídolo, el 12) |
 
-Implementados: los `ajustes` numéricos (fuerte, conformista), los `modificadores` (influyente, nativo) y el contable (en `aplicarEfectos`). Los efectos especiales **no se simulan** hasta que existan los sistemas que necesitan.
+Implementados (Sprint 6): los `ajustes` numéricos (fuerte, conformista), los `modificadores` (influyente, nativo), el vínculo nativo (el nativo), el contable, el hermano (seguidor inseparable y vital) y el maldito (amuleto al empezar). Pendientes: el afortunado (combate), el navegante y el superviviente (mapa) y el heredero (necesita la tabla de objetos mágicos, E037).
 
 **Características** (digital `1d3`): 1 *Fuerte* (Ingenio 2, Fuerza 4); 2 *Equilibrado* (3/3); 3 *Inteligente* (Ingenio 4, Fuerza 2).
 **Chequeo de Fuerza o Ingenio:** tirar 1d6 y sacar el valor de la característica **o menos**. Los piden algunos eventos.
@@ -443,7 +446,7 @@ Implementados: los `ajustes` numéricos (fuerte, conformista), los `modificadore
 Playa, jungla, jungla profunda, costa, alta mar, puerto, aldea, monasterio, naufragio, ruinas, barco, abundancia (+ guarida pirata). Modelo de datos en la sección 6.
 
 ### 4.5 Acciones (solo una por turno; según hexágono)
-Viajar · Buscar información (puertos y aldeas) · Descansar y cazar/pescar · Contratar seguidores o tripulación (puertos) · Vender/comprar comida (puertos y aldeas) · Solicitar audiencia (puertos, aldeas, guaridas pirata) · Enterrar tesoro (tierra, jungla, playa) · Visitar monasterio · Investigar naufragio · Registrar ruinas. Algunos objetos y seguidores añaden acciones (Artista, Carpintero).
+**[Digital, Sprint 6]** Viajar (Sprint 9) · Pescar · Cazar · Reposar · Ir al mercado (puertos y guaridas) · Dar un discurso, contratar marineros y buscar seguidor (puertos y guaridas) · Buscar información (puertos, guaridas y aldeas) · Solicitar audiencia (puertos, aldeas y guaridas) · Rezar y descansar en el monasterio · Enterrar tesoro (playa, jungla, jungla profunda) · Investigar naufragio · Registrar ruinas · Jugar a los dados y echar un pulso (guaridas) · Mendigar (con un artista). La lista completa con sus motivos de desactivación está en `accionesDisponibles` (sección 3.11).
 
 **Viajar (cualquier hex):**
 - Mueve **1 hexágono en cualquier dirección** (el navegante y el superviviente permiten más).
@@ -454,13 +457,13 @@ Viajar · Buscar información (puertos y aldeas) · Descansar y cazar/pescar · 
 - **Adentrarse en tierra:** se puede desembarcar en jungla, playa o puerto; **no se puede atracar en jungla profunda**. Al llegar a tierra desde el barco viajando, **no se tira evento**. Se anota dónde queda el barco; los seguidores acompañan siempre. **Volver al barco** automáticamente si se tienen tantas reservas de comida como hexágonos hay hasta el barco (se descartan), o turno a turno viajando.
 
 **Buscar información (3d6) [digital, Sprint 6: ver 3.11].** En puerto se puede sobornar: 10, 20 o 30 de oro para +1, +2 o +3. En aldea, +1 con seguidor nativo, sobrenombre "el nativo" o amuleto kalinago (se suman). Una búsqueda cada dos días.
-- **[Digital, decidido por el autor] En las aldeas nativas, buscar información usa su PROPIA tabla** (`buscar_informacion_aldea`, 3d6, mismos rangos), con resultados con ambiente de aldea. La tabla de abajo queda **solo para puertos**. El contenido lo escribirá el autor (borrador de ideas de Claude en el proyecto de Claude: `claude/borrador-buscar-informacion-aldea.md`; no va a GitHub). Los ids de tirada `buscar_info_puerto` y `buscar_info_aldea` ya separan los bonificadores.
+- **[Digital, decidido por el autor] En las aldeas nativas, buscar información usa su PROPIA tabla** (`buscar_informacion_aldea`, 3d6, mismos rangos), con resultados con ambiente de aldea. La tabla de abajo queda para puertos (y guaridas). La de aldeas la escribió el autor el 17-nov (`data/tablas/buscar-informacion-aldea.json`; resumen en la sección 3.11). Los ids de tirada `buscar_info_puerto` y `buscar_info_aldea` ya separan los bonificadores.
 
 | 3d6 | Resultado |
 |---|---|
 | 3 | Te roban: pierdes la mitad del oro que llevas |
 | 4 | No pasa nada |
-| 5 | Haces amigos: la próxima vez que busques información o contrates en este hex, +1 |
+| 5 | Haces amigos: la próxima vez que busques información o des un discurso en este hex, +1 |
 | 6 | Cubil de contrabandistas vacío: puedes saquearlo (+50 oro); no se puede repetir en este hex (salvo con "bigote falso") |
 | 7 | Bob el vendedor ambulante: comprar en la tabla de E017 |
 | 8 | Cartógrafo: E079 |
@@ -472,31 +475,31 @@ Viajar · Buscar información (puertos y aldeas) · Descansar y cazar/pescar · 
 | 17 | Rumores sobre un lugar, se dibuja en un mapa: E024 |
 | 18 | Alguacil, audiencia con el gobernador: E042 |
 
-**Contratar tripulación o seguidores (en puerto; una cosa u otra, nunca ambas).**
-- *Discurso (1d6):* 1 multa de 1d6 de oro (si no se tiene, E023) · 2 nadie hace caso · 3 +5 tripulación · 4 +1d6 · 5 +2d6 · 6 +3d6.
-- *Con oro:* tirar 1d6×5 = marineros disponibles; cada 1 de oro pagado = +1 tripulación.
-- *Seguidores (2d6)* [sin inventario ni comida]. Por defecto resistencia 10 y ataque 2:
+**Contratar [digital, Sprint 6: ver 3.11].** En puertos y guaridas; tres acciones distintas (cada día, solo una).
+- *Dar un discurso (1d6):* 1 multa de 1d6 de oro (sin oro suficiente: pierdes todo y te arrestan, E023) · 2-3 nadie te hace caso · 4 +1d6 tripulación · 5 +1d6+3 · 6 +1d6+6.
+- *Contratar marineros:* 1d6×3+4 disponibles; eliges cuántos (de 0 al máximo) a 2 de oro cada uno.
+- *Buscar seguidor (2d6)* [sin inventario ni comida; ves quién sale y lo contratas o no]. Por defecto resistencia 10 y ataque 2:
 
 | 2d6 | Seguidor | Notas |
 |---|---|---|
 | 2-3 | Pirata anciano retirado | Gratis. Resistencia 6 |
-| 4 | Cocinero (30 oro) | **Habilidad por rehacer** (la original, "todo el grupo come con 1 reserva", ya no aplica) |
-| 5 | Hombre nativo (45 oro, se compra su libertad) | Resistencia 12. Seguidor nativo: descanso gratis en aldeas, +1 audiencias en aldeas |
+| 4 | Pescador (30 oro) | Sustituye al cocinero. +1 reserva cada vez que pescas algo |
+| 5 | Nativo kalinago (45 oro) | Resistencia 12. Da el vínculo nativo; +1 en audiencias y buscar información en aldeas, y contra el mal |
 | 6 | Forzudo (25 oro) | Ataque 3 |
-| 7 | Artista (35 oro) | Ataque 1. Acción en puertos **Mendigar**: +2d6 oro, luego 1d6: con 1 te descubre un guardia (E057) |
-| 8 | Cartógrafo | E079 |
-| 9 | Barbero-cirujano (40 oro) | +1 al solicitar audiencia; cura 2 PV al descansar en vez de 1 |
+| 7 | Artista (35 oro) | Ataque 1. Da la acción **Mendigar** (tabla propia, 2d6) |
+| 8 | Cartógrafo | Evento (E079) |
+| 9 | Barbero-cirujano (40 oro) | +1 en las tres audiencias; +1 PV con la acción Reposar |
 | 10 | Navegante (30 oro) | Avanza 2 hexes por mar |
-| 11 | Carpintero (40 oro) | No ataca (pero puede ser atacado). Acción en el barco **Reparar**: 10 oro → +1d6 tripulación |
+| 11 | Mono amaestrado (40 oro) | Sustituye al carpintero. Resistencia 3, no ataca. Al buscar información en puerto: 1d6, con 2-6 trae ese oro; con un 1, 1d6 de multa |
 | 12 | Pirata experto (60 oro) | Resistencia 12, ataque 3 |
 
-**Descansar y cazar/pescar.** El **jugador** elige **una**: descansar, pescar o cazar. (Pescar y cazar son solo del jugador.)
-- *Descansar:* en puerto o aldea no pasa nada. En el barco, 1d6: con 1-2 se elige un evento de la lista del terreno (costa o alta mar). En otro hex, 1d6: con 1-2, evento de la lista de **eventos nocturnos**. **Cura 1 PV al jugador y a los seguidores** (si no hubo combate); no supera el valor original. El barbero-cirujano cura 2.
-- *Pescar:* en hex de agua o adyacente a agua. Aplicar bonificadores y tirada (el PDF dice 2d6, pero la tabla va de 1 a 6: **por defecto 1d6**, ver sección 5): 1 nada · 2-3 → 8 reservas · 4-5 → 12 · 6 → 15 (**reservas de comida**).
-- *Cazar:* en hex de tierra sin puerto ni aldea. Tirada (PDF: 2d6, tabla de 1 a 6: **por defecto 1d6**): 1 nada · 2-3 +10 reservas y −1 PV · 4-5 +10 reservas · 6 +15 reservas.
-- Las cantidades de pesca/caza estaban pensadas para un grupo que gastaba una reserva por miembro: **hay que reequilibrarlas** (sección 5).
+**Reposar, pescar y cazar [digital, Sprint 6: ver 3.11].** Tres acciones distintas. (Pescar y cazar son solo del jugador.)
+- *Reposar:* +2 PV al jugador y a cada seguidor (+1 por barbero-cirujano). Riesgo del 20 %: a bordo, lista `descuido_a_bordo`; a la intemperie, nocturnos; en puertos, guaridas, aldeas y monasterios, ninguno.
+- *Pescar (1d6):* a bordo o en tierra junto al agua: 1 nada · 2-3 → 3 · 4-5 → 5 · 6 → 7 reservas (+1 por pescador si pescas algo).
+- *Cazar (1d6):* solo en tierra salvaje: 1 nada · 2-3 → 4 reservas y −1 PV · 4-5 → 5 · 6 → 8.
+- Cantidades ya reequilibradas para la comida única del grupo (decidido por el autor en el Sprint 6).
 
-**Comprar y vender comida (puertos y aldeas).** 1d6: 1 alguien que solo compra · 2-3 alguien que solo vende · 4-6 mercado (compra y venta). En puertos: comprar a 2 de oro la reserva, vender a 1. ~~En aldeas: objetos por comida~~ **[Digital] eliminado: en las aldeas no se cambian objetos por nada.** Comprar y vender comida pasa a la acción "Ir al mercado" (Sprint 6, paso 6).
+**Comprar y vender comida [digital, Sprint 6].** Dentro de la acción "Ir al mercado" (puertos y guaridas), una reserva por clic: comprar a 5, vender a 2. Sin la tirada de papel ("solo hay alguien que compra"). **En las aldeas no hay mercado ni se cambian objetos por nada.**
 
 **Solicitar audiencia (1d6).**
 - *Gobernador (puerto):* 1 guardia te reconoce (E057) y no puedes repetir en este puerto · 2-3 denegada hoy, mañana +1 (no acumulable, solo al día siguiente) · 4 atiende su hija (E044) · 5-6 permitida (E042).
@@ -506,16 +509,16 @@ Viajar · Buscar información (puertos y aldeas) · Descansar y cazar/pescar · 
 
 **Visitar monasterio (dos acciones; programadas en el Sprint 6, sección 3.11):** *Rezar* (te purificas: se quitan **todas** las maldiciones, el amuleto maldito incluido) · *Descansar* (**todo el grupo: 20 de oro + 5 por seguidor**; todos recuperan toda la vida y esa noche duermen allí sin volver a pagar). **"Meditar" ya no existe.** Sin haber descansado, dormir en el monasterio en la fase de descanso **se paga** (ver 4.7).
 
-**Investigar naufragio (1d6):** 1-2 barco maldito (1d6: 1-3 superar E078; 4 *corregido por el autor en su versión*; 5-6 superar E085), al superarlo 1d6×10 de oro y un tesoro (E036) · 3 guarida pirata (E038) · 4-5 hogar de alguien (1d6: 1 E086, 2 E071, 3 E076, 4 E072, 5 E083, 6 E075) · 6 restos antiguos (E053 y E021).
+**Investigar naufragio (1d6):** 1-2 barco maldito (1d6: 1-3 combate contra el pirata maldito, E078; 4-6 piratas esqueleto, E085), al superarlo 1d6×10 de oro y un tesoro (E036) · 3 guarida pirata (E038) · 4-5 hogar de alguien (1d6: 1 E086, 2 E071, 3 E076, 4 E072, 5 E083, 6 E075) · 6 restos antiguos (E053 y E021).
 
 **Enterrar tesoro [digital, Sprint 6]:** solo en playa, jungla o jungla profunda. 100 de oro = **1 de Fama**. Sin objetos mágicos. Un tesoro por casilla, y no se desentierra.
 
-**Registrar ruinas (2d6):** 2 E022 · 3 E049 · 4 E053 dos veces · 5 E078 y, si se supera, cofre E021 · 6-7 ciudad pirata neutral: E038 yendo directo al punto 3 · 8-9 E040 · 10 gruta E088 · 11 lámpara mágica: 1d6, con 3+ lee E045 · 12 recibes "el ídolo antediluviano" (si ya lo tienes, E037).
+**Registrar ruinas (2d6):** 2 E022 · 3 E049 · 4 E053 dos veces · 5 E078 y, si se supera, cofre E021 · 6-7 ciudad pirata neutral: E038 yendo directo al punto 3 · 8-9 E040 · 10 gruta E088 · 11 lámpara mágica: 1d6, con 3+ el deseo (E041; el "E045" del libro es una errata), con 1-2 te quedas la lámpara agotada · 12 recibes "el ídolo antediluviano" (si ya lo tienes, E037). Programado en el Sprint 6 (sección 3.11); una vez por casilla.
 
 ### 4.6 Fase de comida [digital, programada en el Sprint 5: `core/turno/comer.ts`]
 - **Comer es obligatorio.** Cada día hace falta **1 reserva de comida** (más con condiciones como "hambre insaciable": `comidaPorDia`) y con eso come **todo el grupo**: jugador, seguidores y tripulación.
 - **El jugador elige** entre gastar sus **reservas** o **pagar con oro**, donde se pueda:
-  - **Puerto:** comer en la **taberna**, `AJUSTES.precioTaberna` (5) de oro por cada reserva que haría falta.
+  - **Puerto:** comer en la **taberna**, `AJUSTES.precioTaberna` (4) de oro por cada reserva que haría falta.
   - **Aldea:** los nativos **no aceptan monedas**; solo si el jugador tiene **vínculo nativo** (sobrenombre "el nativo", amuleto kalinago o un seguidor nativo) puede intercambiar oro por comida, al mismo precio.
   - **Resto:** solo reservas.
   - Si se puede pagar pero no llega el oro, la opción sale desactivada.
@@ -530,7 +533,7 @@ Viajar · Buscar información (puertos y aldeas) · Descansar y cazar/pescar · 
 - Al comer del todo, `diasSinComer` vuelve a 0. Comer no cura.
 
 ### 4.7 Fase de descanso [digital, programada en el Sprint 5: `core/turno/descansar.ts`]
-Antes "alojamiento". **"Taberna" es donde se come en un puerto; "posada", donde se duerme en un puerto.** Dormir bien **cura 1 PV**; dormir a la intemperie no cura. **Nadie deserta por dormir al raso** (regla de papel eliminada).
+Antes "alojamiento". **"Taberna" es donde se come en un puerto; "posada", donde se duerme en un puerto.** **[Sprint 6] A bordo o bajo techo, 50 % de "dormir genial" (+1 PV), una tirada para todo el grupo** (en la tabla, "+1 PV" quiere decir eso); dormir a la intemperie no cura. Las guaridas funcionan como un puerto. Con la noche pagada (descansar en el monasterio, fiesta en la aldea) solo sale dormir allí gratis. **Nadie deserta por dormir al raso** (regla de papel eliminada).
 
 | Lugar | Opciones | Coste | Cura |
 |---|---|---|---|
@@ -546,7 +549,7 @@ Antes "alojamiento". **"Taberna" es donde se come en un puerto; "posada", donde 
 
 - **Evento nocturno:** a la intemperie, salvo en un puerto: `AJUSTES.probabilidadEventoNocturno` (33 %, el "1-2 en 1d6" del papel), elegido de la lista ponderada de eventos nocturnos.
 - Solo se curan los que duermen bajo techo (o a bordo).
-- **Dormir en la aldea [digital, decidido por el autor el 17-nov; sustituye a la tabla de papel]:** en la fase de descanso hay dos opciones: dormir a la intemperie, o intentar convencer a los nativos con un **chequeo de Ingenio**. Si lo superas, duermes en la aldea **solo esa noche** (al día siguiente, otra vez intemperie o chequeo). Si fallas, te echan: la aldea queda bloqueada y apareces en un hexágono vecino al azar (lo de la casilla, con el mapa). Excepción: con la fiesta de bienvenida, esa noche se duerme allí sin chequeo.
+- **Dormir en la aldea [digital, decidido por el autor el 17-nov; sustituye a la tabla de papel]:** **con vínculo nativo**, se ofrece dormir en la aldea sin chequeo (gratis, bajo techo). **Sin él**, en la fase de descanso hay dos opciones: dormir a la intemperie, o intentar convencer a los nativos con un **chequeo de Ingenio**. Si lo superas, duermes en la aldea **solo esa noche** (al día siguiente, otra vez intemperie o chequeo). Si fallas, te echan: la aldea queda bloqueada y apareces en un hexágono vecino al azar (lo de la casilla, con el mapa). Excepción: con la fiesta de bienvenida, esa noche se duerme allí sin chequeo.
 
 ### 4.8 Combate
 Por rondas hasta que un bando huye o es eliminado. **El daño se aplica a la vez.** Cada ronda se emparejan luchadores (si un bando supera al otro, uno puede enfrentarse a varios). Todos lanzan 1d6 y restan daño a la resistencia del rival.
@@ -576,12 +579,12 @@ Códigos del libro de papel; en digital cada uno tendrá un id con nombre (ver 3
 | Inventario 5 vs 10 | **Resuelto:** 5 objetos; en el barco, ilimitado. Comida y oro aparte |
 | Pesca: unidad | **Resuelto:** reservas de comida |
 | Inanición y "valor de ataque" | **Resuelto:** el jugador ataca 1d6, −1 por día de inanición (tope −3) |
-| Naufragio, falta el 4 | **Resuelto** por el autor en su versión |
+| Naufragio, falta el 4 | **Resuelto:** barco maldito 1-3 pirata maldito, 4-6 piratas esqueleto |
 | Chequeos de Fuerza | **Resuelto:** 1d6 ≤ Fuerza |
 | Notas azules / veneno | **Ignorar** |
-| Pesca y caza: el PDF dice 2d6 pero las tablas van de 1 a 6 | **Por defecto 1d6** (es solo un dato del JSON, fácil de cambiar). Pendiente de confirmar por el autor |
-| Reequilibrar pesca/caza y precio de la comida | **Pendiente:** ahora una reserva alimenta a todo el grupo, así que las cantidades de papel (8-15) son demasiado generosas. Se ajusta jugando |
-| Cocinero | **Pendiente:** su habilidad original ya no aplica; darle otra o quitarlo |
+| Pesca y caza: el PDF dice 2d6 pero las tablas van de 1 a 6 | **Resuelto (Sprint 6):** 1d6, con cantidades nuevas (3/5/7 y 4/5/8) |
+| Reequilibrar pesca/caza y precio de la comida | **Resuelto (Sprint 6):** comida máxima 12, taberna 4, comprar a 5 y vender a 2. Se afina jugando |
+| Cocinero | **Resuelto (Sprint 6):** sustituido por el pescador (y el carpintero por el mono amaestrado) |
 | Inanición: ¿capacidad de carga a la mitad? | **Pendiente decidir** |
 | Victoria: ¿se gana al cumplir las dos condiciones o al entrar en un puerto después? Supuestos: "visitado" = entrar en el hex; el conformista también debe visitar los 3; el puerto de inicio cuenta si es principal | **Pendiente** (sprint de la condición de victoria) |
 | "Meditar" / guardado como mecánica | **Resuelto (Sprint 5):** "meditar" desaparece; no se guarda en monasterios |
@@ -634,6 +637,7 @@ Ningún código debe asumir 30×20. Al cargar un mapa, comprobar que tiene exact
 
 ### Origen de los datos: Worldographer
 Los mapas se dibujan con **Worldographer**. Su archivo `.wxx` es (según documentación de librerías de terceros para la versión 1.73) **XML comprimido en gzip y codificado en UTF-16**, con *tiles* (terreno) y *features* (iconos). Plan: **un script que convierta el `.wxx` al JSON del mapa**, reutilizable; hay que verificarlo con el archivo real (pendiente). Al dibujar: un único tipo de terreno por color y un icono distinto, siempre el mismo, por rasgo.
+- **Comprobado por el autor (18-nov):** probado en otra conversación de Claude, el `.wxx` real se lee perfectamente y basta para construir el mapa con sus hexágonos e iconos. No hace falta importar imágenes.
 
 ---
 
@@ -652,7 +656,9 @@ Al ser una lista, se puede evitar el mismo evento dos veces seguidas, retirar lo
 
 **Formato real** (`data/eventos-terreno/<terreno>.json`): `{ "id": "jungla", "eventos": [{ "evento": "cabana", "peso": 2, "libro": "E058" }, ...] }`. El mismo evento escrito dos veces es un **error** (se sube el peso). `eventoAleatorio(lista, porcentaje, dados)` decide primero si pasa algo (gasta 1 número) y, si pasa, elige con pesos (gasta otro). Al **viajar** se usa la lista del **terreno de destino** con `AJUSTES.probabilidadEventoAlViajar` (Sprint 9). Servirá también para descansar en el barco y dormir a la intemperie.
 
-**Ids de eventos ya asignados** (código del libro → id): E002 `islote`, E003 `piratas_hostiles`, E004 `aldea`, E008 `barco`, E009 `vientos_fuertes`, E010 `vientos_favorables`, E011 `imprevisto`, E012 `rocas`, E013 `perdidos`, E014 `objeto`, E015 `sirenas`, E016 `polizon`, E017 `bob_vendedor_ambulante`, E018 `el_mal`, E019 `motin`, E020 `pandemia`, E024 `rumores`, E026 `monstruo`, E028 `tierra`, E030 `traicion`, E031 `escondite`, E033 `escorbuto`, E034 `tormenta`, E035 `botella`, E038 `guarida_pirata`, E039 `nido`, E040 `ruinas`, E042 `audiencia_gobernador`, E046 `nativos_hostiles`, E047 `bloqueado`, E048 `manantial`, E051 `explorador`, E052 `plantas_carnivoras`, E053 `esqueleto`, E054 `ritual`, E055 `nativos`, E056 `golem`, E058 `cabana`, E059 `picadura`, E061 `jaguar`, E062 `arenas_movedizas`, E063 `campamento`, E064 `dinosaurio`, E065 `marina`, E066 `bruja_vudu`, E067 `puente`, E068 `lluvias`, E069 `pantano`, E070 `sol`, E071 `pescador`, E072 `piratas_perdidos` (en barco: bote a la deriva; en tierra: deambulando; es el mismo evento), E074 `tesoro_enterrado`, E075 `ermitano`, E078 `pirata_maldito`, E079 `cartografo`, E080 `misioneros`, E081 `taberna_clandestina`, E082 `mercado_de_esclavos`, E083 `contrabandista`, E084 `subasta_secreta`, E085 `piratas_esqueleto`, E086 `fugitivo`, E087 `carruaje`, E088 `cueva`, E089 `cangrejo`, E090 `volcan`. Las listas son orientativas: faltan eventos y están sin equilibrar.
+**Ids de eventos ya asignados** (código del libro → id): E002 `islote`, E003 `piratas_hostiles`, E004 `aldea`, E008 `barco`, E009 `vientos_fuertes`, E010 `vientos_favorables`, E011 `imprevisto`, E012 `rocas`, E013 `perdidos`, E014 `objeto`, E015 `sirenas`, E016 `polizon`, E017 `bob_vendedor_ambulante`, E018 `el_mal`, E019 `motin`, E020 `pandemia`, E024 `rumores`, E026 `monstruo`, E028 `tierra`, E030 `traicion`, E031 `escondite`, E033 `escorbuto`, E034 `tormenta`, E035 `botella`, E038 `guarida_pirata`, E039 `nido`, E040 `ruinas`, E042 `audiencia_gobernador`, E046 `nativos_hostiles`, E047 `bloqueado`, E048 `manantial`, E051 `explorador`, E052 `plantas_carnivoras`, E053 `esqueleto`, E054 `ritual`, E055 `nativos`, E056 `golem`, E058 `cabana`, E059 `picadura`, E061 `jaguar`, E062 `arenas_movedizas`, E063 `campamento`, E064 `dinosaurio`, E065 `marina`, E066 `bruja_vudu`, E067 `puente`, E068 `lluvias`, E069 `pantano`, E070 `sol`, E071 `pescador`, E072 `piratas_perdidos` (en barco: bote a la deriva; en tierra: deambulando; es el mismo evento), E074 `tripulacion_enterrando_tesoro` (renombrado para no confundirlo con la marca `tesoro_enterrado`), E075 `ermitano`, E078 `pirata_maldito`, E079 `cartografo`, E080 `misioneros`, E081 `taberna_clandestina`, E082 `mercado_de_esclavos`, E083 `contrabandista`, E084 `subasta_secreta`, E085 `piratas_esqueleto`, E086 `fugitivo`, E087 `carruaje`, E088 `cueva`, E089 `cangrejo`, E090 `volcan`. Las listas son orientativas: faltan eventos y están sin equilibrar.
+
+**Ids nuevos del Sprint 6** (en las tablas de acciones): `guardia` (E057), `hija_del_gobernador` (E044), `audiencia_jefe_aldea` (E043), `audiencia_capitan_pirata` (E045), `arrestado` (E023), `maldicion` (E022), `tesoro_magico` (E037), `deseo` (E041), `muchacha_perdida` (E076), `tabu_sagrado`, `historias_junto_al_fuego`, `caceria`, `barco_maldito`, `restos_antiguos` (E053 + E021), `esqueletos` (E053 dos veces), `ruinas_pirata_maldito` (E078 + cofre), `ciudad_pirata` (E038 punto 3). Los tres últimos y `restos_antiguos` son **eventos compuestos** a propósito (encadenan otros): en digital un id no tiene por qué ser un E### del libro.
 
 ### Implementado en `core/tablas/` (Sprint 3; tipos de tablas en `rangos/`, `efecto.ts` en la raíz)
 
@@ -679,7 +685,8 @@ export type EfectoDefinicion =                             // tal como se escrib
 export type Efecto = /* igual, pero con cantidades y turnos ya convertidos en números (+ ganar, − perder) */;
 
 // tabla.ts
-export interface Fila { min: number; max: number; texto?: string; efectos?: EfectoDefinicion[]; evento?: string }
+export interface Fila { min: number; max: number; texto?: string; efectos?: EfectoDefinicion[]; evento?: string;
+                        tabla?: string; especial?: EspecialDeTabla; libro?: string }   // tabla y especial: Sprint 6
 export interface Tabla { id: string; dado: string; filas: Fila[] }   // sin modificadores: el id de tirada lo decide quien llama
 
 // resultado-tabla.ts  (lo que devuelve resolverTabla)
@@ -690,6 +697,8 @@ export interface ResultadoTabla {
   texto?: string;       // texto de la fila, si lo tiene
   efectos: Efecto[];    // siempre una lista (vacía si no hay)
   evento?: string;      // id (con nombre) del evento al que salta, si lo hay
+  tabla?: string;       // "tira en otra tabla" (resolverConSubtablas)
+  especial?: EspecialDeTabla;   // regla especial de la fila (la aplica quien usa la tabla)
 }
 ```
 
@@ -698,22 +707,22 @@ Ejemplo de tabla en JSON:
 ```json
 { "id": "pesca", "dado": "1d6", "filas": [
     { "min": 1, "max": 1, "texto": "No pescas nada" },
-    { "min": 2, "max": 3, "efectos": [{ "tipo": "comida", "cantidad": 8 }] },
-    { "min": 4, "max": 5, "efectos": [{ "tipo": "comida", "cantidad": 12 }] },
-    { "min": 6, "max": 6, "efectos": [{ "tipo": "comida", "cantidad": 15 }] } ] }
+    { "min": 2, "max": 3, "efectos": [{ "tipo": "comida", "cantidad": 3 }] },
+    { "min": 4, "max": 5, "efectos": [{ "tipo": "comida", "cantidad": 5 }] },
+    { "min": 6, "max": 6, "efectos": [{ "tipo": "comida", "cantidad": 7 }] } ] }
 ```
 Una fila puede llevar efectos, un evento o ambas cosas: `{ "min": 9, "max": 12, "evento": "taberna_clandestina" }`. Un evento **no es un efecto**: es un salto del motor de eventos.
 
 ### Decisiones del Sprint 3
 1. **`resolverTabla(tabla, modificador, dados): ResultadoTabla` no recibe el estado.** Solo la tabla, un número y los `Dados`. Tira `tabla.dado`, suma el modificador, busca la fila, resuelve las cantidades con expresión de dados (`"2d6"` → un número) y devuelve el resultado.
 2. **`calcularModificador(jugador, idTirada)` es una función aparte** que suma lo que aportan sobrenombre, seguidores y objetos. Lo puntual (p. ej. "+1 por pagar 5 de oro") se suma al número antes de llamar a `resolverTabla`.
-3. **Ids de tirada específicos:** `buscar_info_puerto`, `buscar_info_aldea`, `audiencia_puerto`, `audiencia_aldea`, `audiencia_guarida`, `pesca`, `caza`. Sobrenombres, seguidores y objetos declaran sus modificadores sobre estos ids, en datos, sin `if`s sueltos. Primera versión solo con sobrenombres: *influyente* +1 en `buscar_info_puerto`, `audiencia_puerto` y `audiencia_guarida`; *nativo* +1 en `buscar_info_aldea` y `audiencia_aldea`.
+3. **Ids de tirada específicos:** `buscar_info_puerto`, `buscar_info_aldea`, `audiencia_puerto`, `audiencia_aldea`, `audiencia_guarida`, `pesca`, `caza`. Sobrenombres, seguidores y objetos declaran sus modificadores sobre estos ids, en datos, sin `if`s sueltos. Primera versión solo con sobrenombres: *influyente* +1 en `buscar_info_puerto`, `audiencia_puerto` y `audiencia_guarida`; *nativo* +1 en `buscar_info_aldea` y `audiencia_aldea`. (Después se añadieron `el_mal`, `discurso`, `contratar_seguidor`, `mendigar` y `buscar_info_guarida`.)
 4. **Resultado fuera de la tabla:** se recorta al primer o último rango (21 en una tabla que acaba en 18 se trata como 18). **Un hueco dentro de la tabla es un error**, no un silencio.
 5. **Efectos con dados salen ya resueltos** (números concretos). Los que dependen del estado (`mitad`, `maximo`, `todo`) y los fines de partida se devuelven tal cual y los resuelve `aplicarEfectos` (Sprint 4). `resolverTabla` copia cada efecto tal cual y solo convierte la cantidad.
 6. **Los JSON pierden los tipos al importarse** (`"tipo": "oro"` es un `string`). Se convierte con `as` en **un único cargador de tablas**, y un **test valida todas las tablas**: sin huecos ni solapes, tipos de efecto conocidos (`RECURSOS` + fines de partida), operación y destino válidos (cantidad solo en sumar/fijar, `maximo` solo en recursos con máximo, destino distinto de jugador solo para la vida, no fijar en negativo) e ids de evento con formato válido. Aún no se puede exigir que el evento exista.
 7. **Ids de evento con nombre**, no con el número del libro. Opcional mientras se pasan los eventos: un campo `"libro": "E081"` solo para cotejar con el PDF, que se borra después.
 8. **Dados del papel:** sumar dados cambia las probabilidades (los extremos son raros, a propósito). Mantener el dado de papel en tablas con resultados "normales" y "raros"; para resultados igual de probables, dado único (`1d7`, `1d8`...). **Las tablas siempre son con dado y rangos** (los bonificadores necesitan rangos); **los pesos son solo para las listas de eventos**. Añadir un resultado = partir una fila o cambiar `1d7` → `1d8` y añadir la fila; el revisor avisa si las filas no cubren exactamente lo que saca el dado.
-9. **Pesca y caza:** 1d6 por defecto, con las cantidades del papel por ahora.
+9. **Pesca y caza:** 1d6 (cantidades reequilibradas en el Sprint 6: 3/5/7 y 4/5/8).
 10. **Sin mensajes en efectos ni tablas** (ver 3.5), salvo el `texto` descriptivo de la fila.
 11. **Perder se escribe con signo menos**, también con dados: `{ "tipo": "vida", "cantidad": -1 }` (caza) o `{ "tipo": "oro", "cantidad": "-1d6" }` (multa del discurso). `resolverTabla` quita el `-`, tira y devuelve la cantidad en negativo; `tirar()` no se toca. El código solo suma: **el JSON decide si se gana o se pierde**.
 12. **Dados con suma:** `"1d6+1"` se admite en el dado de una tabla y en cantidades (primero multiplica, luego suma: `"1d6x10+5"`).
@@ -729,7 +738,7 @@ Sobrenombres, seguidores y objetos suman bonificadores (nativo, barbero-cirujano
 ```
 - Van ligados a **tiradas, no a tablas**: la misma tabla (buscar información) tiene bonificadores distintos en puerto y en aldea, y habrá tiradas que no son tablas (huida, chequeos).
 - **No todo es un modificador de tirada.** El navegante y el superviviente cambian el alcance del movimiento: tendrán su propio campo (p. ej. `"movimiento": { "mar": 2 }`) en el Sprint 9. Muchas reglas concretas de sobrenombres, seguidores y eventos se irán resolviendo una a una cuando toque.
-- **Duda abierta:** la descripción del influyente dice "+1 al buscar información" sin especificar dónde; ahora está programado solo en puertos (decisión 3). Confirmar con el autor.
+- **Duda abierta:** la descripción del influyente dice "+1 al buscar información" sin especificar dónde; ahora está programado en puertos y guaridas. Falta confirmar si vale también en aldeas.
 
 ---
 
@@ -790,22 +799,22 @@ Los eventos van **después** del núcleo (detalle en el documento de sprints del
 4. ✅ Efectos y estado ampliado: catálogos de objetos y condiciones, vocabulario de efectos, `calcularModificador` ampliado y `aplicarEfectos` con el chivato de cambios (sección 0 y 3.5).
    - ✅ Clasificación del libro de eventos (sección 3.9).
 5. ✅ Ciclo de turno: inicio de turno, comida (hambre, deserción, motín) y descanso, con las fichas de condición completas (secciones 0 y 3.10).
-6. ✅ Seguidores (efecto "se une un seguidor", catálogo de tipos, `inseparable`, bonificadores de seguidores), **condiciones otorgadas** por objetos, sobrenombres y seguidores (amuleto maldito, vínculo nativo con icono; sección 3.10), **pasar de la fase de acción a la de comida**, monasterio (rezar y descansar por 20 de oro), objetos (usos, descarte, vender en puertos y aldeas, elegir qué tirar si no cabe) y acciones sin eventos (pescar, cazar, comida, reclutar, descansar, enterrar tesoro). **Tablas que faltan** (cada una llega con su acción; las que mandan a eventos dependen de la clasificación del libro): contratar (discurso 1d6, con oro 1d6×5, seguidores 2d6), comprar/vender comida (1d6), audiencias (gobernador, jefe de aldea, capitán pirata), investigar naufragio (con subtablas), registrar ruinas (2d6), **dormir en la aldea** (1d6, a retocar; sección 4.7) y **buscar información en aldeas** (tabla propia, 3d6).
+6. ✅ Seguidores (efecto "se une un seguidor", catálogo de tipos, `inseparable`, bonificadores de seguidores), **condiciones otorgadas** por objetos, sobrenombres y seguidores (amuleto maldito, vínculo nativo con icono; sección 3.10), **pasar de la fase de acción a la de comida**, monasterio (rezar y descansar por 20 de oro), objetos (usos, descarte, vender en puertos y aldeas, elegir qué tirar si no cabe) y acciones sin eventos (pescar, cazar, comida, reclutar, descansar, enterrar tesoro). Todas las tablas de acciones del sprint están hechas (detalle en la sección 3.11).
 7. Combate normal (con habilidades especiales de enemigos, sección 3.9; el afortunado) y naval provisional.
 8. Guardado (autoguardado, exportar/importar, versión).
 9. Mapa (conversión `.wxx` → JSON, SVG), viajar (respetando `prohibe: viajar`, avisando de las llegadas para `alLlegar` y calculando el lugar para comida y descanso), `posicionBarco`, eventos de una sola vez en las listas de terreno, eventos que cambian el mapa y condición de victoria (con `famaObjetivoActual`).
 10. Motor de eventos (punto único de tiradas con botones de objetos, atajos de escritura, paso "elige una cantidad", condiciones de ubicación) y primeros eventos reales (3-4 variados) para validar el formato.
 11. Contenido, interfaz pulida, minijuego naval y, más adelante, backend.
 
-Hasta el punto 8 no hace falta ni mapa ni libro de eventos. El 9 necesita el `.wxx`.
+Hasta el punto 8 no hace falta ni mapa ni libro de eventos. El 9 necesita el `.wxx` (el autor ya lo tiene y ha comprobado que se lee bien).
 
 ## 10. Pendiente del autor
 
-- Archivo **`.wxx`** del mapa prototipo.
+- Añadir al repositorio el archivo **`.wxx`** del mapa prototipo. **Comprobado por el autor (18-nov): con el `.wxx` basta para construir el mapa hexagonal con sus terrenos e iconos; no hace falta ninguna imagen.**
 - **Erratas del libro de eventos:** E008 barco negrero, opción 1, dice E018 (es E082, confirmado); "2dx10", "2x6x10" y "2dx6x10" en E008, E082 y E087 son `2d6x10` (confirmado); E044 resultado 3-4 dice E041 (debería ser E042); E072 piratas neutrales 5-6 dice E023 (seguramente E038); E081 beber y bailar 5 dice E041 (¿E044?); "8" suelto en E020; doble "1" en E019; en las tablas de dirección, "E" debe ser "NO".
-- Confirmar si el +1 del **influyente** al buscar información vale solo en puertos o también en aldeas.
-- Decidir la **comida máxima** definitiva jugando (ahora 20).
-- Confirmar **pesca y caza en 1d6** y, más adelante, reequilibrar cantidades y precio de la comida.
+- Confirmar si el +1 del **influyente** al buscar información vale también en aldeas (hoy: puertos y guaridas).
+- Decidir la **comida máxima** definitiva jugando (ahora 12).
+- ~~Confirmar pesca y caza en 1d6 y reequilibrar~~ (hecho en el Sprint 6; se afina jugando).
 - ~~Rehacer el cocinero~~ (sustituido por el pescador). Decidir la **capacidad de carga** en la inanición.
 - Completar y equilibrar las **listas de eventos por terreno** (ya pasadas del papel, faltan algunos eventos).
 - **Libro de eventos**, empezando por 3-4 muestras variadas (tirada, decisión, combinado, con llamada y vuelta, y una con regla especial como el mapa del tesoro).
@@ -813,7 +822,7 @@ Hasta el punto 8 no hace falta ni mapa ni libro de eventos. El 9 necesita el `.w
 - Decidir cómo encaja el guardado con el diseño roguelike (sección 3.7), el momento exacto de la **victoria** y el diseño del **minijuego naval** (y con él, las **mejoras del barco**).
 - Decidir qué **eventos solo pueden salir una vez por partida** (de momento, el mal está a bordo).
 - ~~Retocar la tabla para dormir en la aldea~~ (hecho: regla nueva con chequeo de Ingenio, sección 4.7).
-- Equilibrar jugando los precios de `data/ajustes.json`: taberna (5), posada (5) y monasterio (7).
+- Equilibrar jugando los precios de `data/ajustes.json` (taberna 4, posada 5, monasterio 7, mercado, sobornos, marineros, apuestas...).
 - ~~Nombres de los tipos de seguidor~~ (hecho). Decidir la carpeta de las imágenes.
 - Decidir si la fila 5 de **El mal está a bordo** puede dejarte sin tripulación, y si el **motín** puede saltar estando a pie.
 - Revisar sobre la marcha la **clasificación del libro de eventos** (`claude/clasificacion-libro-eventos.md` en el proyecto de Claude).

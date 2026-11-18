@@ -36,6 +36,8 @@ import type { IdAccion, Sitio } from './accion';
 //   sin_naufragio, sin_ruinas: aquí no hay naufragio / ruinas.
 //   ya_explorado:  este naufragio o estas ruinas ya se exploraron ("Ya has registrado estas ruinas").
 //   sin_artista:   mendigar necesita un artista en el grupo.
+//   no_es_momento: no es la fase de acción (o la partida ha terminado): ninguna acción se puede.
+//   accion_a_medias: ya hay una acción empezada (mercado, mesa de dados...): primero hay que terminarla.
 export type MotivoNoDisponible =
   | 'sin_agua'
   | 'solo_salvaje'
@@ -57,7 +59,9 @@ export type MotivoNoDisponible =
   | 'sin_naufragio'
   | 'sin_ruinas'
   | 'ya_explorado'
-  | 'sin_artista';
+  | 'sin_artista'
+  | 'no_es_momento'
+  | 'accion_a_medias';
 
 /** Una acción tal como la enseña la interfaz: si no está disponible, sale desactivada con su motivo. */
 export interface AccionDisponible {
@@ -87,6 +91,15 @@ export function sePuedeCazar(sitio: Sitio): boolean {
  * "buscar información: falta 1 día".)
  */
 export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponible[] {
+  const todas = accionesSegunElSitio(estado, sitio);
+  // Protección: fuera de la fase de acción, o con una acción a medias, no se puede empezar ninguna.
+  const bloqueo: MotivoNoDisponible | undefined =
+    estado.mundo.finPartida || estado.mundo.fase !== 'accion' ? 'no_es_momento' : estado.mundo.accionEnCurso ? 'accion_a_medias' : undefined;
+  return bloqueo ? todas.map(a => ({ accion: a.accion, disponible: false, motivo: bloqueo })) : todas;
+}
+
+/** Las acciones según el sitio y el jugador (sin mirar la fase del día). */
+function accionesSegunElSitio(estado: Estado, sitio: Sitio): AccionDisponible[] {
   const enPuerto = esPuerto(sitio.lugar);
   const enMonasterio = sitio.lugar === 'monasterio';
   return [

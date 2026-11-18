@@ -125,3 +125,53 @@ describe('mendigar', () => {
     expect(mendigar(estadoCon({ seguidores: [artista('a')] }), EN_PUERTO, new Dados(27)).estado.mundo.fase).toBe('comida');
   });
 });
+
+describe('dormir en la aldea con vínculo nativo', () => {
+  const deNoche = (cambios: Partial<Jugador> = {}) => estadoCon(cambios, 'descanso');
+
+  it('con vínculo nativo, se ofrece dormir en la aldea (gratis, sin chequeo) en vez de convencer', () => {
+    const nativo = deNoche({ sobrenombre: 'el_nativo' });
+
+    expect(opcionesDeDescanso(nativo, 'aldea', ALDEA)).toEqual([
+      { eleccion: 'intemperie', precio: 0, alcanzaElOro: true },
+      { eleccion: 'techo_todos', precio: 0, alcanzaElOro: true },
+    ]);
+  });
+
+  it('duermen allí sin chequeo, sin eventos y con posibilidad de dormir genial', () => {
+    const noche = descansar(deNoche({ sobrenombre: 'el_nativo' }), 'techo_todos', 'aldea', new Dados(1), undefined, ALDEA);
+
+    expect(noche.chequeo).toBeUndefined();
+    expect(noche.eventos).toEqual([]);
+    expect(noche.haDormidoGenial).toBeDefined();
+    expect(noche.estado.jugador.oro).toBe(50);
+  });
+
+  it('también con el amuleto kalinago o un seguidor nativo (cualquier fuente del vínculo)', () => {
+    const conAmuleto = deNoche({ inventario: [{ id: 'amuleto_kalinago' }] });
+
+    expect(opcionesDeDescanso(conAmuleto, 'aldea', ALDEA).map(o => o.eleccion)).toEqual(['intemperie', 'techo_todos']);
+  });
+});
+
+describe('protección: fuera de la fase de acción no se puede empezar ninguna acción', () => {
+  it('en otra fase, todas desactivadas con "no_es_momento"', () => {
+    const deNoche = estadoCon({}, 'descanso');
+
+    expect(accionesDisponibles(deNoche, EN_PUERTO).every(a => !a.disponible && a.motivo === 'no_es_momento')).toBe(true);
+  });
+
+  it('con una acción a medias, todas desactivadas con "accion_a_medias"', () => {
+    const base = estadoCon();
+    const enElMercado: Estado = { ...base, mundo: { ...base.mundo, accionEnCurso: { tipo: 'mercado', rastrillo: null } } };
+
+    expect(accionesDisponibles(enElMercado, EN_PUERTO).every(a => !a.disponible && a.motivo === 'accion_a_medias')).toBe(true);
+  });
+
+  it('con la partida terminada, también "no_es_momento"', () => {
+    const base = estadoCon();
+    const terminada: Estado = { ...base, mundo: { ...base.mundo, finPartida: { resultado: 'derrota', motivo: 'vida' } } };
+
+    expect(accionesDisponibles(terminada, EN_PUERTO)[0].motivo).toBe('no_es_momento');
+  });
+});

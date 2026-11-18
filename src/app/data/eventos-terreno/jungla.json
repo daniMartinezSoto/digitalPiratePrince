@@ -17,7 +17,7 @@
     { "evento": "aldea", "peso": 1, "libro": "E004" },
     { "evento": "picadura", "peso": 1, "libro": "E059" },
     { "evento": "bruja_vudu", "peso": 1, "libro": "E066" },
-    { "evento": "tesoro_enterrado", "peso": 1, "libro": "E074" },
+    { "evento": "tripulacion_enterrando_tesoro", "peso": 1, "libro": "E074" },
     { "evento": "arenas_movedizas", "peso": 1, "libro": "E062" },
     { "evento": "jaguar", "peso": 1, "libro": "E061" },
     { "evento": "sol", "peso": 1, "libro": "E070" },

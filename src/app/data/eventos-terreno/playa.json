@@ -2,7 +2,7 @@
   "id": "playa",
   "eventos": [
     { "evento": "cangrejo", "peso": 3, "libro": "E089" },
-    { "evento": "tesoro_enterrado", "peso": 3, "libro": "E074" },
+    { "evento": "tripulacion_enterrando_tesoro", "peso": 3, "libro": "E074" },
     { "evento": "nativos", "peso": 3, "libro": "E055" },
     { "evento": "pescador", "peso": 3, "libro": "E071" },
     { "evento": "sol", "peso": 2, "libro": "E070" },

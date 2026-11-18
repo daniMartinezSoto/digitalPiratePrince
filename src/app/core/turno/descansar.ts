@@ -13,6 +13,7 @@ import { eventoAleatorio } from '../tablas/listas-eventos/elegir-evento';
 import type { ListaEventos } from '../tablas/listas-eventos/lista-eventos';
 import { chequeo, type ResultadoChequeo } from '../chequeos/chequeo';
 import { conMarca, hayMarca } from '../estado/marcas';
+import { tieneVinculoNativo } from '../personaje/vinculo-nativo';
 import { esPuerto, type Lugar } from './lugar';
 
 /** Catálogos y listas que usa el descanso. Por defecto, los del juego; los tests pueden pasar otros. */
@@ -68,8 +69,9 @@ export interface ResultadoDescanso {
  *   puerto (o guarida pirata) y monasterio: bajo techo solo él, bajo techo todos (si tiene seguidores) o a la intemperie.
  *   Con la noche ya pagada (mundo.nochePagada: descansar en el monasterio, o la fiesta de una aldea),
  *     en el monasterio o la aldea solo hay una opción: "techo_todos", gratis (todo el grupo duerme allí).
- *   aldea:               a la intemperie o intentar convencer a los nativos (si no le han echado de esta
- *                        aldea: "hex" es la casilla; sin ella no se puede saber y se ofrece).
+ *   aldea:               a la intemperie, y además (si no le han echado de esta aldea; "hex" es la casilla):
+ *                        con vínculo nativo, dormir en la aldea ("techo_todos", gratis, sin chequeo);
+ *                        sin él, intentar convencer a los nativos (chequeo de Ingenio).
  *   intemperie:          a la intemperie.
  */
 export function opcionesDeDescanso(estado: Estado, lugar: Lugar, hex?: { col: number; fila: number }): OpcionDeDescanso[] {
@@ -95,7 +97,9 @@ export function opcionesDeDescanso(estado: Estado, lugar: Lugar, hex?: { col: nu
   }
   opciones.push(opcion('intemperie', 0));
   if (lugar === 'aldea' && !hayMarca(estado, 'echado_de_la_aldea', hex)) {
-    opciones.push(opcion('convencer_nativos', 0));
+    // Con vínculo nativo, los nativos os acogen sin más: dormir en la aldea, gratis y sin chequeo.
+    // Sin él, hay que convencerlos (chequeo de Ingenio).
+    opciones.push(tieneVinculoNativo(estado.jugador) ? opcion('techo_todos', 0) : opcion('convencer_nativos', 0));
   }
   return opciones;
 }
