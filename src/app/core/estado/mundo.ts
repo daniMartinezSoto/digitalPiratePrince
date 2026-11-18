@@ -32,8 +32,11 @@ export type AccionEnCurso = VisitaMercado | MarinerosDisponibles | SeguidorEnEsp
 // MARCAS: cosas que quedan en una casilla concreta del mapa.
 //   evento:           al entrar en esa casilla salta ese evento (un tesoro señalado en un mapa...). Lleva "evento".
 //   tesoro_enterrado: el jugador enterró aquí un tesoro (no se puede enterrar otro ni desenterrarlo).
+//   amigos:           "haces amigos" al buscar información: +1 la próxima vez que busques información
+//                     (o des un discurso) aquí. Se quita al usarla.
+//   cubil_saqueado:   ya saqueó el cubil de contrabandistas de aquí: si vuelve a salir, está vacío.
 // Irán llegando más tipos (casillas bloqueadas, aldeas ofendidas...).
-export const TIPOS_DE_MARCA = ['evento', 'tesoro_enterrado'] as const;
+export const TIPOS_DE_MARCA = ['evento', 'tesoro_enterrado', 'amigos', 'cubil_saqueado'] as const;
 export type TipoDeMarca = (typeof TIPOS_DE_MARCA)[number];
 
 export interface Marca {
@@ -96,7 +99,16 @@ export interface Mundo {
   // La acción a medias (ver AccionEnCurso arriba). null si no hay ninguna.
   accionEnCurso: AccionEnCurso | null;
 
-  // true = el grupo tiene ya pagada la noche en el monasterio: lo apunta la acción "Descansar en el
-  // monasterio" (su precio incluye dormir allí esa noche, todo el grupo). Vuelve a false al acabar el día.
+  // true = el grupo tiene ya pagada la noche donde está (monasterio o aldea): lo apuntan la acción
+  // "Descansar en el monasterio" (su precio incluye dormir allí) y la fiesta de bienvenida de una aldea.
+  // Esa noche solo hay una opción: dormir allí todos, gratis. Vuelve a false al acabar el día.
   nochePagada: boolean;
+
+  // true = hoy come gratis (la fiesta de bienvenida de una aldea): en la fase de comida no gasta
+  // reservas ni oro. Vuelve a false al acabar el día.
+  comidaGratis: boolean;
+
+  // Día en que buscó información por última vez (null = nunca). Tras buscar, hay que esperar
+  // AJUSTES.diasEntreBusquedas días para volver a hacerlo, en cualquier sitio.
+  ultimaBusquedaInformacion: number | null;
 }

@@ -3,6 +3,7 @@ import { condicionesQueProhiben } from '../condiciones/consultas';
 import type { Dados } from '../dados/dados';
 import { aplicarEfectos } from '../efectos/aplicar-efectos';
 import type { Estado } from '../estado/estado';
+import { conMarca, hayMarca } from '../estado/marcas';
 import { cerrarFaseDeAccion, comprobarQueSePuedeActuar, type ResultadoAccion, type Sitio } from './accion';
 
 // ACCIÓN: ENTERRAR TESORO. Se entierran AJUSTES.oroAlEnterrarTesoro (100) de oro y se gana 1 punto de fama.
@@ -38,8 +39,7 @@ export function motivoParaNoEnterrar(estado: Estado, sitio: Sitio): MotivoParaNo
 
 /** ¿Ya hay un tesoro enterrado en la casilla de ese sitio? (Sin casilla conocida, no se puede saber: false.) */
 export function hayTesoroEnterrado(estado: Estado, sitio: Sitio): boolean {
-  const hex = sitio.hex;
-  return hex !== undefined && estado.mundo.marcas.some(m => m.tipo === 'tesoro_enterrado' && m.col === hex.col && m.fila === hex.fila);
+  return hayMarca(estado, 'tesoro_enterrado', sitio.hex);
 }
 
 /**
@@ -61,9 +61,6 @@ export function enterrarTesoro(estado: Estado, sitio: Sitio, dados: Dados): Resu
     ],
     dados,
   );
-  const hex = sitio.hex;
-  const conMarca: Estado = hex
-    ? { ...resultado.estado, mundo: { ...resultado.estado.mundo, marcas: [...resultado.estado.mundo.marcas, { col: hex.col, fila: hex.fila, tipo: 'tesoro_enterrado' }] } }
-    : resultado.estado;
-  return { estado: cerrarFaseDeAccion(conMarca, dados), cambios: resultado.cambios, eventos: [] };
+  const marcado = conMarca(resultado.estado, 'tesoro_enterrado', sitio.hex);
+  return { estado: cerrarFaseDeAccion(marcado, dados), cambios: resultado.cambios, eventos: [] };
 }

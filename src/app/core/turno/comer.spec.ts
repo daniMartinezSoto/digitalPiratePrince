@@ -74,6 +74,7 @@ describe('opcionesDeComida', () => {
       reservas: 1,
       alcanzanLasReservas: false,
       pago: { precio: 2 * PRECIO, alcanzaElOro: true },
+      invitado: false,
     });
   });
 });

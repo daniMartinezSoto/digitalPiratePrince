@@ -1,0 +1,25 @@
+{
+  "id": "buscar_informacion_aldea",
+  "dado": "3d6",
+  "filas": [
+    { "min": 3, "max": 4, "texto": "Rompes un tabú sagrado y un nativo te desafía.", "evento": "tabu_sagrado" },
+    { "min": 5, "max": 6, "texto": "Nadie entiende tu idioma y no te hacen caso." },
+    { "min": 7, "max": 7, "texto": "Un niño curioso te sigue a todas partes: la próxima vez que busques información aquí, tendrás +1.", "especial": "haces_amigos" },
+    { "min": 8, "max": 8, "texto": "Historias junto al fuego: los ancianos te hablan de unas ruinas cercanas.", "evento": "historias_junto_al_fuego" },
+    { "min": 9, "max": 9, "texto": "Una curandera os cura.", "efectos": [{ "tipo": "vida", "cantidad": "1d6", "destino": "todos" }] },
+    { "min": 10, "max": 11, "texto": "Los cazadores te invitan a una cacería.", "evento": "caceria" },
+    { "min": 12, "max": 13, "texto": "¡Fiesta de bienvenida! Comes y bebes con la tribu: hoy comes gratis y esta noche duermes en la aldea.", "especial": "fiesta" },
+    {
+      "min": 14,
+      "max": 14,
+      "texto": "Un viejo chamán os purifica y te regala un ungüento curativo.",
+      "efectos": [
+        { "tipo": "quitar_condicion", "categoria": "maldicion" },
+        { "tipo": "ganar_objeto", "objeto": "unguento" }
+      ]
+    },
+    { "min": 15, "max": 15, "texto": "Un joven guerrero quiere ver mundo y se une a ti.", "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "nativo" }] },
+    { "min": 16, "max": 17, "texto": "Se te concede una audiencia con el jefe de la aldea.", "evento": "audiencia_jefe_aldea" },
+    { "min": 18, "max": 18, "texto": "¡Te confunden con su dios!", "efectos": [{ "tipo": "fama", "cantidad": 1 }], "evento": "audiencia_jefe_aldea" }
+  ]
+}

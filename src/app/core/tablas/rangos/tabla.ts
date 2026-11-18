@@ -1,5 +1,15 @@
 import type { EfectoDefinicion } from '../efecto';
 
+// REGLAS ESPECIALES de una fila: algo que no se puede escribir con efectos normales y que programa
+// la acción que usa la tabla (buscar información). En el JSON: { ..., "especial": "haces_amigos" }.
+//   haces_amigos: queda una marca "amigos" en la casilla: +1 la próxima vez que busques información
+//                 (o des un discurso) allí. Se gasta al usarla.
+//   cubil:        el cubil de contrabandistas solo se saquea una vez por casilla: la segunda vez
+//                 está vacío y no da nada (sus efectos no se aplican).
+//   fiesta:       fiesta de bienvenida en la aldea: ese día comes gratis y esa noche duermes allí gratis.
+export const ESPECIALES_DE_TABLA = ['haces_amigos', 'cubil', 'fiesta'] as const;
+export type EspecialDeTabla = (typeof ESPECIALES_DE_TABLA)[number];
+
 // Una fila cubre un rango de resultados del dado, ambos extremos incluidos.
 export interface Fila {
   min: number;
@@ -14,6 +24,9 @@ export interface Fila {
   // Id del evento al que lleva esta fila, con nombre (p. ej. "taberna_clandestina").
   // Es un salto del motor de eventos, no un efecto sobre el estado.
   evento?: string;
+
+  // Regla especial de la fila (ver ESPECIALES_DE_TABLA). Sin ponerla = ninguna.
+  especial?: EspecialDeTabla;
 
   // Solo para cotejar con el PDF mientras se pasan los eventos (p. ej. "E081"). Se borrará.
   libro?: string;

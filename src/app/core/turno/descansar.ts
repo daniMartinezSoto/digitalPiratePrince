@@ -57,8 +57,8 @@ export interface ResultadoDescanso {
  * Solo consulta: dónde puede dormir el jugador estando en ese lugar, y cuánto cuesta.
  *   barco:               a bordo.
  *   puerto y monasterio: bajo techo solo él, bajo techo todos (si tiene seguidores) o a la intemperie.
- *     En el monasterio con la noche ya pagada (mundo.nochePagada, por la acción "Descansar en el monasterio")
- *     solo hay una opción: "techo_todos", gratis (todo el grupo duerme allí).
+ *   Con la noche ya pagada (mundo.nochePagada: descansar en el monasterio, o la fiesta de una aldea),
+ *     en el monasterio o la aldea solo hay una opción: "techo_todos", gratis (todo el grupo duerme allí).
  *   aldea e intemperie:  a la intemperie. (Convencer a los aldeanos: Sprint 6, con su tabla.)
  */
 export function opcionesDeDescanso(estado: Estado, lugar: Lugar): OpcionDeDescanso[] {
@@ -69,11 +69,12 @@ export function opcionesDeDescanso(estado: Estado, lugar: Lugar): OpcionDeDescan
     return [opcion('a_bordo', 0)];
   }
 
+  if ((lugar === 'monasterio' || lugar === 'aldea') && estado.mundo.nochePagada) {
+    return [opcion('techo_todos', 0)];
+  }
+
   const opciones: OpcionDeDescanso[] = [];
   if (lugar === 'puerto' || lugar === 'monasterio') {
-    if (lugar === 'monasterio' && estado.mundo.nochePagada) {
-      return [opcion('techo_todos', 0)];
-    }
     const porPersonaje = lugar === 'puerto' ? AJUSTES.precioPosada : AJUSTES.precioMonasterio;
     const personajes = 1 + estado.jugador.seguidores.length;
     opciones.push(opcion('techo_solo', porPersonaje));
@@ -95,8 +96,8 @@ export function opcionesDeDescanso(estado: Estado, lugar: Lugar): OpcionDeDescan
  * 2. A la intemperie, salvo en un puerto: puede saltar un evento nocturno
  *    (AJUSTES.probabilidadEventoNocturno), elegido de la lista de eventos nocturnos.
  *    Se devuelve como evento pendiente.
- * 3. SE ACABA EL DÍA: el día sube en 1, la partida vuelve a la fase "inicio" y se olvida la noche
- *    pagada (mundo.nochePagada).
+ * 3. SE ACABA EL DÍA: el día sube en 1, la partida vuelve a la fase "inicio" y se olvidan la noche
+ *    pagada y la comida gratis (mundo.nochePagada, mundo.comidaGratis).
  *
  * NO toca el estado que recibe: devuelve uno nuevo.
  * Dados: a bordo o bajo techo, 1 número (dormir genial). A la intemperie fuera de un puerto,
@@ -155,6 +156,7 @@ export function descansar(
       dia: resultado.estado.mundo.dia + 1,
       fase: 'inicio',
       nochePagada: false,
+      comidaGratis: false,
       estadoDados: dados.obtenerEstado(),
     },
   };

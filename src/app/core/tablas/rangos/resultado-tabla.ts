@@ -1,4 +1,5 @@
 import type { Efecto } from '../efecto';
+import type { EspecialDeTabla } from './tabla';
 
 // Lo que devuelve resolverTabla(): la fila elegida ya resuelta, más datos de la tirada.
 export interface ResultadoTabla {
@@ -8,4 +9,5 @@ export interface ResultadoTabla {
   texto?: string;      // texto de la fila, si lo tiene
   efectos: Efecto[];   // efectos ya resueltos; lista vacía si no hay
   evento?: string;     // id del evento al que salta, si lo hay
+  especial?: EspecialDeTabla; // regla especial de la fila, si la tiene (la aplica quien usa la tabla)
 }

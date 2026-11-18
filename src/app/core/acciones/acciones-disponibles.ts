@@ -2,6 +2,7 @@ import { AJUSTES } from '../ajustes/ajustes';
 import { condicionesQueProhiben, maximoSeguidoresActual } from '../condiciones/consultas';
 import type { Estado } from '../estado/estado';
 import { motivoParaNoDescansarEnMonasterio, motivoParaNoRezar } from '../monasterio/monasterio';
+import { motivoParaNoBuscar } from './buscar-informacion';
 import { motivoParaNoEnterrar } from './enterrar-tesoro';
 import type { IdAccion, Sitio } from './accion';
 
@@ -20,6 +21,8 @@ import type { IdAccion, Sitio } from './accion';
 //   sin_maldiciones: rezar sin tener ninguna maldición ("No tienes ninguna maldición").
 //   nadie_herido:  descansar en el monasterio con todo el grupo con la vida al máximo ("Nadie necesita descansar").
 //   tesoro_ya_enterrado: en esta casilla ya enterró un tesoro ("Ya has enterrado un tesoro aquí").
+//   solo_puerto_o_aldea: buscar información solo en puertos y aldeas.
+//   espera:        buscó información hace poco (en "faltanDias", cuántos días faltan).
 export type MotivoNoDisponible =
   | 'sin_agua'
   | 'solo_salvaje'
@@ -31,7 +34,9 @@ export type MotivoNoDisponible =
   | 'solo_monasterio'
   | 'sin_maldiciones'
   | 'nadie_herido'
-  | 'tesoro_ya_enterrado';
+  | 'tesoro_ya_enterrado'
+  | 'solo_puerto_o_aldea'
+  | 'espera';
 
 /** Una acción tal como la enseña la interfaz: si no está disponible, sale desactivada con su motivo. */
 export interface AccionDisponible {
@@ -40,6 +45,8 @@ export interface AccionDisponible {
   motivo?: MotivoNoDisponible;
   // Solo con motivo "prohibido": ids de las condiciones que lo impiden, para decir cuáles.
   condiciones?: string[];
+  // Solo con motivo "espera": días que faltan para poder usarla ("falta 1 día").
+  faltanDias?: number;
 }
 
 /** Pescar: a bordo, o en tierra si hay agua en una casilla de al lado. */
@@ -72,6 +79,7 @@ export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponi
     enMonasterio ? disponibleONo('rezar', motivoParaNoRezar(estado)) : noEnMonasterio('rezar'),
     enMonasterio ? disponibleONo('descansar_en_monasterio', motivoParaNoDescansarEnMonasterio(estado)) : noEnMonasterio('descansar_en_monasterio'),
     disponibilidadDeEnterrar(estado, sitio),
+    disponibilidadDeBuscar(estado, sitio),
   ];
 }
 
@@ -111,6 +119,16 @@ function disponibilidadDeEnterrar(estado: Estado, sitio: Sitio): AccionDisponibl
   return noSePuede.motivo === 'prohibido'
     ? { accion: 'enterrar_tesoro', disponible: false, motivo: 'prohibido', condiciones: noSePuede.condiciones }
     : { accion: 'enterrar_tesoro', disponible: false, motivo: noSePuede.motivo };
+}
+
+function disponibilidadDeBuscar(estado: Estado, sitio: Sitio): AccionDisponible {
+  const noSePuede = motivoParaNoBuscar(estado, sitio);
+  if (!noSePuede) {
+    return { accion: 'buscar_informacion', disponible: true };
+  }
+  return noSePuede.motivo === 'espera'
+    ? { accion: 'buscar_informacion', disponible: false, motivo: 'espera', faltanDias: noSePuede.faltanDias }
+    : { accion: 'buscar_informacion', disponible: false, motivo: noSePuede.motivo };
 }
 
 function disponibleONo(accion: IdAccion, motivo: MotivoNoDisponible | undefined): AccionDisponible {

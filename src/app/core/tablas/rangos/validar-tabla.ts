@@ -13,7 +13,7 @@ import {
   RECURSOS,
   RECURSOS_CON_MAXIMO,
 } from '../efecto';
-import type { Fila, Tabla } from './tabla';
+import { ESPECIALES_DE_TABLA, type Fila, type Tabla } from './tabla';
 
 // Formatos válidos.
 const FORMATO_ID = /^[a-z][a-z0-9_]*$/;              // minúsculas, números y guiones bajos: "taberna_clandestina"
@@ -98,11 +98,14 @@ function validarFila(fila: Fila, nombre: string): string[] {
   if (fila.min > fila.max) {
     errores.push(`${donde}: "min" es mayor que "max".`);
   }
-  if (fila.texto === undefined && fila.efectos === undefined && fila.evento === undefined) {
-    errores.push(`${donde}: está vacía (necesita al menos "texto", "efectos" o "evento").`);
+  if (fila.texto === undefined && fila.efectos === undefined && fila.evento === undefined && fila.especial === undefined) {
+    errores.push(`${donde}: está vacía (necesita al menos "texto", "efectos", "evento" o "especial").`);
   }
   if (fila.evento !== undefined && !FORMATO_ID.test(fila.evento)) {
     errores.push(`${donde}: el evento "${fila.evento}" debe ir en minúsculas y con guiones bajos.`);
+  }
+  if (fila.especial !== undefined && !(ESPECIALES_DE_TABLA as readonly string[]).includes(fila.especial)) {
+    errores.push(`${donde}: la regla especial "${String(fila.especial)}" no existe (válidas: ${ESPECIALES_DE_TABLA.join(', ')}).`);
   }
 
   for (const efecto of fila.efectos ?? []) {

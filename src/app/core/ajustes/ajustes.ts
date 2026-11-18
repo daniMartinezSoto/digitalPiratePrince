@@ -33,6 +33,15 @@ export interface Ajustes {
   /** Oro que se entierra con la acción "Enterrar tesoro" (a cambio de 1 punto de fama). */
   oroAlEnterrarTesoro: number;
 
+  /** Oro que cuesta cada soborno al buscar información en un puerto (cada uno da +1 a la tirada). */
+  precioSoborno: number;
+
+  /** Sobornos que se pueden pagar como mucho en una búsqueda (3 = hasta +3). */
+  maximoSobornos: number;
+
+  /** Días que hay que esperar entre una búsqueda de información y la siguiente (2 = un día sí y otro no). */
+  diasEntreBusquedas: number;
+
   /** Porcentaje (0-100) de que pase un evento nocturno al dormir a la intemperie. En papel: 1-2 en 1d6 = 33. */
   probabilidadEventoNocturno: number;
 

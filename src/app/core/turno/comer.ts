@@ -19,7 +19,8 @@ export const CONDICION_HAMBRE = 'hambre';
 // Lo que elige el jugador en la fase de comida:
 //   reservas: gastar sus reservas de comida.
 //   pagar:    pagar con oro. En un puerto es "comer en la taberna"; en una aldea, "intercambiar oro por comida".
-export const ELECCIONES_DE_COMIDA = ['reservas', 'pagar'] as const;
+//   invitado: hoy le invitan (fiesta de bienvenida en una aldea: mundo.comidaGratis). No gasta nada.
+export const ELECCIONES_DE_COMIDA = ['reservas', 'pagar', 'invitado'] as const;
 export type EleccionDeComida = (typeof ELECCIONES_DE_COMIDA)[number];
 
 /** Lo que la interfaz necesita para pintar la fase de comida (qué botones hay y cuáles se pueden pulsar). */
@@ -30,6 +31,8 @@ export interface OpcionesDeComida {
   // null = aquí no se puede pagar con oro. Si se puede: cuánto cuesta hoy y si al jugador le llega.
   // Si se puede pagar pero no le llega el oro, el botón sale, pero no se puede pulsar.
   pago: { precio: number; alcanzaElOro: boolean } | null;
+  // true = hoy le invitan a comer (mundo.comidaGratis): sale el botón "invitado".
+  invitado: boolean;
 }
 
 /** Lo que devuelve comer. Son datos, no mensajes: la interfaz decide cómo contarlo. */
@@ -50,6 +53,7 @@ export function opcionesDeComida(estado: Estado, lugar: Lugar, catalogos: Catalo
     reservas: estado.jugador.comida,
     alcanzanLasReservas: estado.jugador.comida >= necesarias,
     pago: sePuedePagarConOro(estado.jugador, lugar) ? { precio, alcanzaElOro: estado.jugador.oro >= precio } : null,
+    invitado: estado.mundo.comidaGratis,
   };
 }
 
@@ -68,6 +72,8 @@ export function sePuedePagarConOro(jugador: Jugador, lugar: Lugar): boolean {
  * FASE DE COMIDA. Solo se puede llamar con la partida en la fase "comida". Comer es obligatorio.
  *
  *   "reservas": gasta las reservas que hacen falta hoy. Si no llegan, gasta las que haya y pasa hambre.
+ *   "invitado": hoy le invitan (mundo.comidaGratis): come todo el grupo sin gastar nada. Si hoy no
+ *               le invitan, error.
  *   "pagar":    paga AJUSTES.precioTaberna de oro por cada reserva que haría falta. Solo donde se
  *               puede (ver sePuedePagarConOro) y si llega el oro (si no, error: la interfaz no debe
  *               dejar pulsar el botón).
@@ -105,7 +111,12 @@ export function comer(
   let haComido: boolean;
 
   // 1. Pagar la comida.
-  if (eleccion === 'pagar') {
+  if (eleccion === 'invitado') {
+    if (!opciones.invitado) {
+      throw new Error('comer: hoy no le invitan a comer');
+    }
+    haComido = true;
+  } else if (eleccion === 'pagar') {
     if (!opciones.pago) {
       throw new Error(`comer: en "${lugar}" no se puede pagar la comida con oro`);
     }

@@ -48,5 +48,20 @@
     "otorga": [
       "vinculo_nativo"
     ]
+  },
+  {
+    "id": "unguento",
+    "nombre": "Ungüento curativo",
+    "descripcion": "Un ungüento de hierbas del chamán. Al usarlo, recuperas 1d6 de vida.",
+    "tipo": "activo",
+    "usosMaximos": 1,
+    "cuandoSeUsa": "accion",
+    "alUsar": [
+      {
+        "tipo": "vida",
+        "cantidad": "1d6"
+      }
+    ],
+    "precioVenta": 10
   }
 ]

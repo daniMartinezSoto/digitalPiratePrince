@@ -42,7 +42,7 @@
   - ✅ `core/turno/`: `iniciarTurno` (amanecer), `comer` + `opcionesDeComida`, `descansar` + `opcionesDeDescanso` (cierra el día: `dia + 1`, fase `inicio`), `lugar.ts` (`LUGARES`) y un test de día completo. `core/personaje/vinculo-nativo.ts` (`tieneVinculoNativo`).
   - ✅ Estado: `Seguidor.inseparable?`. Cambio nuevo `seguidor_se_marcha`. `data/ajustes.json`: `precioTaberna` (5), `precioPosada` (5), `precioMonasterio` (7), `probabilidadEventoNocturno` (33).
   - **La fase de acción sigue siendo un hueco:** `iniciarTurno` deja el día en `accion` y todavía nada lo pasa a `comida`; lo harán las acciones del Sprint 6.
-- **Tests:** tras el paso 8 del Sprint 6, a Claude le pasan 827 en 44 archivos (sin `app.spec.ts`; al autor le deberían salir 829 en 45).
+- **Tests:** tras el paso 8 del Sprint 6, a Claude le pasan 856 en 45 archivos (sin `app.spec.ts`; al autor le deberían salir 858 en 46).
 
 **Siguiente:** Sprint 6 (seguidores, objetos y acciones sin eventos, sección 9). El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
@@ -141,14 +141,16 @@ Mundo   { mapaId: string | null;
           dia: number;
           fase: 'inicio' | 'accion' | 'comida' | 'descanso';     // momento del día (core/estado/fase.ts)
           banderas: Record<string, boolean | number | string>;   // hechos generales
-          marcas: { col, fila, tipo: 'evento' | 'tesoro_enterrado', evento? }[];   // cosas en casillas concretas
+          marcas: { col, fila, tipo: 'evento' | 'tesoro_enterrado' | 'amigos' | 'cubil_saqueado', evento? }[];   // cosas en casillas concretas (core/estado/marcas.ts)
           pilaEventos: { evento, paso }[];
           puertosVisitados: string[];                            // ids de puertos principales
           estadoDados: number;                                   // dados.obtenerEstado()
           finPartida: { resultado: 'victoria' | 'derrota';       // null mientras se juega
                         motivo: 'vida' | 'tripulacion' | 'seguidor' | 'evento' } | null;
           accionEnCurso: AccionEnCurso | null;    // acción a medias: mercado, marineros o seguidor en espera (Sprint 6)
-          nochePagada: boolean }                  // el grupo tiene pagada la noche en el monasterio; vuelve a false al acabar el día
+          nochePagada: boolean;                   // noche pagada (monasterio o fiesta en aldea); vuelve a false al acabar el día
+          comidaGratis: boolean;                  // hoy come gratis (fiesta en aldea); vuelve a false al acabar el día
+          ultimaBusquedaInformacion: number | null }   // día de la última búsqueda de información
 
 Seguidor { id: string; tipo: string; nombre: string; ataque: number;   // ataque = daño que hace si acierta
            resistencia, resistenciaMaxima: number;                     // resistencia = su vida
@@ -328,7 +330,7 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
   - Vender cuenta como ganar oro: el contable gana sus 2d6 en cada venta.
   - **Sin tirada de papel** ("hoy solo hay alguien que compra"): siempre se puede comprar y vender comida. **No hay tienda fija:** objetos solo en el rastrillo (o en eventos como el emporio de Bob). En las aldeas no hay mercado.
   - **Rastrillo:** `data/rastrillo.json` (`objetos: [{ objeto, peso, precio }]`, elegido con pesos). El revisor exige que cueste más que su `precioVenta`. Provisional: los 4 objetos sin el ídolo, a precio doble.
-  - **Mejoras del barco (RECORDAR AL AUTOR EN EL SPRINT DEL COMBATE NAVAL):** se conseguirán en el rastrillo, en el emporio de Bob y en eventos; no ocupan inventario (como las bendiciones: probablemente condiciones de una categoría nueva `mejora`). Su efecto depende de cómo sea el combate naval (quizá con minijuego), así que no se ha programado nada.
+  - **Mejoras del barco (RECORDAR AL AUTOR EN EL SPRINT DEL COMBATE NAVAL):** se conseguirán en el rastrillo, en el emporio de Bob, en eventos y quizá en un **astillero pirata** de las guaridas; no ocupan inventario (como las bendiciones: probablemente condiciones de una categoría nueva `mejora`). Su efecto depende de cómo sea el combate naval (quizá con minijuego), así que no se ha programado nada.
 - **Acciones a medias: `mundo.accionEnCurso` (paso 7, 17-nov).** Las acciones de varios pasos (primero se tira o se entra, después el jugador decide) guardan lo que salió en un único campo (`AccionEnCurso` en `core/estado/mundo.ts`): `{ tipo: 'mercado', rastrillo }`, `{ tipo: 'marineros', disponibles }` o `{ tipo: 'seguidor', seguidor, precio }`. Así no se puede volver a tirar hasta que guste y un guardado a mitad lo conserva. Mientras hay una, `comprobarQueSePuedeActuar` y `usarObjeto` dan error ("hay una acción a medias").
 - **REGLA DE LA INTERFAZ (decidida por el autor):** una acción que no se puede usar SIEMPRE se ve, desactivada (más clara) y con el motivo. `AccionDisponible` lleva `motivo` y, si es por una condición, `condiciones` (ids: "no puedes: Hedor nauseabundo"). Vale para todo el juego.
 - **Contratar (paso 7 hecho, 17-nov; `core/contratar/contratar.ts`).** Solo en puertos. Tres formas, cada una una ACCIÓN distinta en `accionesDisponibles` (cada día, solo una):
@@ -340,7 +342,25 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
   - **`descansar_en_monasterio`** (`descansarEnMonasterio(estado, sitio, dados)`): **descansa todo el grupo o nadie** (decidido por el autor: más simple y entendible). Cuesta `AJUSTES.precioDescansarMonasterio` (20) + `precioDescansarMonasterioPorSeguidor` (5) por cada seguidor (`precioDescansoEnMonasterio`); el jugador y cada seguidor recuperan **toda** la vida (con gran fortaleza, hasta 19). Desactivada con `nadie_herido` ("Nadie necesita descansar") o `sin_oro`.
   - **El precio incluye dormir allí esa noche:** queda `mundo.nochePagada = true`; en la fase de descanso en el monasterio solo sale una opción, `techo_todos` gratis (sin eventos nocturnos y con su posibilidad de dormir genial). `descansar` lo vuelve a `false` al acabar el día.
 - **Enterrar tesoro (paso 9 hecho, 17-nov; `core/acciones/enterrar-tesoro.ts`).** Acción `enterrar_tesoro`: −`AJUSTES.oroAlEnterrarTesoro` (100) de oro, +1 de fama. Solo en tierra salvaje (lugar `intemperie`: playa, jungla, jungla profunda). **Sin objeto mágico** (decidido por el autor) y **nada se desentierra**. **Un tesoro por casilla:** queda una marca `tesoro_enterrado` en `mundo.marcas` (las marcas tienen ya `tipo`: `evento` o `tesoro_enterrado`); en esa casilla sale desactivada con `tesoro_ya_enterrado` ("Ya has enterrado un tesoro aquí"). `Sitio` lleva un `hex` opcional (lo dará el mapa); sin él no se puede comprobar ni marcar. Desactivada también con `prohibido` (avaricioso, con la condición) o `sin_oro`.
-- **SIGUIENTE PASO, 10:** buscar información. Después: audiencias, naufragio y ruinas, dormir en la aldea y mendigar (artista).
+- **Buscar información (paso 10 hecho, 17-nov; `core/acciones/buscar-informacion.ts`).** Acción `buscar_informacion` en puertos y aldeas (motivo `solo_puerto_o_aldea` fuera), 3d6 en su tabla: puertos `data/tablas/buscar-informacion.json` (tirada `buscar_info_puerto`), aldeas `data/tablas/buscar-informacion-aldea.json` (tirada `buscar_info_aldea`; **escrita por el autor el 17-nov**).
+  - **Sobornos, solo en puertos** (UI: al pulsar salen "Sobornar 10 / 20 / 30" o "Buscar sin sobornar"): `buscarInformacion(estado, sitio, sobornos, dados)`, cada uno `AJUSTES.precioSoborno` (10) y +1, hasta `maximoSobornos` (3). En aldeas no se soborna. `opcionesDeBuscarInformacion` da los botones y si hay amigos.
+  - **Cada dos días, en todo el juego** (`AJUSTES.diasEntreBusquedas` 2; `mundo.ultimaBusquedaInformacion`): mientras, desactivada con `espera` y `faltanDias` ("falta 1 día").
+  - **Reglas especiales de fila** (campo nuevo `especial` en las filas de tabla, `ESPECIALES_DE_TABLA` en `tabla.ts`; las aplica quien usa la tabla): `haces_amigos` (marca `amigos` en la casilla: +1 la próxima vez que busques información **o des un discurso** allí; se gasta al usarla), `cubil` (una vez por casilla: marca `cubil_saqueado`; la segunda vez "El cubil ya está vacío") y `fiesta` (ese día `mundo.comidaGratis`: en la fase de comida sale la elección nueva `invitado`, gratis; y `mundo.nochePagada`: esa noche en la aldea solo `techo_todos` gratis, sin eventos nocturnos y con posibilidad de dormir genial).
+  - **El mono (manos largas), solo en puertos:** por cada mono, 1d6: con 2-6 trae ese oro; con un 1 lo pillan y pagas 1d6 de multa. El resultado devuelve `manosLargas` para enseñarlo.
+  - **Tabla de aldeas:** 3-4 tabú sagrado (evento `tabu_sagrado`: pelea; si pierdes, te echan, la aldea queda bloqueada y apareces en un hexágono vecino al azar: combate Sprint 7, mapa Sprint 9) · 5-6 nadie entiende tu idioma · 7 niño curioso (amigos) · 8 historias junto al fuego (evento `historias_junto_al_fuego`: marca unas ruinas, Sprint 9) · 9 curandera (1d6 de vida a todos, una tirada) · 10-11 cacería (evento `caceria`: si aceptas, combate contra un jaguar; si ganas, +5 reservas) · 12-13 fiesta · 14 chamán (quita la maldición más antigua y da un ungüento) · 15 joven guerrero nativo (se une siempre si cabe) · 16-17 audiencia con el jefe (evento `audiencia_jefe_aldea`) · 18+ te confunden con su dios (+1 fama y audiencia).
+  - **Objeto nuevo `unguento`:** activo, 1 uso, se usa en la fase de acción, cura 1d6, precio 10. Es el primer objeto con `alUsar`.
+- **Eventos no programados (decidido por el autor):** mientras un evento no exista, la interfaz enseña un aviso con su nombre ("Evento: Taberna clandestina (pendiente)") y sigue. **Para la demo:** al viajar solo deben salir los eventos que ya estén programados (filtrar las listas de terreno), no todos con aviso. Apuntado para el motor de eventos (Sprint 10).
+- **GUARIDA PIRATA (diseño decidido por el autor, 18-nov; se programa en el paso 11 lo que se pueda, el resto cuando toque).** Rasgo `guarida_pirata` del mapa (también puede aparecer por eventos).
+  - **Primera visita = evento E038** (necesita chequeos, combate Sprint 7, mapa Sprint 9 y motor de eventos Sprint 10). Al llegar puedes **entrar o no** (entrar es opcional; el jugador no sabe si es hostil hasta que entra). Si entras, 1d6: **5-6 neutral** · **3-4 abandonada** · **1-2 hostil**. El resultado queda apuntado en la casilla (marca).
+  - **Neutral = "puerto pirata":** todas las acciones de un puerto (mercado con rastrillo, contratar, taberna, posada, buscar información...) con estas diferencias: la audiencia es con el **capitán pirata** (+1 por cada 2 de fama, ya en `AJUSTES.bonificadorPorFama`); al buscar información **+1 por cada 2 de fama** y **sin sobornos** ("aquí lo que importa es la fama"); **no cuenta** como puerto principal para ganar. Más dos acciones exclusivas (abajo).
+  - **Abandonada:** se tira en su tabla (1 E039 nido · 2 E082 · 3 E076 · 4 E049 · 5 E021 cofre · 6 E054) y la casilla **deja de ser guarida**: pasa a ser jungla normal.
+  - **Hostil:** con **8+ de fama** te dejan entrar y te regalan un tesoro (E036) → neutral · con **6-7** te dejan entrar → neutral · con **4-5**, chequeo de Ingenio para convencerlos: si lo superas → neutral; si fallas, tabla · con **menos de 4**, tabla. **Tabla (1d6):** 1-3 te arrestan (E023) · 4 intentas huir: eliges Fuerza o Ingenio y haces el chequeo; si lo superas, como el 5; si no, como el 1-3 · 5 huyes, pero alguien se interpone (combate E003) · 6 te confunden con uno de los suyos y te dejan entrar → neutral. **Con 1-5, la casilla queda bloqueada para siempre.**
+  - **Acciones exclusivas de la guarida neutral** (sacadas de la taberna clandestina, E081; servirán también para ese evento):
+    - **Jugar a los dados:** apuestas el oro que quieras; un dado para ti y otro para tu rival. Si el tuyo es mayor, ganas lo apostado; si es menor, lo pierdes; si empatan, se vuelve a tirar. Puedes jugar tantas veces como quieras (como el mercado: acción a medias hasta que te levantas de la mesa).
+    - **Echar un pulso:** apuestas el oro que quieras y 1d6 para ver quién se sienta: 1-2 un borracho (−1 al dado) · 3-4 un parroquiano (tirada normal) · 5-6 el campeón de pulsos (+1 al dado). Chequeo de Fuerza con ese modificador (en un chequeo, −1 al dado ayuda y +1 lo hace más difícil). Si lo superas, ganas lo apostado; si no, lo pierdes. Si ganas al campeón, además **+1 de fama**.
+    - Por decidir al programarlas: si hay apuesta máxima (¿todo tu oro?), si el pulso también se repite en la misma visita y si ganar al campeón da fama más de una vez.
+  - **Ideas apuntadas para más adelante:** el **perista** (vender objetos a ~1,5 veces su precio), **invitar a una ronda** (pagas y +1 de fama, una vez por guarida), **encargos del capitán** (condición con `alLlegar` a un puerto que da recompensa) y el **astillero pirata** (donde comprar las mejoras del barco: ver el recordatorio del combate naval).
+- **SIGUIENTE PASO, 11:** solicitar audiencia (gobernador, jefe de aldea, capitán pirata) y el sitio **guarida** (puerto pirata: acciones de puerto, audiencia con el capitán, buscar información con fama y sin sobornos, jugar a los dados y echar un pulso; ver arriba). Después: naufragio y ruinas, dormir en la aldea (regla nueva, sección 4.7) y mendigar (artista).
 - **Cómo comprueba Claude los tests sin `ng test`:** compila `src/app/core` con `tsc` a una carpeta temporal fuera del repo (commonjs) y carga los `.spec.js` con un corredor mínimo que usa el `expect` de `vitest/dist/index.js`. No incluye `app.spec.ts` (por eso le salen 2 tests menos que al autor). La comprobación oficial sigue siendo el `ng test --watch=false` del autor.
 - **Límite conocido:** al amanecer (`iniciarTurno`) solo actúan las condiciones apuntadas; las partes y las otorgadas no ejecutan `cadaTurno` (hoy ninguna lo tiene).
 
@@ -411,7 +431,7 @@ Viajar · Buscar información (puertos y aldeas) · Descansar y cazar/pescar · 
 - **Hex de abundancia:** pescar es más eficaz (E005).
 - **Adentrarse en tierra:** se puede desembarcar en jungla, playa o puerto; **no se puede atracar en jungla profunda**. Al llegar a tierra desde el barco viajando, **no se tira evento**. Se anota dónde queda el barco; los seguidores acompañan siempre. **Volver al barco** automáticamente si se tienen tantas reservas de comida como hexágonos hay hasta el barco (se descartan), o turno a turno viajando.
 
-**Buscar información (3d6).** En puerto se pueden gastar 5 de oro para +1 al dado (hasta 3 veces). En aldea, +1 con seguidor nativo, sobrenombre "el nativo" o amuleto kalinago (se suman).
+**Buscar información (3d6) [digital, Sprint 6: ver 3.11].** En puerto se puede sobornar: 10, 20 o 30 de oro para +1, +2 o +3. En aldea, +1 con seguidor nativo, sobrenombre "el nativo" o amuleto kalinago (se suman). Una búsqueda cada dos días.
 - **[Digital, decidido por el autor] En las aldeas nativas, buscar información usa su PROPIA tabla** (`buscar_informacion_aldea`, 3d6, mismos rangos), con resultados con ambiente de aldea. La tabla de abajo queda **solo para puertos**. El contenido lo escribirá el autor (borrador de ideas de Claude en el proyecto de Claude: `claude/borrador-buscar-informacion-aldea.md`; no va a GitHub). Los ids de tirada `buscar_info_puerto` y `buscar_info_aldea` ya separan los bonificadores.
 
 | 3d6 | Resultado |
@@ -500,11 +520,11 @@ Antes "alojamiento". **"Taberna" es donde se come en un puerto; "posada", donde 
 | | Intemperie | Gratis | Nada; puede haber evento nocturno |
 | Playa, jungla, jungla profunda | Intemperie | Gratis | Nada; puede haber evento nocturno |
 | Aldea | Intemperie | Gratis | Nada; puede haber evento nocturno |
-| | Convencer a los aldeanos de que te dejen dormir en la aldea | — | **Sprint 6**, con su tabla (hay que retocarla) |
+| | Convencer a los nativos de que te dejen dormir en la aldea | — | **Chequeo de Ingenio** (regla nueva, abajo) |
 
 - **Evento nocturno:** a la intemperie, salvo en un puerto: `AJUSTES.probabilidadEventoNocturno` (33 %, el "1-2 en 1d6" del papel), elegido de la lista ponderada de eventos nocturnos.
 - Solo se curan los que duermen bajo techo (o a bordo).
-- **Tabla de papel para dormir en la aldea (a retocar en el Sprint 6):** con vínculo nativo se descansa como en el barco. Si no, 1d6 (+1 por cada objeto entregado como regalo, **a revisar**: en las aldeas ya no se cambian objetos por nada): 1 ofendes (chequeo de Ingenio: éxito → noche a la intemperie pero puedes seguir en la aldea; fallo → debes irte y la aldea queda bloqueada) · 2 duermes a la intemperie con tirada de evento nocturno · 3 duermes a las afueras sin evento nocturno pero sin descanso · 4-7 descansas · 8+ descansas y un nativo se une (seguidor nativo). Las deserciones de esa tabla se eliminan.
+- **Dormir en la aldea [digital, decidido por el autor el 17-nov; sustituye a la tabla de papel]:** en la fase de descanso hay dos opciones: dormir a la intemperie, o intentar convencer a los nativos con un **chequeo de Ingenio**. Si lo superas, duermes en la aldea **solo esa noche** (al día siguiente, otra vez intemperie o chequeo). Si fallas, te echan: la aldea queda bloqueada y apareces en un hexágono vecino al azar (lo de la casilla, con el mapa). Excepción: con la fiesta de bienvenida, esa noche se duerme allí sin chequeo.
 
 ### 4.8 Combate
 Por rondas hasta que un bando huye o es eliminado. **El daño se aplica a la vez.** Cada ronda se emparejan luchadores (si un bando supera al otro, uno puede enfrentarse a varios). Todos lanzan 1d6 y restan daño a la resistencia del rival.
@@ -770,10 +790,10 @@ Hasta el punto 8 no hace falta ni mapa ni libro de eventos. El 9 necesita el `.w
 - Tabla de objetos mágicos (E037), lista de objetos y estadísticas de enemigos y barcos.
 - Decidir cómo encaja el guardado con el diseño roguelike (sección 3.7), el momento exacto de la **victoria** y el diseño del **minijuego naval** (y con él, las **mejoras del barco**).
 - Decidir qué **eventos solo pueden salir una vez por partida** (de momento, el mal está a bordo).
-- Retocar la **tabla para dormir en la aldea** (sección 4.7).
+- ~~Retocar la tabla para dormir en la aldea~~ (hecho: regla nueva con chequeo de Ingenio, sección 4.7).
 - Equilibrar jugando los precios de `data/ajustes.json`: taberna (5), posada (5) y monasterio (7).
 - Decidir los **nombres de los tipos de seguidor** (hoy el vínculo nativo busca el tipo `nativo`, provisional) y la carpeta de las imágenes.
 - Decidir si la fila 5 de **El mal está a bordo** puede dejarte sin tripulación, y si el **motín** puede saltar estando a pie.
 - Revisar sobre la marcha la **clasificación del libro de eventos** (`claude/clasificacion-libro-eventos.md` en el proyecto de Claude).
 - Dibujos de objetos y condiciones (mientras tanto, iconos de reserva por categoría).
-- Escribir la **tabla de buscar información en aldeas nativas** (3d6, mismos rangos que la de puertos).
+- ~~Escribir la tabla de buscar información en aldeas nativas~~ (hecha el 17-nov).

@@ -6,6 +6,7 @@ import type { Dados } from '../dados/dados';
 import { aplicarEfectos } from '../efectos/aplicar-efectos';
 import type { Estado } from '../estado/estado';
 import type { AccionEnCurso, MarinerosDisponibles, SeguidorEnEspera } from '../estado/mundo';
+import { hayMarca, sinMarca } from '../estado/marcas';
 import { calcularModificador } from '../modificadores/calcular-modificador';
 import { seguidoresDespedibles } from '../seguidores/consultas';
 import type { Efecto } from '../tablas/efecto';
@@ -30,6 +31,7 @@ const EVENTO_ARRESTADO = 'arrestado';
 
 /**
  * ACCIÓN: DAR UN DISCURSO. 1d6 en la tabla "discurso" (con los bonificadores de la tirada "discurso").
+ * Si tiene amigos en esta casilla (marca "amigos", de buscar información), +1 y la marca se gasta.
  * Regla de la multa (fila 1): si no le llega el oro para pagarla, le quitan TODO su oro y lo arrestan
  * (el evento "arrestado" queda pendiente hasta el motor de eventos).
  * Después, toca comer.
@@ -38,7 +40,8 @@ export function darDiscurso(estado: Estado, sitio: Sitio, dados: Dados): Resulta
   comprobarQueSePuedeActuar(estado, 'darDiscurso');
   exigirPuerto(sitio, 'darDiscurso');
 
-  const tirada = resolverTabla(obtenerTabla('discurso'), calcularModificador(estado.jugador, 'discurso'), dados);
+  const amigos = hayMarca(estado, 'amigos', sitio.hex);
+  const tirada = resolverTabla(obtenerTabla('discurso'), calcularModificador(estado.jugador, 'discurso') + (amigos ? 1 : 0), dados);
   const eventos: string[] = tirada.evento ? [tirada.evento] : [];
   let efectos: Efecto[] = tirada.efectos;
 
@@ -48,7 +51,7 @@ export function darDiscurso(estado: Estado, sitio: Sitio, dados: Dados): Resulta
     eventos.push(EVENTO_ARRESTADO);
   }
 
-  const resultado = aplicarEfectos(estado, efectos, dados);
+  const resultado = aplicarEfectos(amigos ? sinMarca(estado, 'amigos', sitio.hex) : estado, efectos, dados);
   return { estado: cerrarFaseDeAccion(resultado.estado, dados), cambios: resultado.cambios, tirada: paraEnsenar(tirada), eventos };
 }
 

@@ -30,6 +30,7 @@ export function resolverTabla(tabla: Tabla, modificador: number, dados: Dados): 
   // texto y evento solo se añaden si la fila los tiene.
   if (fila.texto !== undefined) resultado.texto = fila.texto;
   if (fila.evento !== undefined) resultado.evento = fila.evento;
+  if (fila.especial !== undefined) resultado.especial = fila.especial;
 
   return resultado;
 }
