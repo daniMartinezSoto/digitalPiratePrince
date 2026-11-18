@@ -27,7 +27,12 @@ export interface SeguidorEnEspera {
   precio: number;
 }
 
-export type AccionEnCurso = VisitaMercado | MarinerosDisponibles | SeguidorEnEspera;
+// Sentado a la mesa de dados en una guarida: puede apostar tantas veces como quiera hasta levantarse.
+export interface MesaDeDados {
+  tipo: 'dados';
+}
+
+export type AccionEnCurso = VisitaMercado | MarinerosDisponibles | SeguidorEnEspera | MesaDeDados;
 
 // MARCAS: cosas que quedan en una casilla concreta del mapa.
 //   evento:           al entrar en esa casilla salta ese evento (un tesoro señalado en un mapa...). Lleva "evento".
@@ -38,6 +43,7 @@ export type AccionEnCurso = VisitaMercado | MarinerosDisponibles | SeguidorEnEsp
 //   audiencia_concedida: aquí ya le concedieron audiencia (una por sitio y partida).
 //   audiencia_vetada:    aquí ofendió (o le reconoció un guardia): no puede volver a pedir audiencia.
 //   audiencia_aplazada:  aquí le dijeron "hoy no": +1 si la pide al día siguiente (lleva "dia").
+//   campeon_vencido:     en esta guarida ya venció al campeón de pulsos: no vuelve a salir.
 // Irán llegando más tipos (casillas bloqueadas, aldeas ofendidas...).
 export const TIPOS_DE_MARCA = [
   'evento',
@@ -47,6 +53,7 @@ export const TIPOS_DE_MARCA = [
   'audiencia_concedida',
   'audiencia_vetada',
   'audiencia_aplazada',
+  'campeon_vencido',
 ] as const;
 export type TipoDeMarca = (typeof TIPOS_DE_MARCA)[number];
 

@@ -80,6 +80,8 @@ describe('dónde se puede cada acción', () => {
       { accion: 'enterrar_tesoro', disponible: false, motivo: 'solo_salvaje' },
       { accion: 'buscar_informacion', disponible: false, motivo: 'solo_puerto_o_aldea' },
       { accion: 'solicitar_audiencia', disponible: false, motivo: 'solo_puerto_aldea_o_guarida' },
+      { accion: 'jugar_a_los_dados', disponible: false, motivo: 'solo_guarida' },
+      { accion: 'echar_un_pulso', disponible: false, motivo: 'solo_guarida' },
     ]);
   });
 
@@ -97,6 +99,8 @@ describe('dónde se puede cada acción', () => {
       { accion: 'enterrar_tesoro', disponible: false, motivo: 'sin_oro' }, // en la jungla sí, pero tiene 50 de oro
       { accion: 'buscar_informacion', disponible: false, motivo: 'solo_puerto_o_aldea' },
       { accion: 'solicitar_audiencia', disponible: false, motivo: 'solo_puerto_aldea_o_guarida' },
+      { accion: 'jugar_a_los_dados', disponible: false, motivo: 'solo_guarida' },
+      { accion: 'echar_un_pulso', disponible: false, motivo: 'solo_guarida' },
     ]);
   });
 

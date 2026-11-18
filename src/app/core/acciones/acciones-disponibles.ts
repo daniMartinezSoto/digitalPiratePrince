@@ -2,6 +2,8 @@ import { AJUSTES } from '../ajustes/ajustes';
 import { condicionesQueProhiben, maximoSeguidoresActual } from '../condiciones/consultas';
 import type { Estado } from '../estado/estado';
 import { motivoParaNoDescansarEnMonasterio, motivoParaNoRezar } from '../monasterio/monasterio';
+import { motivoParaNoJugarALosDados } from '../guarida/dados';
+import { motivoParaNoEcharPulso } from '../guarida/pulso';
 import { motivoParaNoPedirAudiencia } from './audiencia';
 import { motivoParaNoBuscar } from './buscar-informacion';
 import { motivoParaNoEnterrar } from './enterrar-tesoro';
@@ -28,6 +30,7 @@ import type { IdAccion, Sitio } from './accion';
 //   solo_puerto_aldea_o_guarida: solicitar audiencia solo donde hay alguien que mande.
 //   audiencia_ya_concedida: aquí ya te concedieron audiencia ("Ya te concedieron audiencia aquí").
 //   audiencia_vetada: aquí ofendiste ("Aquí no quieren volver a verte").
+//   solo_guarida:  jugar a los dados y echar un pulso, solo en guaridas piratas.
 export type MotivoNoDisponible =
   | 'sin_agua'
   | 'solo_salvaje'
@@ -44,7 +47,8 @@ export type MotivoNoDisponible =
   | 'espera'
   | 'solo_puerto_aldea_o_guarida'
   | 'audiencia_ya_concedida'
-  | 'audiencia_vetada';
+  | 'audiencia_vetada'
+  | 'solo_guarida';
 
 /** Una acción tal como la enseña la interfaz: si no está disponible, sale desactivada con su motivo. */
 export interface AccionDisponible {
@@ -89,6 +93,8 @@ export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponi
     disponibilidadDeEnterrar(estado, sitio),
     disponibilidadDeBuscar(estado, sitio),
     disponibleONo('solicitar_audiencia', motivoParaNoPedirAudiencia(estado, sitio)),
+    disponibleONo('jugar_a_los_dados', motivoParaNoJugarALosDados(estado, sitio)),
+    disponibleONo('echar_un_pulso', motivoParaNoEcharPulso(estado, sitio)),
   ];
 }
 

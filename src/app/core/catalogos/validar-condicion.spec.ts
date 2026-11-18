@@ -63,7 +63,7 @@ describe('validarCondiciones', () => {
   });
 
   it('acepta una condición que prohíbe cosas y cambia reglas', () => {
-    expect(erroresDe({ ...escorbuto(), prohibe: ['viajar', 'solicitar_audiencia'] })).toBe('');
+    expect(erroresDe({ ...escorbuto(), prohibe: ['viajar', 'enterrar_tesoro'] })).toBe('');
     expect(erroresDe({ ...escorbuto(), ajustes: { famaObjetivo: 2, comidaPorDia: 1 } })).toBe('');
   });
 

@@ -42,6 +42,9 @@ export interface Ajustes {
   /** Días que hay que esperar entre una búsqueda de información y la siguiente (2 = un día sí y otro no). */
   diasEntreBusquedas: number;
 
+  /** Botones de apuesta en la guarida (jugar a los dados, echar un pulso). Además siempre está "todo". */
+  apuestas: number[];
+
   /** Porcentaje (0-100) de que pase un evento nocturno al dormir a la intemperie. En papel: 1-2 en 1d6 = 33. */
   probabilidadEventoNocturno: number;
 

@@ -132,10 +132,10 @@
     "prohibe": ["nuevos_seguidores"]
   },
   {
-    "id": "rechazo_a_la_autoridad",
-    "nombre": "Rechazo a la autoridad",
-    "descripcion": "No puedes solicitar audiencias en ningún sitio.",
+    "id": "manos_torpes",
+    "nombre": "Manos torpes",
+    "descripcion": "Todo se te escurre de las manos: −1 al pescar y al cazar.",
     "categoria": "maldicion",
-    "prohibe": ["solicitar_audiencia"]
+    "modificadores": { "pesca": -1, "caza": -1 }
   }
 ]

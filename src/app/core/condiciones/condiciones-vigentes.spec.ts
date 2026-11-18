@@ -196,8 +196,9 @@ describe('las reglas miran las condiciones vigentes (con los catálogos del jueg
     expect(condicionesQueProhiben(amuleto('hedor_nauseabundo'), 'nuevos_seguidores')).toEqual(['hedor_nauseabundo']);
   });
 
-  it('rechazo a la autoridad dentro del amuleto: prohibido solicitar audiencia', () => {
-    expect(estaProhibido(amuleto('rechazo_a_la_autoridad'), 'solicitar_audiencia')).toBe(true);
+  it('manos torpes dentro del amuleto: −1 al pescar y al cazar', () => {
+    expect(calcularModificador(amuleto('manos_torpes'), 'pesca')).toBe(-1);
+    expect(calcularModificador(amuleto('manos_torpes'), 'caza')).toBe(-1);
   });
 
   it('sin el amuleto, todo vuelve solo a lo normal', () => {

@@ -7,7 +7,7 @@ import { comidaPorDia, condicionesQueProhiben, estaProhibido, famaObjetivoActual
 const CATALOGO: Condicion[] = [
   { id: 'tormenta', nombre: 'Tormenta', descripcion: 'x', categoria: 'clima', prohibe: ['viajar'] },
   { id: 'calma_chicha', nombre: 'Calma chicha', descripcion: 'x', categoria: 'clima', prohibe: ['viajar'] },
-  { id: 'rechazo_autoridad', nombre: 'Rechazo a la autoridad', descripcion: 'x', categoria: 'maldicion', prohibe: ['solicitar_audiencia'] },
+  { id: 'avaricia', nombre: 'Avaricioso', descripcion: 'x', categoria: 'maldicion', prohibe: ['enterrar_tesoro'] },
   { id: 'ambicion', nombre: 'Ambición desmedida', descripcion: 'x', categoria: 'maldicion', ajustes: { famaObjetivo: 2 } },
   { id: 'humildad', nombre: 'Humildad', descripcion: 'x', categoria: 'bendicion', ajustes: { famaObjetivo: -20 } },
   { id: 'hambre', nombre: 'Hambre insaciable', descripcion: 'x', categoria: 'maldicion', ajustes: { comidaPorDia: 1 } },
@@ -33,8 +33,8 @@ describe('consultas sobre condiciones', () => {
 
     it('una condición solo prohíbe lo suyo', () => {
       const jugador = jugadorCon(['tormenta']);
-      expect(estaProhibido(jugador, 'solicitar_audiencia', CATALOGO)).toBe(false);
       expect(estaProhibido(jugador, 'enterrar_tesoro', CATALOGO)).toBe(false);
+      expect(estaProhibido(jugador, 'nuevos_seguidores', CATALOGO)).toBe(false);
     });
 
     it('una condición que no prohíbe nada no molesta', () => {
