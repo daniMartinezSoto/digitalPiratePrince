@@ -35,8 +35,19 @@ export type AccionEnCurso = VisitaMercado | MarinerosDisponibles | SeguidorEnEsp
 //   amigos:           "haces amigos" al buscar información: +1 la próxima vez que busques información
 //                     (o des un discurso) aquí. Se quita al usarla.
 //   cubil_saqueado:   ya saqueó el cubil de contrabandistas de aquí: si vuelve a salir, está vacío.
+//   audiencia_concedida: aquí ya le concedieron audiencia (una por sitio y partida).
+//   audiencia_vetada:    aquí ofendió (o le reconoció un guardia): no puede volver a pedir audiencia.
+//   audiencia_aplazada:  aquí le dijeron "hoy no": +1 si la pide al día siguiente (lleva "dia").
 // Irán llegando más tipos (casillas bloqueadas, aldeas ofendidas...).
-export const TIPOS_DE_MARCA = ['evento', 'tesoro_enterrado', 'amigos', 'cubil_saqueado'] as const;
+export const TIPOS_DE_MARCA = [
+  'evento',
+  'tesoro_enterrado',
+  'amigos',
+  'cubil_saqueado',
+  'audiencia_concedida',
+  'audiencia_vetada',
+  'audiencia_aplazada',
+] as const;
 export type TipoDeMarca = (typeof TIPOS_DE_MARCA)[number];
 
 export interface Marca {
@@ -44,6 +55,7 @@ export interface Marca {
   fila: number;
   tipo: TipoDeMarca;
   evento?: string; // solo en las marcas de tipo "evento"
+  dia?: number; // solo en las que caducan: el día en que se puso (audiencia_aplazada)
 }
 
 export interface Mundo {

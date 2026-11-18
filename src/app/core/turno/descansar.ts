@@ -11,7 +11,7 @@ import type { Efecto } from '../tablas/efecto';
 import { obtenerListaEventos } from '../tablas/listas-eventos/cargar-listas-eventos';
 import { eventoAleatorio } from '../tablas/listas-eventos/elegir-evento';
 import type { ListaEventos } from '../tablas/listas-eventos/lista-eventos';
-import type { Lugar } from './lugar';
+import { esPuerto, type Lugar } from './lugar';
 
 /** Catálogos y listas que usa el descanso. Por defecto, los del juego; los tests pueden pasar otros. */
 export interface CatalogosDescanso {
@@ -56,7 +56,7 @@ export interface ResultadoDescanso {
 /**
  * Solo consulta: dónde puede dormir el jugador estando en ese lugar, y cuánto cuesta.
  *   barco:               a bordo.
- *   puerto y monasterio: bajo techo solo él, bajo techo todos (si tiene seguidores) o a la intemperie.
+ *   puerto (o guarida pirata) y monasterio: bajo techo solo él, bajo techo todos (si tiene seguidores) o a la intemperie.
  *   Con la noche ya pagada (mundo.nochePagada: descansar en el monasterio, o la fiesta de una aldea),
  *     en el monasterio o la aldea solo hay una opción: "techo_todos", gratis (todo el grupo duerme allí).
  *   aldea e intemperie:  a la intemperie. (Convencer a los aldeanos: Sprint 6, con su tabla.)
@@ -74,8 +74,8 @@ export function opcionesDeDescanso(estado: Estado, lugar: Lugar): OpcionDeDescan
   }
 
   const opciones: OpcionDeDescanso[] = [];
-  if (lugar === 'puerto' || lugar === 'monasterio') {
-    const porPersonaje = lugar === 'puerto' ? AJUSTES.precioPosada : AJUSTES.precioMonasterio;
+  if (esPuerto(lugar) || lugar === 'monasterio') {
+    const porPersonaje = esPuerto(lugar) ? AJUSTES.precioPosada : AJUSTES.precioMonasterio;
     const personajes = 1 + estado.jugador.seguidores.length;
     opciones.push(opcion('techo_solo', porPersonaje));
     if (personajes > 1) {
@@ -141,7 +141,7 @@ export function descansar(
 
   // 2. ¿Evento nocturno?
   const eventos: string[] = [];
-  if (eleccion === 'intemperie' && lugar !== 'puerto') {
+  if (eleccion === 'intemperie' && !esPuerto(lugar)) {
     const evento = eventoAleatorio(catalogos.eventosNocturnos, AJUSTES.probabilidadEventoNocturno, dados);
     if (evento !== null) {
       eventos.push(evento);

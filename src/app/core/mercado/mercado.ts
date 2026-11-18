@@ -8,6 +8,7 @@ import type { Cambio } from '../efectos/cambio';
 import type { Estado } from '../estado/estado';
 import type { VisitaMercado } from '../estado/mundo';
 import { espaciosQueFaltan } from '../objetos/consultas';
+import { esPuerto } from '../turno/lugar';
 import { RASTRILLO } from './cargar-rastrillo';
 import type { Rastrillo } from './rastrillo';
 
@@ -36,7 +37,7 @@ export interface ResultadoMercado {
  */
 export function irAlMercado(estado: Estado, sitio: Sitio, dados: Dados, rastrillo: Rastrillo = RASTRILLO): ResultadoAccion {
   comprobarQueSePuedeActuar(estado, 'irAlMercado');
-  if (sitio.lugar !== 'puerto') {
+  if (!esPuerto(sitio.lugar)) {
     throw new Error(`irAlMercado: el mercado solo está en los puertos (está en "${sitio.lugar}")`);
   }
 

@@ -14,6 +14,7 @@ import { obtenerTabla } from '../tablas/rangos/cargar-tablas';
 import { resolverTabla } from '../tablas/rangos/resolver-tabla';
 import type { ResultadoTabla } from '../tablas/rangos/resultado-tabla';
 import { maximoSeguidoresActual } from '../condiciones/consultas';
+import { esPuerto } from '../turno/lugar';
 
 // CONTRATAR (solo en puertos). Tres formas, y cada una es una ACCIÓN distinta (cada día, solo una):
 //   dar_discurso:        1d6 en la tabla "discurso" (data/tablas/discurso.json). Se resuelve en el acto.
@@ -206,7 +207,7 @@ export function rechazarSeguidor(estado: Estado, dados: Dados): ResultadoAccion 
 // ---------------------------------------------------------------------------
 
 function exigirPuerto(sitio: Sitio, que: string): void {
-  if (sitio.lugar !== 'puerto') {
+  if (!esPuerto(sitio.lugar)) {
     throw new Error(`${que}: solo se puede contratar en los puertos (está en "${sitio.lugar}")`);
   }
 }

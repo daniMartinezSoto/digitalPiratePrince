@@ -79,6 +79,7 @@ describe('dónde se puede cada acción', () => {
       { accion: 'descansar_en_monasterio', disponible: false, motivo: 'solo_monasterio' },
       { accion: 'enterrar_tesoro', disponible: false, motivo: 'solo_salvaje' },
       { accion: 'buscar_informacion', disponible: false, motivo: 'solo_puerto_o_aldea' },
+      { accion: 'solicitar_audiencia', disponible: false, motivo: 'solo_puerto_aldea_o_guarida' },
     ]);
   });
 
@@ -95,6 +96,7 @@ describe('dónde se puede cada acción', () => {
       { accion: 'descansar_en_monasterio', disponible: false, motivo: 'solo_monasterio' },
       { accion: 'enterrar_tesoro', disponible: false, motivo: 'sin_oro' }, // en la jungla sí, pero tiene 50 de oro
       { accion: 'buscar_informacion', disponible: false, motivo: 'solo_puerto_o_aldea' },
+      { accion: 'solicitar_audiencia', disponible: false, motivo: 'solo_puerto_aldea_o_guarida' },
     ]);
   });
 

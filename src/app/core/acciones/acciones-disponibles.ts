@@ -2,8 +2,10 @@ import { AJUSTES } from '../ajustes/ajustes';
 import { condicionesQueProhiben, maximoSeguidoresActual } from '../condiciones/consultas';
 import type { Estado } from '../estado/estado';
 import { motivoParaNoDescansarEnMonasterio, motivoParaNoRezar } from '../monasterio/monasterio';
+import { motivoParaNoPedirAudiencia } from './audiencia';
 import { motivoParaNoBuscar } from './buscar-informacion';
 import { motivoParaNoEnterrar } from './enterrar-tesoro';
+import { esPuerto } from '../turno/lugar';
 import type { IdAccion, Sitio } from './accion';
 
 // REGLA DE LA INTERFAZ (decidida por el autor): una acción que no se puede hacer SIEMPRE se ve,
@@ -23,6 +25,9 @@ import type { IdAccion, Sitio } from './accion';
 //   tesoro_ya_enterrado: en esta casilla ya enterró un tesoro ("Ya has enterrado un tesoro aquí").
 //   solo_puerto_o_aldea: buscar información solo en puertos y aldeas.
 //   espera:        buscó información hace poco (en "faltanDias", cuántos días faltan).
+//   solo_puerto_aldea_o_guarida: solicitar audiencia solo donde hay alguien que mande.
+//   audiencia_ya_concedida: aquí ya te concedieron audiencia ("Ya te concedieron audiencia aquí").
+//   audiencia_vetada: aquí ofendiste ("Aquí no quieren volver a verte").
 export type MotivoNoDisponible =
   | 'sin_agua'
   | 'solo_salvaje'
@@ -36,7 +41,10 @@ export type MotivoNoDisponible =
   | 'nadie_herido'
   | 'tesoro_ya_enterrado'
   | 'solo_puerto_o_aldea'
-  | 'espera';
+  | 'espera'
+  | 'solo_puerto_aldea_o_guarida'
+  | 'audiencia_ya_concedida'
+  | 'audiencia_vetada';
 
 /** Una acción tal como la enseña la interfaz: si no está disponible, sale desactivada con su motivo. */
 export interface AccionDisponible {
@@ -66,7 +74,7 @@ export function sePuedeCazar(sitio: Sitio): boolean {
  * "buscar información: falta 1 día".)
  */
 export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponible[] {
-  const enPuerto = sitio.lugar === 'puerto';
+  const enPuerto = esPuerto(sitio.lugar);
   const enMonasterio = sitio.lugar === 'monasterio';
   return [
     sePuedePescar(sitio) ? { accion: 'pescar', disponible: true } : { accion: 'pescar', disponible: false, motivo: 'sin_agua' },
@@ -80,6 +88,7 @@ export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponi
     enMonasterio ? disponibleONo('descansar_en_monasterio', motivoParaNoDescansarEnMonasterio(estado)) : noEnMonasterio('descansar_en_monasterio'),
     disponibilidadDeEnterrar(estado, sitio),
     disponibilidadDeBuscar(estado, sitio),
+    disponibleONo('solicitar_audiencia', motivoParaNoPedirAudiencia(estado, sitio)),
   ];
 }
 

@@ -74,7 +74,7 @@ describe('sobornos (solo en puertos)', () => {
 
   it('en aldeas no hay sobornos, y pedirlos da error', () => {
     expect(opcionesDeBuscarInformacion(estadoCon(), EN_ALDEA).sobornos).toEqual([]);
-    expect(() => buscarInformacion(estadoCon(), EN_ALDEA, 1, new Dados(1))).toThrow(/en aldeas no se puede sobornar/);
+    expect(() => buscarInformacion(estadoCon(), EN_ALDEA, 1, new Dados(1))).toThrow(/solo se puede sobornar en los puertos/);
   });
 
   it('cada soborno cuesta 10 y da +1 a la tirada', () => {

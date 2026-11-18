@@ -7,7 +7,18 @@ import type { EfectoDefinicion } from '../efecto';
 //   cubil:        el cubil de contrabandistas solo se saquea una vez por casilla: la segunda vez
 //                 está vacío y no da nada (sus efectos no se aplican).
 //   fiesta:       fiesta de bienvenida en la aldea: ese día comes gratis y esa noche duermes allí gratis.
-export const ESPECIALES_DE_TABLA = ['haces_amigos', 'cubil', 'fiesta'] as const;
+// Audiencias (las aplica solicitarAudiencia):
+//   audiencia_concedida: te reciben. En este sitio ya no se puede volver a pedir audiencia en toda la partida.
+//   audiencia_vetada:    le ofendes (o te reconoce un guardia): aquí no puedes volver a pedirla nunca.
+//   audiencia_aplazada:  "hoy no": si vuelves a pedirla aquí MAÑANA, +1 (no se acumula; pasado mañana ya no vale).
+export const ESPECIALES_DE_TABLA = [
+  'haces_amigos',
+  'cubil',
+  'fiesta',
+  'audiencia_concedida',
+  'audiencia_vetada',
+  'audiencia_aplazada',
+] as const;
 export type EspecialDeTabla = (typeof ESPECIALES_DE_TABLA)[number];
 
 // Una fila cubre un rango de resultados del dado, ambos extremos incluidos.

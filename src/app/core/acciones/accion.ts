@@ -18,9 +18,10 @@ import type { Lugar } from '../turno/lugar';
 // "rezar", "descansar_en_monasterio": las dos acciones del monasterio (core/monasterio/monasterio.ts).
 // "enterrar_tesoro": 100 de oro = 1 de fama, en tierra salvaje (core/acciones/enterrar-tesoro.ts).
 // "buscar_informacion": en puertos y aldeas, con su tabla 3d6 (core/acciones/buscar-informacion.ts).
+// "solicitar_audiencia": con el gobernador, el jefe de la aldea o el capitán pirata (core/acciones/audiencia.ts).
 // No confundir con la FASE de descanso, que es dormir por la noche (core/turno/descansar.ts):
 // son dos cosas distintas y por eso tienen nombres distintos.
-export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado', 'dar_discurso', 'contratar_marineros', 'buscar_seguidor', 'rezar', 'descansar_en_monasterio', 'enterrar_tesoro', 'buscar_informacion'] as const;
+export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado', 'dar_discurso', 'contratar_marineros', 'buscar_seguidor', 'rezar', 'descansar_en_monasterio', 'enterrar_tesoro', 'buscar_informacion', 'solicitar_audiencia'] as const;
 export type IdAccion = (typeof ACCIONES)[number];
 
 /**

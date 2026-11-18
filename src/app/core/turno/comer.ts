@@ -9,7 +9,7 @@ import type { Estado } from '../estado/estado';
 import type { Efecto } from '../tablas/efecto';
 import { tieneVinculoNativo } from '../personaje/vinculo-nativo';
 import type { Jugador } from '../estado/jugador';
-import type { Lugar } from './lugar';
+import { esPuerto, type Lugar } from './lugar';
 
 const CATALOGOS_DEL_JUEGO: CatalogosEfectos = { objetos: OBJETOS, condiciones: CONDICIONES };
 
@@ -59,13 +59,13 @@ export function opcionesDeComida(estado: Estado, lugar: Lugar, catalogos: Catalo
 
 /**
  * ¿Aquí se puede comer pagando con oro en vez de gastar reservas?
- *   puerto: siempre (la taberna).
+ *   puerto (o guarida pirata): siempre (la taberna).
  *   aldea:  los nativos no aceptan monedas, salvo que el jugador tenga vínculo nativo
  *           (sobrenombre "el nativo", amuleto kalinago o un seguidor nativo).
  *   resto:  no.
  */
 export function sePuedePagarConOro(jugador: Jugador, lugar: Lugar): boolean {
-  return lugar === 'puerto' || (lugar === 'aldea' && tieneVinculoNativo(jugador));
+  return esPuerto(lugar) || (lugar === 'aldea' && tieneVinculoNativo(jugador));
 }
 
 /**

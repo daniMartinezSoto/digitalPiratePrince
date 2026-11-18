@@ -8,10 +8,13 @@ import { calcularModificador } from '../modificadores/calcular-modificador';
 import type { Efecto } from '../tablas/efecto';
 import { obtenerTabla } from '../tablas/rangos/cargar-tablas';
 import { resolverTabla } from '../tablas/rangos/resolver-tabla';
+import { esPuerto } from '../turno/lugar';
 import { cerrarFaseDeAccion, comprobarQueSePuedeActuar, type ResultadoAccion, type Sitio } from './accion';
 
-// ACCIÓN: BUSCAR INFORMACIÓN, en puertos y aldeas. 3d6 en su tabla:
-//   puerto: data/tablas/buscar-informacion.json      (tirada "buscar_info_puerto")
+// ACCIÓN: BUSCAR INFORMACIÓN, en puertos, guaridas piratas y aldeas. 3d6 en su tabla:
+//   puerto:  data/tablas/buscar-informacion.json      (tirada "buscar_info_puerto")
+//   guarida: la misma tabla, SIN sobornos y con +1 por cada 2 de fama (tirada "buscar_info_guarida";
+//            el +1 por fama está en AJUSTES.bonificadorPorFama)
 //   aldea:  data/tablas/buscar-informacion-aldea.json (tirada "buscar_info_aldea")
 // - Sobornos (solo en puertos): antes de tirar, 0 a AJUSTES.maximoSobornos, a AJUSTES.precioSoborno cada uno: +1 por soborno.
 // - "Haces amigos" (marca en la casilla): +1, y la marca se gasta.
@@ -40,7 +43,7 @@ export type MotivoParaNoBuscar = { motivo: 'solo_puerto_o_aldea' } | { motivo: '
 
 /** Solo consulta: si no se puede buscar información, por qué. undefined = se puede. */
 export function motivoParaNoBuscar(estado: Estado, sitio: Sitio): MotivoParaNoBuscar | undefined {
-  if (sitio.lugar !== 'puerto' && sitio.lugar !== 'aldea') {
+  if (!esPuerto(sitio.lugar) && sitio.lugar !== 'aldea') {
     return { motivo: 'solo_puerto_o_aldea' };
   }
   const ultima = estado.mundo.ultimaBusquedaInformacion;
@@ -63,7 +66,7 @@ export interface OpcionesBuscarInformacion {
 
 export function opcionesDeBuscarInformacion(estado: Estado, sitio: Sitio): OpcionesBuscarInformacion {
   const sobornos =
-    sitio.lugar === 'puerto'
+    sitio.lugar === 'puerto' // en la guarida no hay sobornos: lo que cuenta es la fama
       ? Array.from({ length: AJUSTES.maximoSobornos }, (_, i) => {
           const precio = (i + 1) * AJUSTES.precioSoborno;
           return { cantidad: i + 1, precio, disponible: estado.jugador.oro >= precio };
@@ -83,9 +86,10 @@ export function buscarInformacion(estado: Estado, sitio: Sitio, sobornos: number
   if (noSePuede) {
     throw new Error(`buscarInformacion: no se puede (${noSePuede.motivo})`);
   }
-  const enPuerto = sitio.lugar === 'puerto';
-  if (!Number.isInteger(sobornos) || sobornos < 0 || sobornos > (enPuerto ? AJUSTES.maximoSobornos : 0)) {
-    throw new Error(`buscarInformacion: sobornos no válidos (${sobornos}); en aldeas no se puede sobornar`);
+  const enPuerto = esPuerto(sitio.lugar); // puerto o guarida: tabla de puertos y el mono roba
+  const enGuarida = sitio.lugar === 'guarida';
+  if (!Number.isInteger(sobornos) || sobornos < 0 || sobornos > (sitio.lugar === 'puerto' ? AJUSTES.maximoSobornos : 0)) {
+    throw new Error(`buscarInformacion: sobornos no válidos (${sobornos}); solo se puede sobornar en los puertos`);
   }
   const precioSobornos = sobornos * AJUSTES.precioSoborno;
   if (estado.jugador.oro < precioSobornos) {
@@ -96,7 +100,8 @@ export function buscarInformacion(estado: Estado, sitio: Sitio, sobornos: number
   const amigos = hayMarca(estado, 'amigos', sitio.hex);
   let actual = amigos ? sinMarca(estado, 'amigos', sitio.hex) : estado;
 
-  const modificador = calcularModificador(estado.jugador, enPuerto ? 'buscar_info_puerto' : 'buscar_info_aldea') + sobornos + (amigos ? 1 : 0);
+  const idTirada = enGuarida ? 'buscar_info_guarida' : enPuerto ? 'buscar_info_puerto' : 'buscar_info_aldea';
+  const modificador = calcularModificador(estado.jugador, idTirada) + sobornos + (amigos ? 1 : 0);
   const tirada = resolverTabla(obtenerTabla(enPuerto ? 'buscar_informacion' : 'buscar_informacion_aldea'), modificador, dados);
 
   // El cubil solo se saquea una vez por casilla: si ya estaba saqueado, está vacío.

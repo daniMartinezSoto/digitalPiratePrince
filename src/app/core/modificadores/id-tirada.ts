@@ -4,6 +4,7 @@
 export const IDS_TIRADA = [
   'buscar_info_puerto',
   'buscar_info_aldea',
+  'buscar_info_guarida', // buscar información en una guarida pirata neutral
   'audiencia_puerto',
   'audiencia_aldea',
   'audiencia_guarida',

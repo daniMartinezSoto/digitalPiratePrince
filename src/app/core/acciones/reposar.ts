@@ -16,7 +16,7 @@ import { cerrarFaseDeAccion, comprobarQueSePuedeActuar, type ResultadoAccion, ty
  * Qué puede pasar mientras reposas, según dónde estés:
  *   barco:      lista "descuido_a_bordo" (dejas el mando de lado: el barco deriva, se cuela un polizón...).
  *   intemperie: la lista de eventos nocturnos (te pillan desprevenido).
- *   puerto, aldea y monasterio: nada. Donde hay gente se reposa tranquilo.
+ *   puerto, guarida, aldea y monasterio: nada. Donde hay gente se reposa tranquilo.
  */
 export function listaDeEventosAlReposar(lugar: Lugar): ListaEventos | null {
   if (lugar === 'barco') {

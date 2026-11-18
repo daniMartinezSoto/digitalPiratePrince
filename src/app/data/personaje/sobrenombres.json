@@ -57,6 +57,7 @@
     "ajustes": {},
     "modificadores": {
       "buscar_info_puerto": 1,
+      "buscar_info_guarida": 1,
       "audiencia_puerto": 1,
       "audiencia_guarida": 1
     }

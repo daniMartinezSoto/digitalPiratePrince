@@ -1,0 +1,10 @@
+{
+  "id": "audiencia_gobernador",
+  "dado": "1d6",
+  "filas": [
+    { "min": 1, "max": 1, "texto": "Un guardia te reconoce.", "evento": "guardia", "especial": "audiencia_vetada", "libro": "E057" },
+    { "min": 2, "max": 3, "texto": "Hoy el gobernador no puede recibirte. Mañana tendrás más suerte.", "especial": "audiencia_aplazada" },
+    { "min": 4, "max": 4, "texto": "Te atiende la hija del gobernador.", "evento": "hija_del_gobernador", "libro": "E044" },
+    { "min": 5, "max": 6, "texto": "El gobernador te recibe.", "evento": "audiencia_gobernador", "especial": "audiencia_concedida", "libro": "E042" }
+  ]
+}

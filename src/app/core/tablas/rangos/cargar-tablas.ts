@@ -1,5 +1,8 @@
 import type { Tabla } from './tabla';
 
+import audienciaCapitan from '../../../data/tablas/audiencia-capitan.json';
+import audienciaGobernador from '../../../data/tablas/audiencia-gobernador.json';
+import audienciaJefeAldea from '../../../data/tablas/audiencia-jefe-aldea.json';
 import buscarInformacion from '../../../data/tablas/buscar-informacion.json';
 import buscarInformacionAldea from '../../../data/tablas/buscar-informacion-aldea.json';
 import caza from '../../../data/tablas/caza.json';
@@ -20,6 +23,9 @@ const comoTabla = (json: unknown) => json as Tabla;
  * PARA AÑADIR UNA TABLA: crea su JSON en data/tablas/, impórtalo arriba y añádelo aquí.
  */
 export const TABLAS: readonly Tabla[] = [
+  comoTabla(audienciaCapitan),
+  comoTabla(audienciaGobernador),
+  comoTabla(audienciaJefeAldea),
   comoTabla(buscarInformacion),
   comoTabla(buscarInformacionAldea),
   comoTabla(caza),

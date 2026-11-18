@@ -42,7 +42,7 @@
   - ✅ `core/turno/`: `iniciarTurno` (amanecer), `comer` + `opcionesDeComida`, `descansar` + `opcionesDeDescanso` (cierra el día: `dia + 1`, fase `inicio`), `lugar.ts` (`LUGARES`) y un test de día completo. `core/personaje/vinculo-nativo.ts` (`tieneVinculoNativo`).
   - ✅ Estado: `Seguidor.inseparable?`. Cambio nuevo `seguidor_se_marcha`. `data/ajustes.json`: `precioTaberna` (5), `precioPosada` (5), `precioMonasterio` (7), `probabilidadEventoNocturno` (33).
   - **La fase de acción sigue siendo un hueco:** `iniciarTurno` deja el día en `accion` y todavía nada lo pasa a `comida`; lo harán las acciones del Sprint 6.
-- **Tests:** tras el paso 8 del Sprint 6, a Claude le pasan 856 en 45 archivos (sin `app.spec.ts`; al autor le deberían salir 858 en 46).
+- **Tests:** tras el paso 8 del Sprint 6, a Claude le pasan 879 en 46 archivos (sin `app.spec.ts`; al autor le deberían salir 881 en 47).
 
 **Siguiente:** Sprint 6 (seguidores, objetos y acciones sin eventos, sección 9). El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
@@ -141,7 +141,7 @@ Mundo   { mapaId: string | null;
           dia: number;
           fase: 'inicio' | 'accion' | 'comida' | 'descanso';     // momento del día (core/estado/fase.ts)
           banderas: Record<string, boolean | number | string>;   // hechos generales
-          marcas: { col, fila, tipo: 'evento' | 'tesoro_enterrado' | 'amigos' | 'cubil_saqueado', evento? }[];   // cosas en casillas concretas (core/estado/marcas.ts)
+          marcas: { col, fila, tipo: TipoDeMarca, evento?, dia? }[];   // cosas en casillas concretas (TIPOS_DE_MARCA en mundo.ts; core/estado/marcas.ts)
           pilaEventos: { evento, paso }[];
           puertosVisitados: string[];                            // ids de puertos principales
           estadoDados: number;                                   // dados.obtenerEstado()
@@ -360,7 +360,12 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
     - **Echar un pulso:** apuestas el oro que quieras y 1d6 para ver quién se sienta: 1-2 un borracho (−1 al dado) · 3-4 un parroquiano (tirada normal) · 5-6 el campeón de pulsos (+1 al dado). Chequeo de Fuerza con ese modificador (en un chequeo, −1 al dado ayuda y +1 lo hace más difícil). Si lo superas, ganas lo apostado; si no, lo pierdes. Si ganas al campeón, además **+1 de fama**.
     - Por decidir al programarlas: si hay apuesta máxima (¿todo tu oro?), si el pulso también se repite en la misma visita y si ganar al campeón da fama más de una vez.
   - **Ideas apuntadas para más adelante:** el **perista** (vender objetos a ~1,5 veces su precio), **invitar a una ronda** (pagas y +1 de fama, una vez por guarida), **encargos del capitán** (condición con `alLlegar` a un puerto que da recompensa) y el **astillero pirata** (donde comprar las mejoras del barco: ver el recordatorio del combate naval).
-- **SIGUIENTE PASO, 11:** solicitar audiencia (gobernador, jefe de aldea, capitán pirata) y el sitio **guarida** (puerto pirata: acciones de puerto, audiencia con el capitán, buscar información con fama y sin sobornos, jugar a los dados y echar un pulso; ver arriba). Después: naufragio y ruinas, dormir en la aldea (regla nueva, sección 4.7) y mendigar (artista).
+- **Audiencias y guarida (paso 11a hecho, 18-nov).**
+  - **Lugar nuevo `guarida`** (guarida pirata neutral) y `esPuerto(lugar)` en `core/turno/lugar.ts`: mercado, contratar, taberna, posada y "sin eventos nocturnos a la intemperie" valen en puertos y guaridas. Buscar información en la guarida: tabla de puertos, **sin sobornos**, tirada nueva `buscar_info_guarida` (+1 por cada 2 de fama en `AJUSTES.bonificadorPorFama`; el influyente también suma), y el mono roba.
+  - **`solicitar_audiencia`** (`core/acciones/audiencia.ts`): puerto → gobernador (`audiencia-gobernador.json`: 1 guardia te reconoce, evento `guardia` y vetada · 2-3 hoy no · 4 te atiende su hija, evento `hija_del_gobernador`, **no cuenta como concedida** · 5-6 concedida, evento `audiencia_gobernador`); aldea → jefe (`audiencia-jefe-aldea.json`: 1 vetada · 2 no se permite · 3 hoy no · 4-6 concedida, evento `audiencia_jefe_aldea`); guarida → capitán (`audiencia-capitan.json`: 1-2 vetada · 3 no se permite · 4+ concedida, evento `audiencia_capitan_pirata`). Bonificadores por tirada (`audiencia_puerto/aldea/guarida`): influyente, nativo, barbero-cirujano (+1 en las tres) y fama en la guarida.
+  - **Reglas especiales nuevas de fila:** `audiencia_concedida` (marca: una por sitio y partida → desactivada con `audiencia_ya_concedida`), `audiencia_vetada` (marca: nunca más aquí → `audiencia_vetada`; bloquear la aldea, con el mapa) y `audiencia_aplazada` (marca con `dia`: +1 si la pide aquí al día siguiente; no se acumula y caduca). Las marcas pueden llevar `dia`.
+  - **Rechazo a la autoridad deja de prohibir** (decidido por el autor: las audiencias son llamativas y limitadas y no deben prohibirse). **Falta elegir la maldición que la sustituye** en el amuleto.
+- **SIGUIENTE PASO, 11b:** jugar a los dados y echar un pulso en la guarida (apuestas con botones 10, 25, 50, 100 o todo; los dados se repiten en la misma visita; el pulso, una vez por día; el campeón de pulsos, una vez vencido, no vuelve a salir en esa guarida y el 3-4 pasa a ser 3-6). Y sustituir rechazo a la autoridad. Después: naufragio y ruinas, dormir en la aldea y mendigar (artista).
 - **Cómo comprueba Claude los tests sin `ng test`:** compila `src/app/core` con `tsc` a una carpeta temporal fuera del repo (commonjs) y carga los `.spec.js` con un corredor mínimo que usa el `expect` de `vitest/dist/index.js`. No incluye `app.spec.ts` (por eso le salen 2 tests menos que al autor). La comprobación oficial sigue siendo el `ng test --watch=false` del autor.
 - **Límite conocido:** al amanecer (`iniciarTurno`) solo actúan las condiciones apuntadas; las partes y las otorgadas no ejecutan `cadaTurno` (hoy ninguna lo tiene).
 

@@ -1,0 +1,9 @@
+{
+  "id": "audiencia_capitan",
+  "dado": "1d6",
+  "filas": [
+    { "min": 1, "max": 2, "texto": "Ofendes al capitán pirata: no quiere volver a verte.", "especial": "audiencia_vetada" },
+    { "min": 3, "max": 3, "texto": "No se te permite ver al capitán." },
+    { "min": 4, "max": 6, "texto": "El capitán pirata te recibe.", "evento": "audiencia_capitan_pirata", "especial": "audiencia_concedida", "libro": "E045" }
+  ]
+}
