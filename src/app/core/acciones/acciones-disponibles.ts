@@ -8,6 +8,7 @@ import { motivoParaNoPedirAudiencia } from './audiencia';
 import { motivoParaNoBuscar } from './buscar-informacion';
 import { motivoParaNoEnterrar } from './enterrar-tesoro';
 import { motivoParaNoExplorar } from './explorar';
+import { motivoParaNoMendigar } from './mendigar';
 import { esPuerto } from '../turno/lugar';
 import type { IdAccion, Sitio } from './accion';
 
@@ -34,6 +35,7 @@ import type { IdAccion, Sitio } from './accion';
 //   solo_guarida:  jugar a los dados y echar un pulso, solo en guaridas piratas.
 //   sin_naufragio, sin_ruinas: aquí no hay naufragio / ruinas.
 //   ya_explorado:  este naufragio o estas ruinas ya se exploraron ("Ya has registrado estas ruinas").
+//   sin_artista:   mendigar necesita un artista en el grupo.
 export type MotivoNoDisponible =
   | 'sin_agua'
   | 'solo_salvaje'
@@ -54,7 +56,8 @@ export type MotivoNoDisponible =
   | 'solo_guarida'
   | 'sin_naufragio'
   | 'sin_ruinas'
-  | 'ya_explorado';
+  | 'ya_explorado'
+  | 'sin_artista';
 
 /** Una acción tal como la enseña la interfaz: si no está disponible, sale desactivada con su motivo. */
 export interface AccionDisponible {
@@ -103,6 +106,7 @@ export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponi
     disponibleONo('echar_un_pulso', motivoParaNoEcharPulso(estado, sitio)),
     disponibleONo('investigar_naufragio', motivoParaNoExplorar(estado, sitio, 'investigar_naufragio')),
     disponibleONo('registrar_ruinas', motivoParaNoExplorar(estado, sitio, 'registrar_ruinas')),
+    disponibleONo('mendigar', motivoParaNoMendigar(estado, sitio)),
   ];
 }
 

@@ -2,7 +2,7 @@ import type { FinPartida } from '../estado/fin-partida';
 import type { TipoRecurso } from '../tablas/efecto';
 
 // Por qué cambia un recurso, cuando no es por el efecto en sí:
-//   contable:       el contable gana 2d6 de oro más cada vez que gana oro.
+//   contable:       el contable gana 1d6 de oro más cada vez que gana oro.
 //   objeto_magico:  +1 de fama al conseguir un objeto mágico.
 export type MotivoDeRecurso = 'contable' | 'objeto_magico';
 

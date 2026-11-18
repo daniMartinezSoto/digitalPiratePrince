@@ -11,6 +11,8 @@ import type { Efecto } from '../tablas/efecto';
 import { obtenerListaEventos } from '../tablas/listas-eventos/cargar-listas-eventos';
 import { eventoAleatorio } from '../tablas/listas-eventos/elegir-evento';
 import type { ListaEventos } from '../tablas/listas-eventos/lista-eventos';
+import { chequeo, type ResultadoChequeo } from '../chequeos/chequeo';
+import { conMarca, hayMarca } from '../estado/marcas';
 import { esPuerto, type Lugar } from './lugar';
 
 /** Catálogos y listas que usa el descanso. Por defecto, los del juego; los tests pueden pasar otros. */
@@ -31,9 +33,13 @@ const CATALOGOS_DEL_JUEGO: CatalogosDescanso = {
 //   techo_solo:  paga su cama (posada en un puerto, celda en un monasterio). Si duerme genial, cura 1 PV solo al jugador.
 //   techo_todos: paga su cama y la de cada seguidor. Si duermen genial, cura 1 PV a todos.
 //   intemperie:  al raso. Gratis. No cura nunca. Fuera de los puertos puede haber un evento nocturno.
+//   convencer_nativos: solo en una aldea. Chequeo de Ingenio para que los nativos os dejen dormir allí
+//               SOLO esta noche. Si lo supera: como bajo techo (todo el grupo, gratis, puede dormir genial,
+//               sin eventos). Si falla: le echan (marca "echado_de_la_aldea": no puede volver a intentarlo
+//               en esa aldea) y duerme a la intemperie, con su posible evento nocturno.
 // "Dormir genial" no es seguro: pasa con AJUSTES.probabilidadDormirGenial (una tirada para todo el grupo).
 // Para curarse seguro está la ACCIÓN "Reposar" (core/acciones/reposar.ts), que gasta el día.
-export const ELECCIONES_DE_DESCANSO = ['a_bordo', 'techo_solo', 'techo_todos', 'intemperie'] as const;
+export const ELECCIONES_DE_DESCANSO = ['a_bordo', 'techo_solo', 'techo_todos', 'intemperie', 'convencer_nativos'] as const;
 export type EleccionDeDescanso = (typeof ELECCIONES_DE_DESCANSO)[number];
 
 /** Una opción que la interfaz enseña en la fase de descanso. */
@@ -51,6 +57,9 @@ export interface ResultadoDescanso {
   // No aparece si ha dormido a la intemperie (ahí no se tira: nunca se duerme genial).
   haDormidoGenial?: boolean;
   eventos: string[];  // id del evento nocturno, si ha saltado alguno
+  // Solo al intentar convencer a los nativos: el chequeo de Ingenio y si le han echado.
+  chequeo?: ResultadoChequeo;
+  echado?: boolean;
 }
 
 /**
@@ -59,9 +68,11 @@ export interface ResultadoDescanso {
  *   puerto (o guarida pirata) y monasterio: bajo techo solo él, bajo techo todos (si tiene seguidores) o a la intemperie.
  *   Con la noche ya pagada (mundo.nochePagada: descansar en el monasterio, o la fiesta de una aldea),
  *     en el monasterio o la aldea solo hay una opción: "techo_todos", gratis (todo el grupo duerme allí).
- *   aldea e intemperie:  a la intemperie. (Convencer a los aldeanos: Sprint 6, con su tabla.)
+ *   aldea:               a la intemperie o intentar convencer a los nativos (si no le han echado de esta
+ *                        aldea: "hex" es la casilla; sin ella no se puede saber y se ofrece).
+ *   intemperie:          a la intemperie.
  */
-export function opcionesDeDescanso(estado: Estado, lugar: Lugar): OpcionDeDescanso[] {
+export function opcionesDeDescanso(estado: Estado, lugar: Lugar, hex?: { col: number; fila: number }): OpcionDeDescanso[] {
   const oro = estado.jugador.oro;
   const opcion = (eleccion: EleccionDeDescanso, precio: number): OpcionDeDescanso => ({ eleccion, precio, alcanzaElOro: oro >= precio });
 
@@ -83,6 +94,9 @@ export function opcionesDeDescanso(estado: Estado, lugar: Lugar): OpcionDeDescan
     }
   }
   opciones.push(opcion('intemperie', 0));
+  if (lugar === 'aldea' && !hayMarca(estado, 'echado_de_la_aldea', hex)) {
+    opciones.push(opcion('convencer_nativos', 0));
+  }
   return opciones;
 }
 
@@ -100,7 +114,8 @@ export function opcionesDeDescanso(estado: Estado, lugar: Lugar): OpcionDeDescan
  *    pagada y la comida gratis (mundo.nochePagada, mundo.comidaGratis).
  *
  * NO toca el estado que recibe: devuelve uno nuevo.
- * Dados: a bordo o bajo techo, 1 número (dormir genial). A la intemperie fuera de un puerto,
+ * Dados: convencer a los nativos, primero 1 número (el chequeo) y luego como bajo techo o a la intemperie.
+ * A bordo o bajo techo, 1 número (dormir genial). A la intemperie fuera de un puerto,
  * 1 número si no pasa nada y 2 si hay evento. A la intemperie en un puerto, ninguno.
  */
 export function descansar(
@@ -109,6 +124,7 @@ export function descansar(
   lugar: Lugar,
   dados: Dados,
   catalogos: CatalogosDescanso = CATALOGOS_DEL_JUEGO,
+  hex?: { col: number; fila: number },
 ): ResultadoDescanso {
   if (estado.mundo.finPartida) {
     throw new Error('descansar: la partida ya ha terminado');
@@ -117,12 +133,20 @@ export function descansar(
     throw new Error(`descansar: solo se puede descansar en la fase "descanso" (la partida está en "${estado.mundo.fase}")`);
   }
 
-  const opcion = opcionesDeDescanso(estado, lugar).find(o => o.eleccion === eleccion);
+  const opcion = opcionesDeDescanso(estado, lugar, hex).find(o => o.eleccion === eleccion);
   if (!opcion) {
     throw new Error(`descansar: en "${lugar}" no se puede elegir "${eleccion}"`);
   }
   if (!opcion.alcanzaElOro) {
     throw new Error(`descansar: "${eleccion}" cuesta ${opcion.precio} de oro y el jugador solo tiene ${estado.jugador.oro}`);
+  }
+
+  // 0. Convencer a los nativos: un chequeo de Ingenio decide si duermen bajo techo o al raso.
+  let chequeoNativos: ResultadoChequeo | undefined;
+  let duermeAlRaso = eleccion === 'intemperie';
+  if (eleccion === 'convencer_nativos') {
+    chequeoNativos = chequeo(estado.jugador, 'ingenio', 0, dados);
+    duermeAlRaso = !chequeoNativos.superado;
   }
 
   // 1. Cobrar y, si duerme genial, curar.
@@ -131,17 +155,19 @@ export function descansar(
     efectos.push({ tipo: 'oro', cantidad: -opcion.precio });
   }
   let haDormidoGenial: boolean | undefined;
-  if (eleccion !== 'intemperie') {
+  if (!duermeAlRaso) {
     haDormidoGenial = dados.probabilidad(AJUSTES.probabilidadDormirGenial / 100);
     if (haDormidoGenial) {
       efectos.push(eleccion === 'techo_solo' ? { tipo: 'vida', cantidad: 1 } : { tipo: 'vida', cantidad: 1, destino: 'todos' });
     }
   }
   const resultado = aplicarEfectos(estado, efectos, dados, catalogos);
+  const echado = chequeoNativos !== undefined && !chequeoNativos.superado;
+  const trasLaNoche = echado ? conMarca(resultado.estado, 'echado_de_la_aldea', hex) : resultado.estado;
 
   // 2. ¿Evento nocturno?
   const eventos: string[] = [];
-  if (eleccion === 'intemperie' && !esPuerto(lugar)) {
+  if (duermeAlRaso && !esPuerto(lugar)) {
     const evento = eventoAleatorio(catalogos.eventosNocturnos, AJUSTES.probabilidadEventoNocturno, dados);
     if (evento !== null) {
       eventos.push(evento);
@@ -150,10 +176,10 @@ export function descansar(
 
   // 3. Se acaba el día.
   const nuevo: Estado = {
-    ...resultado.estado,
+    ...trasLaNoche,
     mundo: {
-      ...resultado.estado.mundo,
-      dia: resultado.estado.mundo.dia + 1,
+      ...trasLaNoche.mundo,
+      dia: trasLaNoche.mundo.dia + 1,
       fase: 'inicio',
       nochePagada: false,
       comidaGratis: false,
@@ -161,7 +187,11 @@ export function descansar(
     },
   };
 
-  return haDormidoGenial === undefined
-    ? { estado: nuevo, cambios: resultado.cambios, eventos }
-    : { estado: nuevo, cambios: resultado.cambios, haDormidoGenial, eventos };
+  return {
+    estado: nuevo,
+    cambios: resultado.cambios,
+    ...(haDormidoGenial === undefined ? {} : { haDormidoGenial }),
+    eventos,
+    ...(chequeoNativos ? { chequeo: chequeoNativos, echado } : {}),
+  };
 }

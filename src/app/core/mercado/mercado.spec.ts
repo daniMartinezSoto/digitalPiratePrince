@@ -141,10 +141,10 @@ describe('comprar y vender comida, de una en una', () => {
     expect(() => venderComida(dentro({ comida: 0 }), new Dados(1))).toThrow(/no tiene comida/);
   });
 
-  it('el contable gana sus 2d6 en cada venta', () => {
+  it('el contable gana su 1d6 en cada venta', () => {
     const { estado, cambios } = venderComida(dentro({ oro: 10, comida: 3, sobrenombre: 'el_contable' }), new Dados(1));
 
-    expect(estado.jugador.oro).toBeGreaterThanOrEqual(10 + 2 + 2);
+    expect(estado.jugador.oro).toBeGreaterThanOrEqual(10 + 2 + 1);
     expect(cambios.some(c => c.tipo === 'recurso' && c.motivo === 'contable')).toBe(true);
   });
 });

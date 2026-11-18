@@ -110,7 +110,7 @@ describe('jugar a los dados', () => {
     expect(() => apostarALosDados(sentado({ oro: 200 }), 30, new Dados(1))).toThrow(/no existe/);
   });
 
-  it('el contable gana sus 2d6 cuando gana una partida', () => {
+  it('el contable gana su 1d6 cuando gana una partida', () => {
     const partida = apostarALosDados(sentado({ oro: 50, sobrenombre: 'el_contable' }), 10, new Dados(1));
 
     expect(partida.cambios.some(c => c.tipo === 'recurso' && c.motivo === 'contable')).toBe(true);

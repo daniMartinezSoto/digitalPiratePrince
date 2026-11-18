@@ -11,6 +11,7 @@ import discurso from '../../../data/tablas/discurso.json';
 import elMal from '../../../data/tablas/el-mal.json';
 import escorbuto from '../../../data/tablas/escorbuto.json';
 import hogarDeAlguien from '../../../data/tablas/hogar-de-alguien.json';
+import mendigar from '../../../data/tablas/mendigar.json';
 import lamparaMagica from '../../../data/tablas/lampara-magica.json';
 import naufragio from '../../../data/tablas/naufragio.json';
 import ruinas from '../../../data/tablas/ruinas.json';
@@ -40,6 +41,7 @@ export const TABLAS: readonly Tabla[] = [
   comoTabla(hogarDeAlguien),
   comoTabla(lamparaMagica),
   comoTabla(lluviasPersisten),
+  comoTabla(mendigar),
   comoTabla(naufragio),
   comoTabla(ruinas),
   comoTabla(pesca),

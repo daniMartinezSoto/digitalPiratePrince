@@ -9,7 +9,7 @@ import { cantidadApostada, puedeApostar, type Apuesta } from './apuestas';
 // Sentarse a la mesa gasta el día; después se apuesta tantas veces como se quiera, hasta levantarse.
 // Cada partida: un dado para ti y otro para tu rival. Si el tuyo es mayor, ganas lo apostado; si es
 // menor, lo pierdes; si empatan, se vuelve a tirar hasta que haya ganador (2 números por tirada).
-// Ganar cuenta como ganar oro (el contable gana sus 2d6).
+// Ganar cuenta como ganar oro (el contable gana su 1d6).
 
 /** Una tirada de la partida: tu dado y el del rival. */
 export interface TiradaDeDados {

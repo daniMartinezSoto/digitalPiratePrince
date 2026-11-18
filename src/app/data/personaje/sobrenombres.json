@@ -72,7 +72,7 @@
   {
     "id": "el_contable",
     "nombre": "El contable",
-    "descripcion": "Cada vez que consigue oro, obtiene además 2d6 de oro.",
+    "descripcion": "Cada vez que consigue oro, obtiene además 1d6 de oro.",
     "ajustes": {},
     "modificadores": {}
   },

@@ -13,6 +13,8 @@ import type { EfectoDefinicion } from '../efecto';
 //   audiencia_aplazada:  "hoy no": si vuelves a pedirla aquí MAÑANA, +1 (no se acumula; pasado mañana ya no vale).
 // Ruinas (las aplica registrarRuinas):
 //   idolo_antediluviano: recibes el ídolo antediluviano; si ya lo tienes, en su lugar un tesoro mágico (evento).
+// Mendigar:
+//   comida_gratis: hoy come gratis (en la fase de comida sale "invitado").
 export const ESPECIALES_DE_TABLA = [
   'haces_amigos',
   'cubil',
@@ -21,6 +23,7 @@ export const ESPECIALES_DE_TABLA = [
   'audiencia_vetada',
   'audiencia_aplazada',
   'idolo_antediluviano',
+  'comida_gratis',
 ] as const;
 export type EspecialDeTabla = (typeof ESPECIALES_DE_TABLA)[number];
 

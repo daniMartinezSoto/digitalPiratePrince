@@ -21,7 +21,7 @@ import type { Rastrillo } from './rastrillo';
 //   comprarEnRastrillo:   el objeto del día (se saca al entrar); una vez comprado, ya no hay más.
 //   salirDelMercado:      termina la acción: toca comer.
 // Mientras está dentro no puede hacer otra acción ni usar objetos.
-// Todo pasa por aplicarEfectos: ganar oro al vender cuenta como ganar oro (el contable gana sus 2d6).
+// Todo pasa por aplicarEfectos: ganar oro al vender cuenta como ganar oro (el contable gana su 1d6).
 
 const CATALOGOS_DEL_JUEGO: CatalogosEfectos = { objetos: OBJETOS, condiciones: CONDICIONES };
 

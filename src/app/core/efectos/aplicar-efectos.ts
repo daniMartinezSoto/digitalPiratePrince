@@ -51,7 +51,7 @@ export interface ResultadoEfectos {
  *   - Seguidores nuevos: entran si hay sitio (maximoSeguidoresActual: 3, o 4 con carisma) y ninguna condición lo prohíbe.
  *     Con el grupo lleno solo entran si el efecto dice a quién se despide (nunca a un inseparable).
  *   - "Un seguidor al azar" sin seguidores: no pasa nada, salvo que el efecto traiga "siNoHay".
- *   - El contable: cada vez que gana oro, gana 2d6 más.
+ *   - El contable: cada vez que gana oro, gana 1d6 más.
  *   - Fin de partida: vida o tripulación a 0 (derrota), la muerte de un seguidor "vital" (derrota),
  *     o un efecto ganar_partida / perder_partida.
  *     Cuando la partida termina, los efectos que quedan ya no se aplican.
@@ -217,14 +217,14 @@ function aplicarReemplazo(estado: Estado, efectos: readonly Efecto[], dados: Dad
 }
 
 /**
- * El contable: cada vez que GANA oro (sumar con cantidad positiva), gana 2d6 más.
+ * El contable: cada vez que GANA oro (sumar con cantidad positiva), gana 1d6 más (antes 2d6: decidido por el autor, 18-nov).
  * No cuenta "fijar": eso no es ganar, es quedarse con una cantidad.
  */
 function aplicarContable(jugador: Jugador, efecto: EfectoDeRecurso, dados: Dados, condiciones: readonly Condicion[], cambios: Cambio[]): void {
   if (oroGanado(efecto) === 0 || jugador.sobrenombre !== 'el_contable') {
     return;
   }
-  const extra = dados.tirar('2d6').total;
+  const extra = dados.tirar('1d6').total;
   apuntarRecurso(jugador, 'oro', jugador.oro + extra, condiciones, cambios, 'contable');
 }
 

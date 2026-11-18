@@ -74,10 +74,10 @@ describe('opcionesDeDescanso', () => {
     expect(opciones.find(o => o.eleccion === 'techo_todos')?.alcanzaElOro).toBe(false);
   });
 
-  it('en playa, jungla o aldea solo se puede dormir a la intemperie', () => {
-    const intemperie = [{ eleccion: 'intemperie', precio: 0, alcanzaElOro: true }];
-    expect(opcionesDeDescanso(estadoCon(), 'intemperie')).toEqual(intemperie);
-    expect(opcionesDeDescanso(estadoCon(), 'aldea')).toEqual(intemperie);
+  it('en playa o jungla solo se puede dormir a la intemperie; en la aldea, también convencer a los nativos', () => {
+    const intemperie = { eleccion: 'intemperie', precio: 0, alcanzaElOro: true };
+    expect(opcionesDeDescanso(estadoCon(), 'intemperie')).toEqual([intemperie]);
+    expect(opcionesDeDescanso(estadoCon(), 'aldea')).toEqual([intemperie, { eleccion: 'convencer_nativos', precio: 0, alcanzaElOro: true }]);
   });
 });
 

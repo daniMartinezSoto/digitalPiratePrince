@@ -299,7 +299,7 @@ describe('aplicarEfectos', () => {
   describe('el contable', () => {
     it('cada vez que gana oro, gana 2d6 más', () => {
       const gemelo = new Dados(3);
-      const extra = gemelo.tirar('2d6').total; // el contable es lo único que tira dados aquí
+      const extra = gemelo.tirar('1d6').total; // el contable es lo único que tira dados aquí
 
       const { estado } = aplicarEfectos(estadoCon({ sobrenombre: 'el_contable', oro: 50 }), [{ tipo: 'oro', cantidad: 20 }], new Dados(3));
 
@@ -372,7 +372,7 @@ describe('aplicarEfectos', () => {
 
     it('el oro extra del contable aparece aparte, con su motivo', () => {
       const gemelo = new Dados(3);
-      const extra = gemelo.tirar('2d6').total;
+      const extra = gemelo.tirar('1d6').total;
 
       const { cambios } = aplicarEfectos(estadoCon({ sobrenombre: 'el_contable', oro: 50 }), [{ tipo: 'oro', cantidad: 20 }], new Dados(3));
 

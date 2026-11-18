@@ -45,6 +45,8 @@ export type AccionEnCurso = VisitaMercado | MarinerosDisponibles | SeguidorEnEsp
 //   audiencia_aplazada:  aquí le dijeron "hoy no": +1 si la pide al día siguiente (lleva "dia").
 //   campeon_vencido:     en esta guarida ya venció al campeón de pulsos: no vuelve a salir.
 //   naufragio_investigado, ruinas_registradas: ya se exploraron (solo se puede una vez).
+//   echado_de_la_aldea:  falló al convencer a los nativos para dormir allí: le echaron y no puede
+//                        volver a intentarlo (bloquear la casilla y mandarle a un vecino, con el mapa).
 // Irán llegando más tipos (casillas bloqueadas, aldeas ofendidas...).
 export const TIPOS_DE_MARCA = [
   'evento',
@@ -57,6 +59,7 @@ export const TIPOS_DE_MARCA = [
   'campeon_vencido',
   'naufragio_investigado',
   'ruinas_registradas',
+  'echado_de_la_aldea',
 ] as const;
 export type TipoDeMarca = (typeof TIPOS_DE_MARCA)[number];
 
