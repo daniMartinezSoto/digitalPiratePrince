@@ -82,6 +82,8 @@ describe('dónde se puede cada acción', () => {
       { accion: 'solicitar_audiencia', disponible: false, motivo: 'solo_puerto_aldea_o_guarida' },
       { accion: 'jugar_a_los_dados', disponible: false, motivo: 'solo_guarida' },
       { accion: 'echar_un_pulso', disponible: false, motivo: 'solo_guarida' },
+      { accion: 'investigar_naufragio', disponible: false, motivo: 'sin_naufragio' },
+      { accion: 'registrar_ruinas', disponible: false, motivo: 'sin_ruinas' },
     ]);
   });
 
@@ -101,6 +103,8 @@ describe('dónde se puede cada acción', () => {
       { accion: 'solicitar_audiencia', disponible: false, motivo: 'solo_puerto_aldea_o_guarida' },
       { accion: 'jugar_a_los_dados', disponible: false, motivo: 'solo_guarida' },
       { accion: 'echar_un_pulso', disponible: false, motivo: 'solo_guarida' },
+      { accion: 'investigar_naufragio', disponible: false, motivo: 'sin_naufragio' },
+      { accion: 'registrar_ruinas', disponible: false, motivo: 'sin_ruinas' },
     ]);
   });
 

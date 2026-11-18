@@ -8,6 +8,7 @@ import type { Cambio } from '../efectos/cambio';
 import type { Estado } from '../estado/estado';
 import type { VisitaMercado } from '../estado/mundo';
 import { espaciosQueFaltan } from '../objetos/consultas';
+import type { Efecto } from '../tablas/efecto';
 import { esPuerto } from '../turno/lugar';
 import { RASTRILLO } from './cargar-rastrillo';
 import type { Rastrillo } from './rastrillo';
@@ -73,8 +74,12 @@ export function venderObjeto(estado: Estado, posicion: number, dados: Dados, cat
   if (!llevado) {
     throw new Error(`venderObjeto: no hay ningún objeto en la posición ${posicion} del inventario`);
   }
-  const precio = fichaDe(llevado.id, catalogos).precioVenta;
-  return aplicarYSeguir(estado, visita, [{ tipo: 'vender_objeto', posicion }, { tipo: 'oro', cantidad: precio }], dados, catalogos);
+  const ficha = fichaDe(llevado.id, catalogos);
+  const efectos: Efecto[] = [{ tipo: 'vender_objeto', posicion }, { tipo: 'oro', cantidad: ficha.precioVenta }];
+  if (ficha.banderaAlVender) {
+    efectos.push({ tipo: 'bandera', bandera: ficha.banderaAlVender }); // el juego recordará que lo vendió
+  }
+  return aplicarYSeguir(estado, visita, efectos, dados, catalogos);
 }
 
 /**

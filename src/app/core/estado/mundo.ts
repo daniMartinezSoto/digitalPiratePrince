@@ -44,6 +44,7 @@ export type AccionEnCurso = VisitaMercado | MarinerosDisponibles | SeguidorEnEsp
 //   audiencia_vetada:    aquí ofendió (o le reconoció un guardia): no puede volver a pedir audiencia.
 //   audiencia_aplazada:  aquí le dijeron "hoy no": +1 si la pide al día siguiente (lleva "dia").
 //   campeon_vencido:     en esta guarida ya venció al campeón de pulsos: no vuelve a salir.
+//   naufragio_investigado, ruinas_registradas: ya se exploraron (solo se puede una vez).
 // Irán llegando más tipos (casillas bloqueadas, aldeas ofendidas...).
 export const TIPOS_DE_MARCA = [
   'evento',
@@ -54,6 +55,8 @@ export const TIPOS_DE_MARCA = [
   'audiencia_vetada',
   'audiencia_aplazada',
   'campeon_vencido',
+  'naufragio_investigado',
+  'ruinas_registradas',
 ] as const;
 export type TipoDeMarca = (typeof TIPOS_DE_MARCA)[number];
 

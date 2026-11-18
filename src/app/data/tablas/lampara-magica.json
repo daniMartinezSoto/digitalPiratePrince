@@ -1,0 +1,8 @@
+{
+  "id": "lampara_magica",
+  "dado": "1d6",
+  "filas": [
+    { "min": 1, "max": 2, "texto": "No pasa nada: la lámpara está agotada.", "efectos": [{ "tipo": "ganar_objeto", "objeto": "lampara_agotada" }] },
+    { "min": 3, "max": 6, "texto": "¡Sale un genio!", "evento": "deseo", "libro": "E041" }
+  ]
+}

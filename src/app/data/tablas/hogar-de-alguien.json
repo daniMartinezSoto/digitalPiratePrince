@@ -1,0 +1,12 @@
+{
+  "id": "hogar_de_alguien",
+  "dado": "1d6",
+  "filas": [
+    { "min": 1, "max": 1, "evento": "fugitivo", "libro": "E086" },
+    { "min": 2, "max": 2, "evento": "pescador", "libro": "E071" },
+    { "min": 3, "max": 3, "evento": "muchacha_perdida", "libro": "E076" },
+    { "min": 4, "max": 4, "evento": "piratas_perdidos", "libro": "E072" },
+    { "min": 5, "max": 5, "evento": "contrabandista", "libro": "E083" },
+    { "min": 6, "max": 6, "evento": "ermitano", "libro": "E075" }
+  ]
+}

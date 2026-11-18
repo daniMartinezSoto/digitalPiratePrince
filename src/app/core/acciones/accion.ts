@@ -1,7 +1,7 @@
 import type { Dados } from '../dados/dados';
 import type { Cambio } from '../efectos/cambio';
 import type { Estado } from '../estado/estado';
-import type { Lugar } from '../turno/lugar';
+import type { Lugar, Rasgo } from '../turno/lugar';
 
 // LA FASE DE ACCIÓN. Cada día el jugador hace UNA acción (pescar, cazar, reposar...).
 // Todas las acciones siguen el mismo molde:
@@ -20,9 +20,10 @@ import type { Lugar } from '../turno/lugar';
 // "buscar_informacion": en puertos y aldeas, con su tabla 3d6 (core/acciones/buscar-informacion.ts).
 // "solicitar_audiencia": con el gobernador, el jefe de la aldea o el capitán pirata (core/acciones/audiencia.ts).
 // "jugar_a_los_dados", "echar_un_pulso": exclusivas de las guaridas piratas (core/guarida/).
+// "investigar_naufragio", "registrar_ruinas": una vez por casilla (core/acciones/explorar.ts).
 // No confundir con la FASE de descanso, que es dormir por la noche (core/turno/descansar.ts):
 // son dos cosas distintas y por eso tienen nombres distintos.
-export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado', 'dar_discurso', 'contratar_marineros', 'buscar_seguidor', 'rezar', 'descansar_en_monasterio', 'enterrar_tesoro', 'buscar_informacion', 'solicitar_audiencia', 'jugar_a_los_dados', 'echar_un_pulso'] as const;
+export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado', 'dar_discurso', 'contratar_marineros', 'buscar_seguidor', 'rezar', 'descansar_en_monasterio', 'enterrar_tesoro', 'buscar_informacion', 'solicitar_audiencia', 'jugar_a_los_dados', 'echar_un_pulso', 'investigar_naufragio', 'registrar_ruinas'] as const;
 export type IdAccion = (typeof ACCIONES)[number];
 
 /**
@@ -35,6 +36,8 @@ export interface Sitio {
   // Lo usan las reglas que recuerdan cosas por casilla (un tesoro enterrado por hexágono):
   // sin casilla, esas reglas no pueden comprobar nada y no limitan.
   hex?: { col: number; fila: number };
+  // Rasgo de la casilla (naufragio, ruinas...), si tiene. Lo dirá el mapa; hasta entonces es opcional.
+  rasgo?: Rasgo;
   // En tierra: ¿hay agua en una casilla de al lado? (Para pescar desde la orilla.)
   // A bordo no hace falta ponerlo: el barco siempre está en el agua.
   juntoAlAgua?: boolean;

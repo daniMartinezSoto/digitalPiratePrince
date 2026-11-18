@@ -1,0 +1,10 @@
+{
+  "id": "naufragio",
+  "dado": "1d6",
+  "filas": [
+    { "min": 1, "max": 2, "texto": "Es un barco maldito.", "evento": "barco_maldito" },
+    { "min": 3, "max": 3, "texto": "Entre los restos encuentras la entrada a una guarida pirata.", "evento": "guarida_pirata", "libro": "E038" },
+    { "min": 4, "max": 5, "texto": "Alguien ha hecho su hogar entre los restos.", "tabla": "hogar_de_alguien" },
+    { "min": 6, "max": 6, "texto": "Restos antiguos.", "evento": "restos_antiguos" }
+  ]
+}

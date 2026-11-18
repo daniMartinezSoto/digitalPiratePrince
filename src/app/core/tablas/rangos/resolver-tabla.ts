@@ -31,8 +31,26 @@ export function resolverTabla(tabla: Tabla, modificador: number, dados: Dados): 
   if (fila.texto !== undefined) resultado.texto = fila.texto;
   if (fila.evento !== undefined) resultado.evento = fila.evento;
   if (fila.especial !== undefined) resultado.especial = fila.especial;
+  if (fila.tabla !== undefined) resultado.tabla = fila.tabla;
 
   return resultado;
+}
+
+/**
+ * Tira en la tabla y, si la fila dice "tira en otra tabla", sigue tirando en esa (sin bonificadores),
+ * y así hasta que una fila no mande a otra. Devuelve todas las tiradas, en orden (la primera es la de
+ * la tabla pedida). Como mucho 10 saltos, para cazar bucles en los datos.
+ * "obtener" busca una tabla por su id (el cargador del juego; los tests pueden pasar otro).
+ */
+export function resolverConSubtablas(tabla: Tabla, modificador: number, dados: Dados, obtener: (id: string) => Tabla): ResultadoTabla[] {
+  const resultados = [resolverTabla(tabla, modificador, dados)];
+  while (resultados[resultados.length - 1].tabla !== undefined) {
+    if (resultados.length > 10) {
+      throw new Error(`resolverConSubtablas: más de 10 saltos desde "${tabla.id}" (¿un bucle en las tablas?)`);
+    }
+    resultados.push(resolverTabla(obtener(resultados[resultados.length - 1].tabla!), 0, dados));
+  }
+  return resultados;
 }
 
 /** Elige la fila cuyo rango contiene el total, recortando a los extremos de la tabla. */

@@ -52,6 +52,10 @@ export interface Objeto {
   // Bonificadores a tiradas mientras lo llevas, igual que los sobrenombres.
   modificadores?: Modificadores;
 
+  // Bandera que el juego apunta si lo VENDES, para recordarlo más tarde. El ídolo antediluviano:
+  // si lo vendiste y llegas a la ciudad perdida, el juego te recordará que lo necesitabas.
+  banderaAlVender?: string;
+
   // Condiciones que tienes MIENTRAS lo llevas (ids del catálogo de condiciones).
   // El amuleto kalinago: ["vinculo_nativo"]. No se guardan en la partida: se calculan.
   otorga?: string[];

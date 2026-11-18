@@ -10,6 +10,10 @@ import contratarSeguidor from '../../../data/tablas/contratar-seguidor.json';
 import discurso from '../../../data/tablas/discurso.json';
 import elMal from '../../../data/tablas/el-mal.json';
 import escorbuto from '../../../data/tablas/escorbuto.json';
+import hogarDeAlguien from '../../../data/tablas/hogar-de-alguien.json';
+import lamparaMagica from '../../../data/tablas/lampara-magica.json';
+import naufragio from '../../../data/tablas/naufragio.json';
+import ruinas from '../../../data/tablas/ruinas.json';
 import lluviasPersisten from '../../../data/tablas/lluvias-persisten.json';
 import pesca from '../../../data/tablas/pesca.json';
 import tormentaContinua from '../../../data/tablas/tormenta-continua.json';
@@ -33,7 +37,11 @@ export const TABLAS: readonly Tabla[] = [
   comoTabla(discurso),
   comoTabla(elMal),
   comoTabla(escorbuto),
+  comoTabla(hogarDeAlguien),
+  comoTabla(lamparaMagica),
   comoTabla(lluviasPersisten),
+  comoTabla(naufragio),
+  comoTabla(ruinas),
   comoTabla(pesca),
   comoTabla(tormentaContinua),
 ];

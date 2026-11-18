@@ -11,6 +11,8 @@ import type { EfectoDefinicion } from '../efecto';
 //   audiencia_concedida: te reciben. En este sitio ya no se puede volver a pedir audiencia en toda la partida.
 //   audiencia_vetada:    le ofendes (o te reconoce un guardia): aquí no puedes volver a pedirla nunca.
 //   audiencia_aplazada:  "hoy no": si vuelves a pedirla aquí MAÑANA, +1 (no se acumula; pasado mañana ya no vale).
+// Ruinas (las aplica registrarRuinas):
+//   idolo_antediluviano: recibes el ídolo antediluviano; si ya lo tienes, en su lugar un tesoro mágico (evento).
 export const ESPECIALES_DE_TABLA = [
   'haces_amigos',
   'cubil',
@@ -18,6 +20,7 @@ export const ESPECIALES_DE_TABLA = [
   'audiencia_concedida',
   'audiencia_vetada',
   'audiencia_aplazada',
+  'idolo_antediluviano',
 ] as const;
 export type EspecialDeTabla = (typeof ESPECIALES_DE_TABLA)[number];
 
@@ -35,6 +38,10 @@ export interface Fila {
   // Id del evento al que lleva esta fila, con nombre (p. ej. "taberna_clandestina").
   // Es un salto del motor de eventos, no un efecto sobre el estado.
   evento?: string;
+
+  // "Tira en otra tabla": id de la tabla en la que se tira a continuación (sin bonificadores).
+  // Lo resuelve resolverConSubtablas. Ej.: el naufragio, 4-5 → "hogar_de_alguien".
+  tabla?: string;
 
   // Regla especial de la fila (ver ESPECIALES_DE_TABLA). Sin ponerla = ninguna.
   especial?: EspecialDeTabla;

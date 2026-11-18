@@ -82,6 +82,10 @@ function validarObjeto(objeto: Objeto): string[] {
     errores.push(`${nombre}: "magico" debe ser true o false.`);
   }
 
+  if (o['banderaAlVender'] !== undefined && (typeof o['banderaAlVender'] !== 'string' || !FORMATO_ID.test(o['banderaAlVender']))) {
+    errores.push(`${nombre}: "banderaAlVender" debe ir en minúsculas y con guiones bajos.`);
+  }
+
   // Bonificadores: solo sobre tiradas que existen y con números enteros.
   errores.push(...validarModificadores(o['modificadores'], nombre));
 

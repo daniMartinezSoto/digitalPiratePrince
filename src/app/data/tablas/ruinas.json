@@ -1,0 +1,15 @@
+{
+  "id": "ruinas",
+  "dado": "2d6",
+  "filas": [
+    { "min": 2, "max": 2, "texto": "Despiertas una antigua maldición.", "evento": "maldicion", "libro": "E022" },
+    { "min": 3, "max": 3, "texto": "Encuentras un gigantesco ídolo de oro... y una maldición.", "efectos": [{ "tipo": "ganar_objeto", "objeto": "idolo_dorado" }], "evento": "maldicion", "libro": "E049" },
+    { "min": 4, "max": 4, "texto": "Dos esqueletos escondidos.", "evento": "esqueletos", "libro": "E053" },
+    { "min": 5, "max": 5, "texto": "Un pirata maldito guarda un cofre.", "evento": "ruinas_pirata_maldito", "libro": "E078" },
+    { "min": 6, "max": 7, "texto": "Una ciudad pirata neutral se esconde entre las ruinas.", "evento": "ciudad_pirata", "libro": "E038" },
+    { "min": 8, "max": 9, "texto": "Ruinas antiguas.", "evento": "ruinas", "libro": "E040" },
+    { "min": 10, "max": 10, "texto": "Una gruta.", "evento": "cueva", "libro": "E088" },
+    { "min": 11, "max": 11, "texto": "Encuentras una lámpara mágica y la frotas...", "tabla": "lampara_magica" },
+    { "min": 12, "max": 12, "texto": "Un ídolo antediluviano.", "especial": "idolo_antediluviano" }
+  ]
+}

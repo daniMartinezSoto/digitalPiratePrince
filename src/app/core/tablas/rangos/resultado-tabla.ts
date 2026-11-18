@@ -10,4 +10,5 @@ export interface ResultadoTabla {
   efectos: Efecto[];   // efectos ya resueltos; lista vacía si no hay
   evento?: string;     // id del evento al que salta, si lo hay
   especial?: EspecialDeTabla; // regla especial de la fila, si la tiene (la aplica quien usa la tabla)
+  tabla?: string;      // "tira en otra tabla": id de la siguiente (ver resolverConSubtablas)
 }

@@ -63,5 +63,21 @@
       }
     ],
     "precioVenta": 10
+  },
+  {
+    "id": "idolo_antediluviano",
+    "nombre": "Ídolo antediluviano",
+    "descripcion": "Antiguo y de una civilización desconocida. No sabes para qué sirve. De momento...",
+    "tipo": "pasivo",
+    "precioVenta": 200,
+    "magico": true,
+    "banderaAlVender": "idolo_antediluviano_vendido"
+  },
+  {
+    "id": "lampara_agotada",
+    "nombre": "Lámpara mágica agotada",
+    "descripcion": "Una lámpara antigua. Frotarla ya no sirve de nada, pero algún coleccionista pagará por ella.",
+    "tipo": "pasivo",
+    "precioVenta": 25
   }
 ]
