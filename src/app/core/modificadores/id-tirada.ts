@@ -14,6 +14,8 @@ export const IDS_TIRADA = [
   'discurso', // contratar: dar un discurso a los marineros del puerto
   'contratar_seguidor', // contratar: buscar un seguidor (2d6)
   'mendigar', // la acción del artista
+  'ataque', // tu ataque en combate: se SUMA AL DAÑO si aciertas (el dado sigue decidiendo el fallo y el 6)
+  'ataque_no_humano', // además de "ataque", contra enemigos que no son humanos (la lanza kalinago)
 ] as const;
 
 export type IdTirada = (typeof IDS_TIRADA)[number];

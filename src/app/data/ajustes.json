@@ -11,7 +11,8 @@
   "maximoSobornos": 3,
   "diasEntreBusquedas": 2,
   "apuestas": [10, 25, 50, 100],
-  "probabilidadEventoNocturno": 33,
+  "probabilidadEventoNocturno": { "playa": 25, "jungla": 25, "jungla_profunda": 35 },
+  "reduccionEventoNocturnoTienda": 10,
   "probabilidadDormirGenial": 50,
   "curaAlReposar": 2,
   "probabilidadEventoAlReposar": 20,
@@ -20,5 +21,6 @@
   "precioVenderComida": 2,
   "marinerosDisponibles": "1d6x3+4",
   "precioMarinero": 2,
-  "bonificadorPorFama": { "audiencia_guarida": 2, "buscar_info_guarida": 2 }
+  "bonificadorPorFama": { "audiencia_guarida": 2, "buscar_info_guarida": 2 },
+  "castigoHambreMaximo": 3
 }

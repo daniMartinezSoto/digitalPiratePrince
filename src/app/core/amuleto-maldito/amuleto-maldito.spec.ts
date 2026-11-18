@@ -24,7 +24,8 @@ const MALDITO_CARISMA_Y_AMBICION = 45;
 
 function estadoCon(cambios: Partial<Jugador> = {}): Estado {
   const { estado } = crearPartida(1, 'Prueba'); // el influyente, sin condiciones
-  return { ...estado, jugador: { ...estado.jugador, ...cambios } };
+  // Las cuentas de estos tests se hicieron con 15 PV (la vida inicial era 15 hasta el Sprint 7; ahora es 18).
+  return { ...estado, jugador: { ...estado.jugador, vida: 15, vidaMax: 15, ...cambios } };
 }
 
 /** Un amuleto puesto a mano con esa bendición y esa maldición dentro. */
@@ -452,19 +453,19 @@ describe('"el maldito" empieza con su amuleto', () => {
   it('de principio a fin: empieza más fuerte y avaricioso, y en el monasterio vuelve todo a lo normal', () => {
     const { estado: inicial, dados } = crearPartida(MALDITO_FORTALEZA_Y_AVARICIA, 'Marta');
     expect(inicial.jugador.condiciones).toEqual([{ id: 'amuleto_maldito', partes: ['gran_fortaleza', 'avaricioso'] }]);
-    expect(inicial.jugador.vida).toBe(19);
+    expect(inicial.jugador.vida).toBe(22); // 18 + 4 de gran fortaleza
     expect(inicial.jugador.oro).toBe(50);
     expect(estaProhibido(inicial.jugador, 'enterrar_tesoro')).toBe(true);
 
-    // Le hieren y se cura: puede llegar hasta 19.
+    // Le hieren y se cura: puede llegar hasta 22.
     const herido = aplicarEfectos(inicial, [{ tipo: 'vida', cantidad: -6 }, { tipo: 'vida', cantidad: 10 }], dados).estado;
-    expect(herido.jugador.vida).toBe(19);
+    expect(herido.jugador.vida).toBe(22);
 
     // "Rezar" en el monasterio: quita una maldición, y se lleva el amuleto entero.
     const { estado: libre, cambios } = aplicarEfectos(herido, [QUITAR_UNA_MALDICION], dados);
     expect(libre.jugador.condiciones).toEqual([]);
-    expect(libre.jugador.vida).toBe(15);
-    expect(vidaMaxActual(libre.jugador)).toBe(15);
+    expect(libre.jugador.vida).toBe(18);
+    expect(vidaMaxActual(libre.jugador)).toBe(18);
     expect(cambios.map(c => c.tipo)).toEqual(['condicion_quitada', 'recurso']);
     expect(estaProhibido(libre.jugador, 'enterrar_tesoro')).toBe(false);
   });

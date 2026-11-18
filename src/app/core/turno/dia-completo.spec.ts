@@ -47,10 +47,10 @@ describe('un día completo', () => {
     expect(estado.jugador.comida).toBe(0);
     expect(estado.jugador.diasSinComer).toBe(2);
     expect(estado.jugador.condiciones.map(c => c.id)).toContain('hambre');
-    // Pierde 1 + 2 PV por el hambre (15 → 12). Las dos noches con hambre puede recuperar 1 PV
-    // cada una, si duerme genial: acaba entre 12 y 14.
-    expect(estado.jugador.vida).toBeGreaterThanOrEqual(12);
-    expect(estado.jugador.vida).toBeLessThanOrEqual(14);
+    // Pierde 1 + 2 PV por el hambre (18 → 15). Las dos noches con hambre puede recuperar 1 PV
+    // cada una, si duerme genial: acaba entre 15 y 17.
+    expect(estado.jugador.vida).toBeGreaterThanOrEqual(15);
+    expect(estado.jugador.vida).toBeLessThanOrEqual(17);
     // El estado sigue siendo solo datos.
     expect(JSON.parse(JSON.stringify(estado))).toEqual(estado);
   });

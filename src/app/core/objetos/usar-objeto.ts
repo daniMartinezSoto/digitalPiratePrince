@@ -20,6 +20,9 @@ export function usarObjeto(estado: Estado, posicion: number, dados: Dados, catal
   if (estado.mundo.finPartida) {
     throw new Error('usarObjeto: la partida ya ha terminado');
   }
+  if (estado.mundo.combate) {
+    throw new Error('usarObjeto: hay un combate en curso; primero hay que terminarlo');
+  }
   if (estado.mundo.fase !== 'accion') {
     throw new Error(`usarObjeto: los objetos se usan en la fase "accion" (la partida está en "${estado.mundo.fase}")`);
   }
@@ -38,7 +41,9 @@ export function usarObjeto(estado: Estado, posicion: number, dados: Dados, catal
     throw new Error(`usarObjeto: "${ficha.id}" no se usa en la fase de acción (${ficha.cuandoSeUsa ? `se usa en: ${ficha.cuandoSeUsa}` : 'es pasivo'})`);
   }
 
-  const efectos: Efecto[] = [{ tipo: 'gastar_uso', posicion }, ...(ficha.alUsar ?? []).map(definicion => resolverEfecto(definicion, dados))];
+  // Un activo sin usos es permanente: se usa sin gastarse.
+  const gasto: Efecto[] = llevado.usosRestantes === undefined ? [] : [{ tipo: 'gastar_uso', posicion }];
+  const efectos: Efecto[] = [...gasto, ...(ficha.alUsar ?? []).map(definicion => resolverEfecto(definicion, dados))];
   const resultado = aplicarEfectos(estado, efectos, dados, catalogos);
   return { ...resultado, estado: { ...resultado.estado, mundo: { ...resultado.estado.mundo, estadoDados: dados.obtenerEstado() } } };
 }

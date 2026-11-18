@@ -19,7 +19,8 @@ const EN_MONASTERIO: Sitio = { lugar: 'monasterio' };
 /** Partida del influyente en la fase de acción, con lo que se le cambie. */
 function estadoCon(cambios: Partial<Jugador> = {}): Estado {
   const { estado } = crearPartida(1, 'Prueba');
-  return { ...estado, jugador: { ...estado.jugador, ...cambios }, mundo: { ...estado.mundo, fase: 'accion' } };
+  // Las cuentas de estos tests se hicieron con 15 PV (la vida inicial era 15 hasta el Sprint 7; ahora es 18).
+  return { ...estado, jugador: { ...estado.jugador, vida: 15, vidaMax: 15, ...cambios }, mundo: { ...estado.mundo, fase: 'accion' } };
 }
 
 function seguidor(id: string, resistencia = 10): Seguidor {

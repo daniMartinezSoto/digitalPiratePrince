@@ -61,6 +61,7 @@ export type MotivoNoDisponible =
   | 'ya_explorado'
   | 'sin_artista'
   | 'no_es_momento'
+  | 'combate_en_curso'
   | 'accion_a_medias';
 
 /** Una acción tal como la enseña la interfaz: si no está disponible, sale desactivada con su motivo. */
@@ -94,7 +95,13 @@ export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponi
   const todas = accionesSegunElSitio(estado, sitio);
   // Protección: fuera de la fase de acción, o con una acción a medias, no se puede empezar ninguna.
   const bloqueo: MotivoNoDisponible | undefined =
-    estado.mundo.finPartida || estado.mundo.fase !== 'accion' ? 'no_es_momento' : estado.mundo.accionEnCurso ? 'accion_a_medias' : undefined;
+    estado.mundo.finPartida || estado.mundo.fase !== 'accion'
+      ? 'no_es_momento'
+      : estado.mundo.combate
+        ? 'combate_en_curso'
+        : estado.mundo.accionEnCurso
+          ? 'accion_a_medias'
+          : undefined;
   return bloqueo ? todas.map(a => ({ accion: a.accion, disponible: false, motivo: bloqueo })) : todas;
 }
 

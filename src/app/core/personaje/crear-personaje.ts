@@ -1,5 +1,6 @@
 import { Dados } from '../dados/dados';
 import { Jugador } from '../estado/jugador';
+import type { Retrato } from './retrato';
 import type { Seguidor } from '../estado/seguidor';
 import { TIPOS_SEGUIDOR } from '../catalogos/cargar-seguidores';
 import { crearSeguidor } from '../seguidores/crear-seguidor';
@@ -22,7 +23,8 @@ function seguidorDelHermano(dados: Dados): Seguidor {
 
 export function crearPersonaje(
   nombre: string,
-  dados: Dados
+  dados: Dados,
+  retrato: Retrato = 'hombre'
 ): Jugador {
 
   // Seleccionar sobrenombre aleatorio.
@@ -40,9 +42,10 @@ export function crearPersonaje(
   const jugador: Jugador = {
     nombre,
     sobrenombre: sobrenombre.id,
+    retrato,
 
-    vida: 15,
-    vidaMax: 15,
+    vida: 18,
+    vidaMax: 18,
     fuerza: perfil.fuerza + (sobrenombre.ajustes.fuerza ?? 0),
     ingenio: perfil.ingenio,
 

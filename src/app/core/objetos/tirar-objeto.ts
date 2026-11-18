@@ -13,5 +13,8 @@ export function tirarObjeto(estado: Estado, posicion: number, dados: Dados, cata
   if (estado.mundo.finPartida) {
     throw new Error('tirarObjeto: la partida ya ha terminado');
   }
+  if (estado.mundo.combate) {
+    throw new Error('tirarObjeto: hay un combate en curso; primero hay que terminarlo');
+  }
   return aplicarEfectos(estado, [{ tipo: 'tirar_objeto', posicion }], dados, catalogos);
 }

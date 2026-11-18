@@ -55,11 +55,12 @@ function validarTipoSeguidor(tipo: TipoSeguidor, idsDeHabilidades: string[], lis
     errores.push(`${nombre}: la imagen debe ser la ruta del dibujo (un texto).`);
   }
 
-  if (t['ataque'] !== undefined && !esEnteroDesde(t['ataque'], 0)) {
-    errores.push(`${nombre}: el ataque debe ser un número entero de 0 o más (0 = no ataca).`);
+  // Ataque y resistencia, siempre escritos (decidido por el autor: que se vea que todos combaten).
+  if (!esEnteroDesde(t['ataque'], 0)) {
+    errores.push(`${nombre}: el ataque debe ser un número entero de 0 o más (lo normal, 2; 0 = no entra en combate).`);
   }
   // Con resistencia 0 nacería muerto.
-  if (t['resistencia'] !== undefined && !esEnteroDesde(t['resistencia'], 1)) {
+  if (!esEnteroDesde(t['resistencia'], 1)) {
     errores.push(`${nombre}: la resistencia debe ser un número entero de 1 o más.`);
   }
   if (t['precio'] !== undefined && !esEnteroDesde(t['precio'], 0)) {

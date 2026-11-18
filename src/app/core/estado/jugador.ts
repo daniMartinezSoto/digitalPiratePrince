@@ -2,12 +2,15 @@
 import { ObjetoLlevado } from './objeto-llevado';
 import { CondicionActiva } from './condicion-activa';
 import { Seguidor } from './seguidor';
+import type { Retrato } from '../personaje/retrato';
 
 // Datos y recursos del protagonista.
 export interface Jugador {
   nombre: string;
   // Sobrenombre obtenido o elegido al crear el personaje.
   sobrenombre: string;
+  // Su dibujo: "hombre" o "mujer" (se elige al crear el personaje; core/personaje/retrato.ts).
+  retrato: Retrato;
 
   // Características principales.
   vida: number;

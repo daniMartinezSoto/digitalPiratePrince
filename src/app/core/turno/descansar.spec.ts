@@ -5,6 +5,7 @@ import type { Jugador } from '../estado/jugador';
 import type { Seguidor } from '../estado/seguidor';
 import { crearPartida } from '../partida/crear-partida';
 import { descansar, opcionesDeDescanso } from './descansar';
+import type { TerrenoAlRaso } from './lugar';
 
 const POSADA = AJUSTES.precioPosada;
 const MONASTERIO = AJUSTES.precioMonasterio;
@@ -241,18 +242,35 @@ describe('descansar', () => {
   // -------------------------------------------------------------------------
   describe('eventos nocturnos', () => {
     // Repite la noche con muchas semillas y devuelve los eventos que han saltado.
-    function noches(eleccion: Parameters<typeof descansar>[1], lugar: Parameters<typeof descansar>[2], estado = estadoCon()): string[] {
+    function noches(
+      eleccion: Parameters<typeof descansar>[1],
+      lugar: Parameters<typeof descansar>[2],
+      estado = estadoCon(),
+      terreno?: TerrenoAlRaso,
+    ): string[] {
       const eventos: string[] = [];
       for (let semilla = 1; semilla <= 1000; semilla++) {
-        eventos.push(...descansar(estado, eleccion, lugar, new Dados(semilla)).eventos);
+        eventos.push(...descansar(estado, eleccion, lugar, new Dados(semilla), undefined, undefined, terreno).eventos);
       }
       return eventos;
     }
 
-    it('a la intemperie salta un evento nocturno más o menos un tercio de las noches', () => {
-      const eventos = noches('intemperie', 'intemperie');
-      expect(eventos.length).toBeGreaterThan(280);
-      expect(eventos.length).toBeLessThan(380);
+    it('en jungla y playa salta un evento nocturno más o menos una de cada cuatro noches (25 %)', () => {
+      for (const terreno of ['jungla', 'playa'] as const) {
+        const eventos = noches('intemperie', 'intemperie', estadoCon(), terreno);
+        expect(eventos.length).toBeGreaterThan(200);
+        expect(eventos.length).toBeLessThan(300);
+      }
+    });
+
+    it('en jungla profunda, más (35 %)', () => {
+      const eventos = noches('intemperie', 'intemperie', estadoCon(), 'jungla_profunda');
+      expect(eventos.length).toBeGreaterThan(300);
+      expect(eventos.length).toBeLessThan(400);
+    });
+
+    it('sin decir el terreno (hasta que exista el mapa), se usa el de la jungla', () => {
+      expect(noches('intemperie', 'intemperie').length).toBe(noches('intemperie', 'intemperie', estadoCon(), 'jungla').length);
     });
 
     it('los eventos salen de la lista de eventos nocturnos', () => {
@@ -279,6 +297,46 @@ describe('descansar', () => {
 
     it('con la misma semilla pasa siempre lo mismo', () => {
       expect(descansar(estadoCon(), 'intemperie', 'intemperie', new Dados(42))).toEqual(descansar(estadoCon(), 'intemperie', 'intemperie', new Dados(42)));
+    });
+  });
+
+  describe('tienda de campaña', () => {
+    const conTienda = (cambios: Partial<Jugador> = {}) => estadoCon({ inventario: [{ id: 'tienda_de_campana' }], ...cambios });
+    // Cuántos eventos nocturnos salen en 1000 noches en la tienda.
+    const nochesEnTienda = (terreno: TerrenoAlRaso) => {
+      let total = 0;
+      for (let semilla = 1; semilla <= 1000; semilla++) {
+        total += descansar(conTienda(), 'tienda', 'intemperie', new Dados(semilla), undefined, undefined, terreno).eventos.length;
+      }
+      return total;
+    };
+
+    it('solo sale si la llevas, y nunca en un puerto ni a bordo', () => {
+      const elecciones = (estado: Estado, lugar: Parameters<typeof opcionesDeDescanso>[1]) => opcionesDeDescanso(estado, lugar).map(o => o.eleccion);
+      expect(elecciones(estadoCon(), 'intemperie')).not.toContain('tienda');
+      expect(elecciones(conTienda(), 'intemperie')).toContain('tienda');
+      expect(elecciones(conTienda(), 'aldea')).toContain('tienda');
+      expect(elecciones(conTienda(), 'monasterio')).toContain('tienda');
+      expect(elecciones(conTienda(), 'puerto')).not.toContain('tienda');
+      expect(elecciones(conTienda(), 'barco')).not.toContain('tienda');
+    });
+
+    it('es gratis y todo el grupo puede dormir genial (+1 PV)', () => {
+      const estado = conTienda({ seguidores: [{ ...seguidor('forzudo_1'), resistencia: 5 }] });
+      const resultado = descansar(estado, 'tienda', 'intemperie', new Dados(NOCHE_GENIAL));
+      expect(resultado.haDormidoGenial).toBe(true);
+      expect(resultado.estado.jugador.vida).toBe(11);
+      expect(resultado.estado.jugador.seguidores[0].resistencia).toBe(6);
+      expect(resultado.estado.jugador.oro).toBe(50);
+    });
+
+    it('resta 10 puntos al evento nocturno: 25 % → 15 % en la jungla, 35 % → 25 % en jungla profunda', () => {
+      const enJungla = nochesEnTienda('jungla');
+      expect(enJungla).toBeGreaterThan(100);
+      expect(enJungla).toBeLessThan(200);
+      const enProfunda = nochesEnTienda('jungla_profunda');
+      expect(enProfunda).toBeGreaterThan(200);
+      expect(enProfunda).toBeLessThan(300);
     });
   });
 });

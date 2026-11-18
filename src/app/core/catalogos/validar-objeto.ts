@@ -1,3 +1,5 @@
+import { EFECTOS_EN_COMBATE } from './objeto';
+import { rangoDeTirada } from '../dados/tirada';
 import { validarOtorga } from '../condiciones/validar-otorga';
 import { validarModificadores } from '../modificadores/validar-modificadores';
 import { validarEfecto } from '../tablas/rangos/validar-tabla';
@@ -54,14 +56,23 @@ function validarObjeto(objeto: Objeto): string[] {
   // Activos: se usan y se gastan, así que necesitan usos y decir cuándo se usan.
   // Pasivos: permanentes y funcionan solos: sin usos, sin momento de uso y sin "alUsar".
   if (o['tipo'] === 'activo') {
-    if (!esEnteroDesde(o['usosMaximos'], 1)) {
-      errores.push(`${nombre}: es activo, así que necesita "usosMaximos" (un número entero de 1 o más).`);
+    // Sin usos = permanente (los de combate se usan una vez por combate).
+    if (o['usosMaximos'] !== undefined && !esEnteroDesde(o['usosMaximos'], 1)) {
+      errores.push(`${nombre}: "usosMaximos" debe ser un número entero de 1 o más (sin él, el objeto es permanente).`);
     }
     if (typeof o['cuandoSeUsa'] !== 'string' || !MOMENTOS_TEXTO.includes(o['cuandoSeUsa'])) {
       errores.push(`${nombre}: es activo, así que necesita "cuandoSeUsa" (válidos: ${MOMENTOS_DE_USO.join(', ')}).`);
     }
     errores.push(...validarAlUsar(o['alUsar'], nombre));
+    if (o['cuandoSeUsa'] === 'combate') {
+      errores.push(...validarEnCombate(o['enCombate'], nombre));
+    } else if (o['enCombate'] !== undefined) {
+      errores.push(`${nombre}: "enCombate" solo va en los objetos que se usan en combate ("cuandoSeUsa": "combate").`);
+    }
   } else if (o['tipo'] === 'pasivo') {
+    if (o['enCombate'] !== undefined) {
+      errores.push(`${nombre}: es pasivo, así que no lleva "enCombate" (sus bonificadores van en "modificadores").`);
+    }
     if (o['usosMaximos'] !== undefined) {
       errores.push(`${nombre}: es pasivo (permanente), así que no lleva "usosMaximos".`);
     }
@@ -93,6 +104,47 @@ function validarObjeto(objeto: Objeto): string[] {
   errores.push(...validarOtorga(o['otorga'], nombre));
 
   return errores;
+}
+
+/** "enCombate": obligatorio en los objetos de combate; cada efecto con sus datos justos. */
+function validarEnCombate(enCombate: unknown, nombre: string): string[] {
+  if (typeof enCombate !== 'object' || enCombate === null || Array.isArray(enCombate)) {
+    return [`${nombre}: se usa en combate, así que necesita "enCombate" (p. ej. { "efecto": "bonificador", "cantidad": 2 }).`];
+  }
+  const c = enCombate as Record<string, unknown>;
+  const errores: string[] = [];
+  if (typeof c['efecto'] !== 'string' || !(EFECTOS_EN_COMBATE as readonly string[]).includes(c['efecto'])) {
+    return [`${nombre}: el efecto en combate "${String(c['efecto'])}" no existe (válidos: ${EFECTOS_EN_COMBATE.join(', ')}).`];
+  }
+  if (c['efecto'] === 'bonificador') {
+    if (!Number.isInteger(c['cantidad']) || c['cantidad'] === 0) {
+      errores.push(`${nombre}: el bonificador en combate necesita "cantidad" (un número entero distinto de 0).`);
+    }
+  } else if (c['cantidad'] !== undefined) {
+    errores.push(`${nombre}: "cantidad" solo va con el efecto en combate "bonificador".`);
+  }
+  if (c['efecto'] === 'dado_extra') {
+    if (typeof c['dados'] !== 'string' || !esExpresionDeDados(c['dados'])) {
+      errores.push(`${nombre}: el dado extra en combate necesita "dados" (p. ej. "1d6").`);
+    }
+  } else if (c['dados'] !== undefined) {
+    errores.push(`${nombre}: "dados" solo va con el efecto en combate "dado_extra".`);
+  }
+  for (const campo of Object.keys(c)) {
+    if (!['efecto', 'cantidad', 'dados'].includes(campo)) {
+      errores.push(`${nombre}: el campo "${campo}" no existe en "enCombate".`);
+    }
+  }
+  return errores;
+}
+
+function esExpresionDeDados(texto: string): boolean {
+  try {
+    rangoDeTirada(texto);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** "alUsar": una lista de efectos bien escritos (opcional). */

@@ -1,5 +1,5 @@
 import { TIPOS_SEGUIDOR } from '../catalogos/cargar-seguidores';
-import { ATAQUE_NORMAL, RESISTENCIA_NORMAL, type TipoSeguidor } from '../catalogos/tipo-seguidor';
+import type { TipoSeguidor } from '../catalogos/tipo-seguidor';
 import type { Dados } from '../dados/dados';
 import type { Seguidor } from '../estado/seguidor';
 import { LISTAS_DE_NOMBRES, nombresDe } from './nombres';
@@ -43,13 +43,13 @@ export function crearSeguidor(
     throw new Error(`crearSeguidor: no existe el tipo de seguidor "${idTipo}". Tipos disponibles: ${disponibles}`);
   }
 
-  const resistencia = tipo.resistencia ?? RESISTENCIA_NORMAL;
+  const resistencia = tipo.resistencia;
 
   const seguidor: Seguidor = {
     id: idLibre(tipo.id, seguidoresActuales),
     tipo: tipo.id,
     nombre: nombreAlAzar(seguidoresActuales, dados, nombresDe(tipo.nombres, fuentes.nombres)),
-    ataque: tipo.ataque ?? ATAQUE_NORMAL,
+    ataque: tipo.ataque,
     resistencia,
     resistenciaMaxima: resistencia,
     habilidades: [...tipo.habilidades], // copia: la ficha del catálogo no se toca

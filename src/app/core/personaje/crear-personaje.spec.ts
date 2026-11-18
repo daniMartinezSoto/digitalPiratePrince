@@ -13,9 +13,10 @@ describe('crearPersonaje', () => {
     expect(jugador).toEqual({
       nombre: 'Barbanegra',
       sobrenombre: 'el_maldito',
+      retrato: 'hombre',
 
-      vida: 15,
-      vidaMax: 15,
+      vida: 18,
+      vidaMax: 18,
       fuerza: 4,
       ingenio: 2,
 
@@ -36,6 +37,11 @@ describe('crearPersonaje', () => {
       condiciones: [],
       fasesAccionPerdidas: 0
     });
+  });
+
+  it('guarda el retrato elegido (hombre o mujer); sin elegir, hombre', () => {
+    expect(crearPersonaje('Anne Bonny', new Dados(7), 'mujer').retrato).toBe('mujer');
+    expect(crearPersonaje('Barbanegra', new Dados(7)).retrato).toBe('hombre');
   });
 
   it('debe guardar el nombre recibido', () => {

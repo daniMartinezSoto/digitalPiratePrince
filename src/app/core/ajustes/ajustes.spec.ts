@@ -1,3 +1,4 @@
+import { TERRENOS_AL_RASO } from '../turno/lugar';
 import { IDS_TIRADA } from '../modificadores/id-tirada';
 import { AJUSTES } from './ajustes';
 
@@ -28,9 +29,18 @@ describe('ajustes', () => {
     }
   });
 
-  it('la probabilidad de evento nocturno es un porcentaje entre 0 y 100', () => {
-    expect(AJUSTES.probabilidadEventoNocturno).toBeGreaterThanOrEqual(0);
-    expect(AJUSTES.probabilidadEventoNocturno).toBeLessThanOrEqual(100);
+  it('la probabilidad de evento nocturno tiene un porcentaje entre 0 y 100 para cada terreno al raso, y nada más', () => {
+    expect(Object.keys(AJUSTES.probabilidadEventoNocturno).sort()).toEqual([...TERRENOS_AL_RASO].sort());
+    for (const terreno of TERRENOS_AL_RASO) {
+      expect(AJUSTES.probabilidadEventoNocturno[terreno]).toBeGreaterThanOrEqual(0);
+      expect(AJUSTES.probabilidadEventoNocturno[terreno]).toBeLessThanOrEqual(100);
+    }
+  });
+
+  it('la tienda de campaña resta un número entero de puntos, entre 0 y 100', () => {
+    expect(Number.isInteger(AJUSTES.reduccionEventoNocturnoTienda)).toBe(true);
+    expect(AJUSTES.reduccionEventoNocturnoTienda).toBeGreaterThanOrEqual(0);
+    expect(AJUSTES.reduccionEventoNocturnoTienda).toBeLessThanOrEqual(100);
   });
 
   it('las probabilidades de dormir genial y de evento al reposar son porcentajes entre 0 y 100', () => {
@@ -56,5 +66,10 @@ describe('ajustes', () => {
       expect(conocidas, `bonificadorPorFama usa una tirada que no existe: "${tirada}"`).toContain(tirada);
       expect(Number.isInteger(cada) && cada >= 1, `"${tirada}": "cada X de fama" debe ser un entero de 1 o más`).toBe(true);
     }
+  });
+
+  it('el castigo máximo por hambre en combate es un número entero de 1 o más', () => {
+    expect(Number.isInteger(AJUSTES.castigoHambreMaximo)).toBe(true);
+    expect(AJUSTES.castigoHambreMaximo).toBeGreaterThanOrEqual(1);
   });
 });

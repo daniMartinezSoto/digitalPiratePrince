@@ -79,5 +79,95 @@
     "descripcion": "Una lámpara antigua. Frotarla ya no sirve de nada, pero algún coleccionista pagará por ella.",
     "tipo": "pasivo",
     "precioVenta": 25
+  },
+  {
+    "id": "estoque",
+    "nombre": "Estoque de calidad suprema",
+    "descripcion": "+1 al daño cada vez que aciertas un ataque.",
+    "tipo": "pasivo",
+    "precioVenta": 40,
+    "modificadores": {
+      "ataque": 1
+    }
+  },
+  {
+    "id": "lanza_kalinago",
+    "nombre": "Lanza kalinago",
+    "descripcion": "+2 al daño de tus ataques contra enemigos que no son humanos.",
+    "tipo": "pasivo",
+    "precioVenta": 25,
+    "modificadores": {
+      "ataque_no_humano": 2
+    }
+  },
+  {
+    "id": "ron",
+    "nombre": "Ron",
+    "descripcion": "Un buen trago antes de pelear: +2 al daño de tus ataques durante el resto del combate. Se gasta al usarlo.",
+    "tipo": "activo",
+    "usosMaximos": 1,
+    "cuandoSeUsa": "combate",
+    "precioVenta": 6,
+    "enCombate": {
+      "efecto": "bonificador",
+      "cantidad": 2
+    }
+  },
+  {
+    "id": "pistola_de_chispa",
+    "nombre": "Pistola de chispa",
+    "descripcion": "Una vez por combate: tu próximo ataque suma 1d6 al daño si aciertas.",
+    "tipo": "activo",
+    "cuandoSeUsa": "combate",
+    "precioVenta": 50,
+    "enCombate": {
+      "efecto": "dado_extra",
+      "dados": "1d6"
+    }
+  },
+  {
+    "id": "pistola_de_gran_calidad",
+    "nombre": "Pistola de chispa de gran calidad",
+    "descripcion": "Una vez por combate: tu próximo ataque suma 2d6 al daño si aciertas.",
+    "tipo": "activo",
+    "cuandoSeUsa": "combate",
+    "precioVenta": 100,
+    "enCombate": {
+      "efecto": "dado_extra",
+      "dados": "2d6"
+    }
+  },
+  {
+    "id": "bomba_de_humo",
+    "nombre": "Bomba de humo",
+    "descripcion": "Huyes de un combate sin tirar (solo de los combates de los que se puede huir). Se gasta al usarla.",
+    "tipo": "activo",
+    "usosMaximos": 1,
+    "cuandoSeUsa": "combate",
+    "precioVenta": 20,
+    "enCombate": {
+      "efecto": "huida"
+    }
+  },
+  {
+    "id": "pocion_magica",
+    "nombre": "Poción mágica",
+    "descripcion": "Derrota a todos los enemigos de un combate. Se gasta al usarla.",
+    "tipo": "activo",
+    "usosMaximos": 1,
+    "cuandoSeUsa": "combate",
+    "precioVenta": 150,
+    "magico": true,
+    "enCombate": {
+      "efecto": "derrota_a_todos"
+    }
+  },
+  {
+    "id": "tienda_de_campana",
+    "nombre": "Tienda de campaña",
+    "descripcion": "Te permite dormir al raso reduciendo la posibilidad de eventos nocturnos y pudiendo tener un sueño reparador.",
+    "tipo": "pasivo",
+    "espacios": 2,
+    "precioVenta": 20
   }
 ]

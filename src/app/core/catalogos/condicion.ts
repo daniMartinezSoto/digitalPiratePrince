@@ -23,10 +23,12 @@ export type Prohibicion = (typeof PROHIBICIONES)[number];
 //   ingenio: 2           -> +2 de ingenio ("súper cerebro").
 //   vidaMax: 4           -> +4 de vida máxima ("gran fortaleza").
 //   maximoSeguidores: 1  -> puedes llevar 1 seguidor más ("carisma").
+//   reduccionDano: 1     -> en combate, cada golpe que te aciertan te hace 1 menos, pero
+//                           siempre al menos 1 ("piel de piedra"; Sprint 7).
 // No se guardan en el personaje: se calculan mirando las condiciones activas (fuerzaActual,
 // vidaMaxActual... en condiciones/consultas.ts), así que al quitarse la condición la regla
 // vuelve sola a su valor. La hoja del personaje guarda solo SU valor, sin las condiciones.
-export const AJUSTES_DE_CONDICION = ['famaObjetivo', 'comidaPorDia', 'fuerza', 'ingenio', 'vidaMax', 'maximoSeguidores'] as const;
+export const AJUSTES_DE_CONDICION = ['famaObjetivo', 'comidaPorDia', 'fuerza', 'ingenio', 'vidaMax', 'maximoSeguidores', 'reduccionDano'] as const;
 export type AjusteDeCondicion = (typeof AJUSTES_DE_CONDICION)[number];
 export type AjustesDeCondicion = Partial<Record<AjusteDeCondicion, number>>;
 

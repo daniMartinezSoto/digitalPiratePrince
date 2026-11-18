@@ -6,9 +6,9 @@ import { LISTAS_DE_NOMBRES, LISTAS_NORMALES, nombresDe } from './nombres';
 
 // Catálogo de prueba: pocas fichas y pocos nombres, para saber qué esperar.
 const TIPOS: TipoSeguidor[] = [
-  { id: 'grumete', nombre: 'Grumete', descripcion: 'x', habilidades: [] },
+  { id: 'grumete', nombre: 'Grumete', descripcion: 'x', ataque: 2, resistencia: 10, habilidades: [] },
   { id: 'mono', nombre: 'Mono', descripcion: 'x', ataque: 0, resistencia: 3, habilidades: ['manos_largas'], precio: 40 },
-  { id: 'chaman', nombre: 'Chamán', descripcion: 'x', habilidades: [], nombres: ['nativos'] },
+  { id: 'chaman', nombre: 'Chamán', descripcion: 'x', ataque: 2, resistencia: 10, habilidades: [], nombres: ['nativos'] },
 ];
 const NOMBRES = ['Ana', 'Blas', 'Cleo'];
 const FUENTES: FuentesSeguidor = { tipos: TIPOS, nombres: { hombres: ['Ana', 'Blas'], mujeres: ['Cleo'], nativos: ['Yara'] } };

@@ -2,8 +2,9 @@
   {
     "id": "maleficio_del_pirata",
     "nombre": "Maleficio del pirata",
-    "descripcion": "Estás maldito: −1 en todas las tiradas de combate mientras dure la maldición.",
-    "categoria": "maldicion"
+    "descripcion": "Estás maldito: −1 al daño de tus ataques en combate mientras dure la maldición.",
+    "categoria": "maldicion",
+    "modificadores": { "ataque": -1 }
   },
   {
     "id": "el_mal",
@@ -87,8 +88,9 @@
   {
     "id": "piel_de_piedra",
     "nombre": "Piel de piedra",
-    "descripcion": "En combate, los enemigos siempre te hacen 1 de daño menos.",
-    "categoria": "bendicion"
+    "descripcion": "En combate, cada golpe que te aciertan te hace 1 de daño menos (pero siempre al menos 1).",
+    "categoria": "bendicion",
+    "ajustes": { "reduccionDano": 1 }
   },
   {
     "id": "carisma",

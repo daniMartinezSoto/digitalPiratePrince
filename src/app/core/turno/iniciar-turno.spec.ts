@@ -56,7 +56,8 @@ const CATALOGOS: CatalogosTurno = { objetos: [], condiciones: CONDICIONES_PRUEBA
 function estadoCon(condiciones: (string | CondicionActiva)[], cambios: Partial<Jugador> = {}): Estado {
   const { estado } = crearPartida(1, 'Prueba');
   const activas = condiciones.map(c => (typeof c === 'string' ? { id: c } : c));
-  return { ...estado, jugador: { ...estado.jugador, sobrenombre: 'el_fuerte', tripulacion: 30, condiciones: activas, ...cambios } };
+  // Las cuentas de estos tests se hicieron con 15 PV (la vida inicial era 15 hasta el Sprint 7; ahora es 18).
+  return { ...estado, jugador: { ...estado.jugador, sobrenombre: 'el_fuerte', tripulacion: 30, vida: 15, vidaMax: 15, condiciones: activas, ...cambios } };
 }
 
 function seguidor(id: string): Seguidor {

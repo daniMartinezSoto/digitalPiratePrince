@@ -34,10 +34,17 @@ describe('validarTiposSeguidor', () => {
     expect(erroresDe(mono())).toBe('');
   });
 
-  it('vale con lo mínimo: sin ataque, resistencia ni precio, y sin habilidades', () => {
-    const grumete = { id: 'grumete', nombre: 'Grumete', descripcion: 'x', habilidades: [] };
+  it('vale con lo mínimo: ataque y resistencia, sin precio y sin habilidades', () => {
+    const grumete = { id: 'grumete', nombre: 'Grumete', descripcion: 'x', ataque: 2, resistencia: 10, habilidades: [] };
 
     expect(erroresDe(grumete)).toBe('');
+  });
+
+  it('el ataque y la resistencia son obligatorios: todos los seguidores combaten salvo que se diga lo contrario', () => {
+    const errores = erroresDe({ id: 'grumete', nombre: 'Grumete', descripcion: 'x', habilidades: [] });
+
+    expect(errores).toContain('el ataque debe ser un número entero de 0 o más');
+    expect(errores).toContain('la resistencia debe ser un número entero de 1 o más');
   });
 
   it('gratis (precio 0) es válido', () => {
@@ -113,6 +120,6 @@ describe('validarTiposSeguidor', () => {
   it('enseña todos los errores a la vez', () => {
     const errores = validarTiposSeguidor([{ id: 'x', ataque: -1 } as unknown as TipoSeguidor], HABILIDADES);
 
-    expect(errores.length).toBe(4); // nombre, descripción, ataque y habilidades
+    expect(errores.length).toBe(5); // nombre, descripción, ataque, resistencia y habilidades
   });
 });

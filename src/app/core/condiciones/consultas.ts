@@ -82,6 +82,14 @@ export function maximoSeguidoresActual(jugador: Jugador, condiciones: readonly C
   return Math.max(0, AJUSTES.maximoSeguidores + sumaDeAjustes(jugador, 'maximoSeguidores', condiciones));
 }
 
+/**
+ * Cuánto se reduce cada golpe que le aciertan al jugador en combate (piel de piedra: 1). 0 = nada.
+ * Se aplica con reducirDano (core/combate/ataque.ts), que deja siempre al menos 1 si el golpe acierta.
+ */
+export function reduccionDanoActual(jugador: Jugador, condiciones: readonly Condicion[] = CONDICIONES): number {
+  return Math.max(0, sumaDeAjustes(jugador, 'reduccionDano', condiciones));
+}
+
 /** Suma lo que aportan a una regla todas las condiciones activas. */
 function sumaDeAjustes(jugador: Jugador, regla: AjusteDeCondicion, condiciones: readonly Condicion[]): number {
   let total = 0;

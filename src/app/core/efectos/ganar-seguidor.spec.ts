@@ -29,7 +29,7 @@ function grupoLleno(): Seguidor[] {
 const UN_FORZUDO: Efecto = { tipo: 'ganar_seguidor', seguidor: 'forzudo' };
 
 // Catálogo de prueba con una condición que prohíbe nuevos seguidores y pocos nombres.
-const TIPOS: TipoSeguidor[] = [{ id: 'grumete', nombre: 'Grumete', descripcion: 'x', habilidades: [] }];
+const TIPOS: TipoSeguidor[] = [{ id: 'grumete', nombre: 'Grumete', descripcion: 'x', ataque: 2, resistencia: 10, habilidades: [] }];
 const CONDICIONES: Condicion[] = [
   { id: 'hedor', nombre: 'Hedor nauseabundo', descripcion: 'x', categoria: 'maldicion', prohibe: ['nuevos_seguidores'] },
 ];

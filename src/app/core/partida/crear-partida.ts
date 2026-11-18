@@ -1,3 +1,4 @@
+import type { Retrato } from '../personaje/retrato';
 import { recibirAmuletoMaldito } from '../amuleto-maldito/recibir-amuleto-maldito';
 import { Dados } from '../dados/dados';
 import { Estado } from '../estado/estado';
@@ -17,9 +18,9 @@ export interface Partida {
   eventos: string[];
 }
 
-export function crearPartida(semilla: number, nombre: string): Partida {
+export function crearPartida(semilla: number, nombre: string, retrato: Retrato = 'hombre'): Partida {
   const dados = new Dados(semilla);
-  const jugador = crearPersonaje(nombre, dados);
+  const jugador = crearPersonaje(nombre, dados, retrato);
 
   let estado: Estado = {
     version: VERSION_ESTADO,
@@ -36,6 +37,7 @@ export function crearPartida(semilla: number, nombre: string): Partida {
       estadoDados: 0, // se apunta al final
       finPartida: null,
       accionEnCurso: null,
+      combate: null,
       nochePagada: false,
       comidaGratis: false,
       ultimaBusquedaInformacion: null,

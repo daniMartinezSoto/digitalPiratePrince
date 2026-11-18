@@ -14,6 +14,14 @@ export type Lugar = (typeof LUGARES)[number];
 export const RASGOS = ['naufragio', 'ruinas'] as const;
 export type Rasgo = (typeof RASGOS)[number];
 
+// Terreno de tierra donde se puede dormir al raso (el color de la casilla). Decide la probabilidad
+// de evento nocturno (AJUSTES.probabilidadEventoNocturno). Lo dirá el mapa (Sprint 9); mientras no
+// exista, se usa TERRENO_POR_DEFECTO. Las aldeas y los monasterios están dibujados sobre jungla
+// profunda y jungla, así que el mapa dará ese terreno.
+export const TERRENOS_AL_RASO = ['playa', 'jungla', 'jungla_profunda'] as const;
+export type TerrenoAlRaso = (typeof TERRENOS_AL_RASO)[number];
+export const TERRENO_POR_DEFECTO: TerrenoAlRaso = 'jungla';
+
 /** ¿Funciona como un puerto (mercado, contratar, taberna, posada...)? Los puertos y las guaridas piratas neutrales. */
 export function esPuerto(lugar: Lugar): boolean {
   return lugar === 'puerto' || lugar === 'guarida';

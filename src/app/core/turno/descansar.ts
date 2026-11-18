@@ -14,7 +14,7 @@ import type { ListaEventos } from '../tablas/listas-eventos/lista-eventos';
 import { chequeo, type ResultadoChequeo } from '../chequeos/chequeo';
 import { conMarca, hayMarca } from '../estado/marcas';
 import { tieneVinculoNativo } from '../personaje/vinculo-nativo';
-import { esPuerto, type Lugar } from './lugar';
+import { esPuerto, TERRENO_POR_DEFECTO, type Lugar, type TerrenoAlRaso } from './lugar';
 
 /** Catálogos y listas que usa el descanso. Por defecto, los del juego; los tests pueden pasar otros. */
 export interface CatalogosDescanso {
@@ -33,14 +33,21 @@ const CATALOGOS_DEL_JUEGO: CatalogosDescanso = {
 //   a_bordo:     en el barco. Gratis. Si duerme genial, cura 1 PV al jugador y a sus seguidores.
 //   techo_solo:  paga su cama (posada en un puerto, celda en un monasterio). Si duerme genial, cura 1 PV solo al jugador.
 //   techo_todos: paga su cama y la de cada seguidor. Si duermen genial, cura 1 PV a todos.
-//   intemperie:  al raso. Gratis. No cura nunca. Fuera de los puertos puede haber un evento nocturno.
+//   intemperie:  al raso. Gratis. No cura nunca. Fuera de los puertos puede haber un evento nocturno
+//               (AJUSTES.probabilidadEventoNocturno, según el terreno).
+//   tienda:      al raso, en la tienda de campaña (hay que llevarla; no en puertos ni a bordo). Gratis.
+//               Todo el grupo duerme bajo techo (puede dormir genial) y la probabilidad de evento
+//               nocturno baja AJUSTES.reduccionEventoNocturnoTienda puntos.
 //   convencer_nativos: solo en una aldea. Chequeo de Ingenio para que los nativos os dejen dormir allí
 //               SOLO esta noche. Si lo supera: como bajo techo (todo el grupo, gratis, puede dormir genial,
 //               sin eventos). Si falla: le echan (marca "echado_de_la_aldea": no puede volver a intentarlo
 //               en esa aldea) y duerme a la intemperie, con su posible evento nocturno.
 // "Dormir genial" no es seguro: pasa con AJUSTES.probabilidadDormirGenial (una tirada para todo el grupo).
 // Para curarse seguro está la ACCIÓN "Reposar" (core/acciones/reposar.ts), que gasta el día.
-export const ELECCIONES_DE_DESCANSO = ['a_bordo', 'techo_solo', 'techo_todos', 'intemperie', 'convencer_nativos'] as const;
+export const ELECCIONES_DE_DESCANSO = ['a_bordo', 'techo_solo', 'techo_todos', 'intemperie', 'tienda', 'convencer_nativos'] as const;
+
+/** Id del objeto que permite dormir en tienda de campaña. */
+export const ID_TIENDA_DE_CAMPANA = 'tienda_de_campana';
 export type EleccionDeDescanso = (typeof ELECCIONES_DE_DESCANSO)[number];
 
 /** Una opción que la interfaz enseña en la fase de descanso. */
@@ -73,6 +80,7 @@ export interface ResultadoDescanso {
  *                        con vínculo nativo, dormir en la aldea ("techo_todos", gratis, sin chequeo);
  *                        sin él, intentar convencer a los nativos (chequeo de Ingenio).
  *   intemperie:          a la intemperie.
+ * Además, fuera de los puertos y del barco, si lleva la tienda de campaña: dormir en la tienda.
  */
 export function opcionesDeDescanso(estado: Estado, lugar: Lugar, hex?: { col: number; fila: number }): OpcionDeDescanso[] {
   const oro = estado.jugador.oro;
@@ -96,6 +104,9 @@ export function opcionesDeDescanso(estado: Estado, lugar: Lugar, hex?: { col: nu
     }
   }
   opciones.push(opcion('intemperie', 0));
+  if (!esPuerto(lugar) && estado.jugador.inventario.some(o => o.id === ID_TIENDA_DE_CAMPANA)) {
+    opciones.push(opcion('tienda', 0));
+  }
   if (lugar === 'aldea' && !hayMarca(estado, 'echado_de_la_aldea', hex)) {
     // Con vínculo nativo, los nativos os acogen sin más: dormir en la aldea, gratis y sin chequeo.
     // Sin él, hay que convencerlos (chequeo de Ingenio).
@@ -111,9 +122,9 @@ export function opcionesDeDescanso(estado: Estado, lugar: Lugar, hex?: { col: nu
  *    una de las de opcionesDeDescanso y, si cuesta oro, tiene que llegar (si no, error:
  *    la interfaz no debe dejar pulsar el botón).
  *    A bordo o bajo techo: tira si duerme genial (AJUSTES.probabilidadDormirGenial); solo entonces cura 1 PV.
- * 2. A la intemperie, salvo en un puerto: puede saltar un evento nocturno
- *    (AJUSTES.probabilidadEventoNocturno), elegido de la lista de eventos nocturnos.
- *    Se devuelve como evento pendiente.
+ * 2. Al raso (a la intemperie o en la tienda), salvo en un puerto: puede saltar un evento nocturno
+ *    (AJUSTES.probabilidadEventoNocturno del terreno; en la tienda, menos), elegido de la lista de
+ *    eventos nocturnos. Se devuelve como evento pendiente. "terreno" lo dirá el mapa; sin él, jungla.
  * 3. SE ACABA EL DÍA: el día sube en 1, la partida vuelve a la fase "inicio" y se olvidan la noche
  *    pagada y la comida gratis (mundo.nochePagada, mundo.comidaGratis).
  *
@@ -121,6 +132,7 @@ export function opcionesDeDescanso(estado: Estado, lugar: Lugar, hex?: { col: nu
  * Dados: convencer a los nativos, primero 1 número (el chequeo) y luego como bajo techo o a la intemperie.
  * A bordo o bajo techo, 1 número (dormir genial). A la intemperie fuera de un puerto,
  * 1 número si no pasa nada y 2 si hay evento. A la intemperie en un puerto, ninguno.
+ * En la tienda: primero el de dormir genial y después los del evento nocturno.
  */
 export function descansar(
   estado: Estado,
@@ -129,9 +141,13 @@ export function descansar(
   dados: Dados,
   catalogos: CatalogosDescanso = CATALOGOS_DEL_JUEGO,
   hex?: { col: number; fila: number },
+  terreno: TerrenoAlRaso = TERRENO_POR_DEFECTO,
 ): ResultadoDescanso {
   if (estado.mundo.finPartida) {
     throw new Error('descansar: la partida ya ha terminado');
+  }
+  if (estado.mundo.combate) {
+    throw new Error('descansar: hay un combate en curso; primero hay que terminarlo');
   }
   if (estado.mundo.fase !== 'descanso') {
     throw new Error(`descansar: solo se puede descansar en la fase "descanso" (la partida está en "${estado.mundo.fase}")`);
@@ -171,8 +187,10 @@ export function descansar(
 
   // 2. ¿Evento nocturno?
   const eventos: string[] = [];
-  if (duermeAlRaso && !esPuerto(lugar)) {
-    const evento = eventoAleatorio(catalogos.eventosNocturnos, AJUSTES.probabilidadEventoNocturno, dados);
+  if ((duermeAlRaso || eleccion === 'tienda') && !esPuerto(lugar)) {
+    const reduccion = eleccion === 'tienda' ? AJUSTES.reduccionEventoNocturnoTienda : 0;
+    const probabilidad = Math.max(0, AJUSTES.probabilidadEventoNocturno[terreno] - reduccion);
+    const evento = eventoAleatorio(catalogos.eventosNocturnos, probabilidad, dados);
     if (evento !== null) {
       eventos.push(evento);
     }

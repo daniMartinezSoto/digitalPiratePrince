@@ -70,6 +70,9 @@ export function iniciarTurno(
   if (estado.mundo.finPartida) {
     throw new Error('iniciarTurno: la partida ya ha terminado');
   }
+  if (estado.mundo.combate) {
+    throw new Error('iniciarTurno: hay un combate en curso; primero hay que terminarlo');
+  }
   if (estado.mundo.fase !== 'inicio') {
     throw new Error(`iniciarTurno: solo se puede empezar el turno en la fase "inicio" (la partida está en "${estado.mundo.fase}")`);
   }

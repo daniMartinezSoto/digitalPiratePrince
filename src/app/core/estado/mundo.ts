@@ -1,3 +1,4 @@
+import type { CombateEnCurso } from './combate';
 import type { Fase } from './fase';
 import type { FinPartida } from './fin-partida';
 
@@ -123,6 +124,10 @@ export interface Mundo {
 
   // La acción a medias (ver AccionEnCurso arriba). null si no hay ninguna.
   accionEnCurso: AccionEnCurso | null;
+
+  // El combate que se está jugando (core/estado/combate.ts, Sprint 7). null si no hay ninguno.
+  // Mientras hay uno, no se puede hacer nada más (ni acciones, ni comer, ni dormir, ni usar objetos).
+  combate: CombateEnCurso | null;
 
   // true = el grupo tiene ya pagada la noche donde está (monasterio o aldea): lo apuntan la acción
   // "Descansar en el monasterio" (su precio incluye dormir allí) y la fiesta de bienvenida de una aldea.

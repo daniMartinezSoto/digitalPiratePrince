@@ -14,7 +14,8 @@ import { aplicarEfectos } from './aplicar-efectos';
 // Un estado de partida normal con los valores del jugador que queramos cambiar.
 function estadoCon(cambios: Partial<Jugador> = {}): Estado {
   const { estado } = crearPartida(1, 'Prueba');
-  return { ...estado, jugador: { ...estado.jugador, sobrenombre: 'el_fuerte', ...cambios } };
+  // Las cuentas de estos tests se hicieron con 15 PV (la vida inicial era 15 hasta el Sprint 7; ahora es 18).
+  return { ...estado, jugador: { ...estado.jugador, sobrenombre: 'el_fuerte', vida: 15, vidaMax: 15, ...cambios } };
 }
 
 function seguidor(id: string, resistencia = 10): Seguidor {

@@ -120,6 +120,15 @@ function aplicarUno(estado: Estado, efecto: Efecto, dados: Dados, catalogos: Cat
       ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
       return;
     }
+    case 'herir_seguidor': {
+      const seguidor = jugador.seguidores.find(s => s.id === efecto.seguidor);
+      if (!seguidor) {
+        throw new Error(`aplicarEfectos: no hay ningún seguidor "${efecto.seguidor}" en el grupo`);
+      }
+      cambiarResistencia(seguidor, { tipo: 'vida', cantidad: -Math.max(0, efecto.cantidad) }, cambios);
+      retirarSeguidoresMuertos(estado, cambios);
+      return;
+    }
     case 'perder_objeto':
       perderObjeto(jugador, efecto.objeto, cambios);
       ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
@@ -192,7 +201,12 @@ function aplicarARecurso(estado: Estado, efecto: EfectoDeRecurso, dados: Dados, 
     throw new Error('aplicarEfectos: "seguidor_elegido" todavía no está disponible (llegará con el motor de eventos)');
   }
 
-  // Los seguidores que se quedan sin resistencia mueren y salen del grupo.
+  retirarSeguidoresMuertos(estado, cambios);
+}
+
+/** Los seguidores que se quedan sin resistencia mueren y salen del grupo; si era el vital, se pierde la partida. */
+function retirarSeguidoresMuertos(estado: Estado, cambios: Cambio[]): void {
+  const jugador = estado.jugador;
   const muertos = jugador.seguidores.filter(s => s.resistencia <= 0);
   for (const muerto of muertos) {
     cambios.push({ tipo: 'seguidor_muerto', seguidor: muerto.id });

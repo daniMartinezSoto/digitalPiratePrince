@@ -68,6 +68,9 @@ export function comprobarQueSePuedeActuar(estado: Estado, accion: string): void 
   if (estado.mundo.finPartida) {
     throw new Error(`${accion}: la partida ya ha terminado`);
   }
+  if (estado.mundo.combate) {
+    throw new Error(`${accion}: hay un combate en curso; primero hay que terminarlo`);
+  }
   if (estado.mundo.fase !== 'accion') {
     throw new Error(`${accion}: solo se puede hacer en la fase "accion" (la partida está en "${estado.mundo.fase}")`);
   }

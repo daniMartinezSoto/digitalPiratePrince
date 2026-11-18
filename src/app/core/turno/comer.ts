@@ -101,6 +101,9 @@ export function comer(
   if (estado.mundo.finPartida) {
     throw new Error('comer: la partida ya ha terminado');
   }
+  if (estado.mundo.combate) {
+    throw new Error('comer: hay un combate en curso; primero hay que terminarlo');
+  }
   if (estado.mundo.fase !== 'comida') {
     throw new Error(`comer: solo se puede comer en la fase "comida" (la partida está en "${estado.mundo.fase}")`);
   }

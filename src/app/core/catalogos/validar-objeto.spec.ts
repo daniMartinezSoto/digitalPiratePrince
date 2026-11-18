@@ -75,10 +75,10 @@ describe('validarObjetos', () => {
       expect(erroresDe({ ...manoDeMono(), tipo: 'consumible' })).toMatch(/tipo "consumible" no existe/);
     });
 
-    it('un objeto activo necesita usos', () => {
+    it('un objeto activo sin usos es permanente (válido)', () => {
       const sinUsos = manoDeMono();
       delete sinUsos.usosMaximos;
-      expect(erroresDe(sinUsos)).toMatch(/es activo, así que necesita "usosMaximos"/);
+      expect(erroresDe(sinUsos)).toBe('');
     });
 
     it('los usos deben ser un entero de 1 o más', () => {
@@ -128,5 +128,34 @@ describe('validarObjetos', () => {
   it('enseña todos los errores a la vez, no solo el primero', () => {
     const mal = { ...idoloDorado(), nombre: '', espacios: 0, precioVenta: 0 };
     expect(validarObjetos([mal as Objeto])).toHaveLength(3);
+  });
+
+  describe('objetos de combate (enCombate)', () => {
+    function ron(): unknown {
+      return { id: 'ron', nombre: 'Ron', descripcion: 'x', tipo: 'activo', usosMaximos: 1, cuandoSeUsa: 'combate', precioVenta: 6,
+        enCombate: { efecto: 'bonificador', cantidad: 2 } };
+    }
+
+    it('un objeto de combate bien escrito no da errores (también permanente, como la pistola)', () => {
+      expect(erroresDe(ron())).toBe('');
+      expect(erroresDe({ id: 'pistola', nombre: 'Pistola', descripcion: 'x', tipo: 'activo', cuandoSeUsa: 'combate', precioVenta: 50,
+        enCombate: { efecto: 'dado_extra', dados: '1d6' } })).toBe('');
+    });
+
+    it('un objeto de combate necesita "enCombate"', () => {
+      expect(erroresDe({ ...(ron() as object), enCombate: undefined })).toMatch(/necesita "enCombate"/);
+    });
+
+    it('"enCombate" solo va en los objetos de combate', () => {
+      expect(erroresDe({ ...manoDeMono(), enCombate: { efecto: 'huida' } })).toMatch(/solo va en los objetos que se usan en combate/);
+    });
+
+    it('revisa el efecto y sus datos', () => {
+      expect(erroresDe({ ...(ron() as object), enCombate: { efecto: 'volar' } })).toMatch(/efecto en combate "volar" no existe/);
+      expect(erroresDe({ ...(ron() as object), enCombate: { efecto: 'bonificador' } })).toMatch(/necesita "cantidad"/);
+      expect(erroresDe({ ...(ron() as object), enCombate: { efecto: 'dado_extra', dados: 'mucho' } })).toMatch(/necesita "dados"/);
+      expect(erroresDe({ ...(ron() as object), enCombate: { efecto: 'huida', cantidad: 2 } })).toMatch(/"cantidad" solo va/);
+      expect(erroresDe({ ...(ron() as object), enCombate: { efecto: 'huida', fuerza: 2 } })).toMatch(/campo "fuerza" no existe/);
+    });
   });
 });

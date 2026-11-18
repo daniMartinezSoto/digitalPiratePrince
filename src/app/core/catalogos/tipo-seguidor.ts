@@ -13,11 +13,11 @@ export interface TipoSeguidor {
   // Ruta del dibujo. Opcional mientras no haya dibujos.
   imagen?: string;
 
-  // Daño que hace cuando acierta en combate. Sin ponerlo = 2. Con 0 no ataca (el mono).
-  ataque?: number;
+  // Daño que hace cuando acierta en combate (obligatorio; lo normal, 2). Con 0 no entra en combate (el mono).
+  ataque: number;
 
-  // Resistencia (su vida) con la que empieza, que es también su máximo. Sin ponerla = 10.
-  resistencia?: number;
+  // Resistencia (su vida) con la que empieza, que es también su máximo (obligatoria; lo normal, 10).
+  resistencia: number;
 
   // Ids de sus habilidades en el catálogo de habilidades (data/habilidades.json). Puede estar vacía.
   habilidades: string[];
@@ -32,6 +32,6 @@ export interface TipoSeguidor {
   precio?: number;
 }
 
-// Números de un seguidor cuando su ficha no dice otra cosa.
+// Números normales de un seguidor (los de casi todos; cada ficha los escribe siempre).
 export const ATAQUE_NORMAL = 2;
 export const RESISTENCIA_NORMAL = 10;

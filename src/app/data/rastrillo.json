@@ -3,6 +3,7 @@
     { "objeto": "mano_de_mono", "peso": 1, "precio": 160 },
     { "objeto": "amuleto_del_destino", "peso": 1, "precio": 120 },
     { "objeto": "brujula_magica", "peso": 1, "precio": 200 },
-    { "objeto": "amuleto_kalinago", "peso": 1, "precio": 80 }
+    { "objeto": "amuleto_kalinago", "peso": 1, "precio": 80 },
+    { "objeto": "tienda_de_campana", "peso": 1, "precio": 40 }
   ]
 }
