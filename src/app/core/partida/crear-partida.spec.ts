@@ -35,6 +35,17 @@ describe('crearPartida', () => {
     expect(sobrenombres.size).toBeGreaterThan(1);
   });
 
+  it('guarda en el estado la semilla con la que empezó (Sprint 8)', () => {
+    const { estado } = crearPartida(7, 'Marta');
+    expect(estado.mundo.semilla).toBe(7);
+  });
+
+  it('la semilla no cambia aunque los dados avancen', () => {
+    const { estado } = crearPartida(2024, 'Marta');
+    expect(estado.mundo.semilla).toBe(2024);
+    expect(estado.mundo.estadoDados).not.toBe(2024); // crear el personaje ya ha gastado dados
+  });
+
   it('guarda en el estado el número interno de los dados', () => {
     const { estado, dados } = crearPartida(7, 'Marta');
     expect(estado.mundo.estadoDados).toBe(dados.obtenerEstado());

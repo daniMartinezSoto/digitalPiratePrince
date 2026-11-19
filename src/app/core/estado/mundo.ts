@@ -115,6 +115,11 @@ export interface Mundo {
   // Se utilizarán para comprobar una de las condiciones de victoria.
   puertosVisitados: string[];
 
+  // Semilla con la que empezó la partida (Sprint 8). No cambia nunca: es la "identidad" de la
+  // partida. El jugador podrá verla (durante la partida y en la crónica) para repetirla o retar
+  // a otro con la misma. No confundir con estadoDados, que avanza con cada tirada.
+  semilla: number;
+
   // Estado interno del generador de números aleatorios.
   // Se obtiene mediante Dados.obtenerEstado() y permite continuar
   // la misma secuencia de tiradas al cargar una partida.

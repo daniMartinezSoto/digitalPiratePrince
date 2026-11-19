@@ -34,6 +34,7 @@ export function crearPartida(semilla: number, nombre: string, retrato: Retrato =
       marcas: [],
       pilaEventos: [],
       puertosVisitados: [],
+      semilla,
       estadoDados: 0, // se apunta al final
       finPartida: null,
       accionEnCurso: null,
