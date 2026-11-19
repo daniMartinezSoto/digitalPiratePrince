@@ -25,4 +25,9 @@ export interface Almacen {
 export const CLAVES_DE_GUARDADO = {
   partida: 'pirate-prince.partida',
   cronica: 'pirate-prince.cronica',
+  // Copias de seguridad: si al arrancar la partida o la crónica guardadas no se pueden leer
+  // (estropeadas, o de una versión más nueva del juego), se copian aquí antes de escribir
+  // encima, para no perder nada.
+  partidaEstropeada: 'pirate-prince.partida.estropeada',
+  cronicaEstropeada: 'pirate-prince.cronica.estropeada',
 } as const;
