@@ -1,0 +1,29 @@
+<h1>Pirate Prince · Partida (pantalla de pruebas)</h1>
+
+@if (avisos().length > 0) {
+  <div class="avisos">
+    @for (aviso of avisos(); track aviso) {
+      <p>⚠ {{ aviso }}</p>
+    }
+    <button type="button" (click)="descartarAvisos()">Entendido</button>
+  </div>
+}
+
+@if (estado(); as estado) {
+  <p>Día {{ estado.mundo.dia }} · fase: {{ estado.mundo.fase }}</p>
+
+  @if (estado.mundo.finPartida; as fin) {
+    <p class="fin">PARTIDA TERMINADA: {{ fin.resultado }} ({{ fin.motivo }})</p>
+    <button type="button" (click)="nuevaPartida()">Nueva partida</button>
+  } @else if (confirmandoAbandono()) {
+    <p>¿Seguro? Contará como derrota en la crónica.</p>
+    <button type="button" (click)="abandonar()">Sí, abandonar</button>
+    <button type="button" (click)="confirmandoAbandono.set(false)">No</button>
+  } @else {
+    <button type="button" (click)="confirmandoAbandono.set(true)">Abandonar</button>
+  }
+
+  @if (hoja(); as hoja) {
+    <app-hoja-personaje [hoja]="hoja" [semilla]="estado.mundo.semilla" />
+  }
+}

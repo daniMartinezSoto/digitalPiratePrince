@@ -1,12 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+// La raíz de la aplicación: solo deja sitio a la pantalla que toque (ui/rutas.ts).
 @Component({
   imports: [RouterOutlet],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
 })
-export class App {
-  protected readonly title = signal('digital-pirate-prince');
-}
+export class App {}

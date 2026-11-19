@@ -1,0 +1,56 @@
+@let h = hoja();
+<section>
+  <h2>{{ h.nombre }}, {{ h.sobrenombre.nombre }} ({{ h.retrato }})</h2>
+  <p>{{ h.sobrenombre.descripcion }}</p>
+  <p>Semilla: <strong>{{ semilla() }}</strong></p>
+
+  <ul>
+    <li>Fuerza: {{ h.fuerza }} · Ingenio: {{ h.ingenio }}</li>
+    <li>Vida: {{ h.vida }} / {{ h.vidaMax }}</li>
+    <li>Oro: {{ h.oro }}</li>
+    <li>Comida: {{ h.comida }} / {{ h.comidaMaxima }}@if (h.diasSinComer > 0) { · días sin comer: {{ h.diasSinComer }} }</li>
+    <li>Tripulación: {{ h.tripulacion }} / {{ h.tripulacionMax }}</li>
+    <li>Fama: {{ h.fama }} / {{ h.famaObjetivo }}</li>
+  </ul>
+
+  <h3>Inventario ({{ h.espacios.ocupados }} / {{ h.espacios.total }} huecos)</h3>
+  @if (h.inventario.length === 0) {
+    <p>Vacío.</p>
+  } @else {
+    <ul>
+      @for (objeto of h.inventario; track $index) {
+        <li>{{ objeto.nombre }}@if (objeto.usosRestantes !== undefined) { ({{ objeto.usosRestantes }} usos) }</li>
+      }
+    </ul>
+  }
+
+  <h3>Seguidores</h3>
+  @if (h.seguidores.length === 0) {
+    <p>Ninguno.</p>
+  } @else {
+    <ul>
+      @for (seguidor of h.seguidores; track seguidor.id) {
+        <li>
+          {{ seguidor.nombre }} ({{ seguidor.tipo }}) · ataque {{ seguidor.ataque }} · resistencia
+          {{ seguidor.resistencia }} / {{ seguidor.resistenciaMaxima }}
+          @if (seguidor.vital) { · VITAL } @else if (seguidor.inseparable) { · inseparable }
+        </li>
+      }
+    </ul>
+  }
+
+  <h3>Condiciones</h3>
+  @if (h.condiciones.length === 0) {
+    <p>Ninguna.</p>
+  } @else {
+    <ul>
+      @for (condicion of h.condiciones; track condicion.id) {
+        <li>
+          {{ condicion.nombre }} ({{ condicion.dentroDe ?? condicion.categoria }})
+          @if (condicion.turnosRestantes !== undefined) { · {{ condicion.turnosRestantes }} turnos }
+          @if (condicion.origen === 'otorgada') { · [otorgada] }
+        </li>
+      }
+    </ul>
+  }
+</section>

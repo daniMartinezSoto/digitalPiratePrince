@@ -1,0 +1,33 @@
+<h1>Pirate Prince · Nueva partida (pantalla de pruebas)</h1>
+
+<form (submit)="$event.preventDefault(); empezar(nombre.value, retrato.value, semilla.value)">
+  <p><label>Nombre: <input #nombre name="nombre" /></label></p>
+  <p>
+    <label>Retrato:
+      <select #retrato name="retrato">
+        <option value="hombre">Hombre</option>
+        <option value="mujer">Mujer</option>
+      </select>
+    </label>
+  </p>
+  <p><label>Semilla (vacía = al azar, de 0 a {{ semillaMaxima }}): <input #semilla name="semilla" /></label></p>
+  @if (error(); as mensaje) {
+    <p class="error">{{ mensaje }}</p>
+  }
+  <button type="submit">Empezar</button>
+</form>
+
+<h2>Crónica</h2>
+@if (cronica().length === 0) {
+  <p>Todavía no has terminado ninguna partida.</p>
+} @else {
+  <ol>
+    @for (entrada of cronica(); track $index) {
+      <li>
+        {{ entrada.nombre }} ({{ entrada.sobrenombre }}) · {{ entrada.resultado }} ({{ entrada.motivo }}) · fama
+        {{ entrada.fama }} · oro {{ entrada.oro }} · {{ entrada.dias }} días · semilla {{ entrada.semilla }} ·
+        {{ entrada.fecha }}
+      </li>
+    }
+  </ol>
+}

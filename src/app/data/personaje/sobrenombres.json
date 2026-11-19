@@ -2,6 +2,7 @@
   {
     "id": "el_maldito",
     "nombre": "El maldito",
+    "nombreFemenino": "La maldita",
     "descripcion": "Comienza la aventura con el amuleto maldito.",
     "ajustes": {},
     "modificadores": {}
@@ -9,6 +10,7 @@
   {
     "id": "el_conformista",
     "nombre": "El conformista",
+    "nombreFemenino": "La conformista",
     "descripcion": "Solo necesita conseguir 8 puntos de fama para ganar.",
     "ajustes": {
       "famaObjetivo": -2
@@ -18,17 +20,21 @@
   {
     "id": "el_nativo",
     "nombre": "El nativo",
+    "nombreFemenino": "La nativa",
     "descripcion": "Puede descansar gratis en aldeas y obtiene +1 en las tiradas de audiencia en ellas.",
     "ajustes": {},
     "modificadores": {
       "buscar_info_aldea": 1,
       "audiencia_aldea": 1
     },
-    "otorga": ["vinculo_nativo"]
+    "otorga": [
+      "vinculo_nativo"
+    ]
   },
   {
     "id": "el_fuerte",
     "nombre": "El fuerte",
+    "nombreFemenino": "La fuerte",
     "descripcion": "Comienza con +1 de fuerza y 2 espacios adicionales de inventario.",
     "ajustes": {
       "fuerza": 1,
@@ -39,6 +45,7 @@
   {
     "id": "el_navegante",
     "nombre": "El navegante",
+    "nombreFemenino": "La navegante",
     "descripcion": "Puede desplazarse 2 hexágonos por mar.",
     "ajustes": {},
     "modificadores": {}
@@ -46,6 +53,7 @@
   {
     "id": "el_superviviente",
     "nombre": "El superviviente",
+    "nombreFemenino": "La superviviente",
     "descripcion": "No necesita comida en la jungla densa y puede desplazarse 2 hexágonos.",
     "ajustes": {},
     "modificadores": {}
@@ -53,6 +61,7 @@
   {
     "id": "el_influyente",
     "nombre": "El influyente",
+    "nombreFemenino": "La influyente",
     "descripcion": "Obtiene +1 al buscar información y +1 en las tiradas de audiencia en puertos y guaridas piratas.",
     "ajustes": {},
     "modificadores": {
@@ -65,13 +74,15 @@
   {
     "id": "el_afortunado",
     "nombre": "El afortunado",
-    "descripcion": "Puede evitar la muerte una vez durante la aventura.",
+    "nombreFemenino": "La afortunada",
+    "descripcion": "Puede evitar la muerte una vez, solo en combate: se queda con 1 PV.",
     "ajustes": {},
     "modificadores": {}
   },
   {
     "id": "el_contable",
     "nombre": "El contable",
+    "nombreFemenino": "La contable",
     "descripcion": "Cada vez que consigue oro, obtiene además 1d6 de oro.",
     "ajustes": {},
     "modificadores": {}
@@ -79,6 +90,7 @@
   {
     "id": "el_hermano",
     "nombre": "El hermano",
+    "nombreFemenino": "La hermana",
     "descripcion": "Comienza con un seguidor aleatorio gratuito. Si este muere, pierde la partida.",
     "ajustes": {},
     "modificadores": {}
@@ -86,6 +98,7 @@
   {
     "id": "el_heredero",
     "nombre": "El heredero",
+    "nombreFemenino": "La heredera",
     "descripcion": "Comienza con un objeto mágico.",
     "ajustes": {},
     "modificadores": {}
