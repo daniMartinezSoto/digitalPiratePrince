@@ -6,6 +6,7 @@ import { DondeEstas } from '../../componentes/donde-estas/donde-estas';
 import { HojaPersonaje } from '../../componentes/hoja-personaje/hoja-personaje';
 import { PanelDelDia } from '../../componentes/panel-del-dia/panel-del-dia';
 import { RegistroDeLaPartida } from '../../componentes/registro/registro';
+import { Trampas } from '../../componentes/trampas/trampas';
 import { NOMBRE_DE_FASE } from '../../textos/textos';
 import { UBICACION_INICIAL, type Ubicacion } from '../../ubicacion';
 
@@ -20,7 +21,7 @@ const TEXTO_DE_AVISO: Record<AvisoDeGuardado, string> = {
 // terminado, lo dice y ofrece empezar otra. Todo lo que cambia la partida se pide al store.
 @Component({
   selector: 'app-pantalla-partida',
-  imports: [HojaPersonaje, DondeEstas, PanelDelDia, RegistroDeLaPartida],
+  imports: [HojaPersonaje, DondeEstas, PanelDelDia, RegistroDeLaPartida, Trampas],
   templateUrl: './partida.html',
   styleUrl: './partida.css',
 })

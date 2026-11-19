@@ -1,0 +1,8 @@
+@if (apuestas(); as botones) {
+  <h3>Mesa de dados</h3>
+  <p>Apuesta (un dado cada uno; el mayor gana, el empate se repite):</p>
+  @for (b of botones; track b.texto) {
+    <button type="button" [disabled]="!b.disponible" (click)="apostar(b.apuesta)">Apostar {{ b.texto }}</button>
+  }
+  <p><button type="button" (click)="levantarse()">Levantarse de la mesa</button></p>
+}

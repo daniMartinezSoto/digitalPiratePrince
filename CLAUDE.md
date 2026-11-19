@@ -56,7 +56,13 @@
   - ✅ Arreglos tras probar el paso 2 (19-nov, decididos por el autor): **el superviviente consigue la comida él solo en la jungla y en la jungla profunda** (las dos): elección de comida nueva `superviviente` (`SOBRENOMBRE_SUPERVIVIENTE`, `TERRENOS_DEL_SUPERVIVIENTE` en `core/turno/comer.ts`; `opcionesDeComida` y `comer` reciben el `terreno` opcional; botón "Conseguir comida (Superviviente)"). **Las condiciones enseñan lo que implican** (su descripción del catálogo, entre paréntesis; más adelante, al pasar el ratón). Pagar la comida con oro en la aldea solo con vínculo nativo: era correcto (el autor tenía un seguidor nativo). Textos: motivos "Solo en puertos y guaridas" y "Solo en puertos, guaridas y aldeas" (las guaridas también valen), fase con su nombre ("acción"), sobrenombre con nombre bonito en la crónica (`nombreDeSobrenombre` en `hoja-de-personaje.ts`), descripción del superviviente sin "él" y "Amanece. Ninguna condición hace nada.".
   - ✅ Decidido por el autor (19-nov): **los puertos y las guaridas cuentan siempre como junto al agua** para pescar (`sePuedePescar`; en la pantalla ya no sale la casilla "junto al agua" allí). **El superviviente en la jungla ve los dos botones** (conseguir comida y comer de las reservas): el autor no quiere quitar opciones al jugador.
   - **Jugador automático (19-nov):** Claude jugó ~500.000 días de partidas al azar (todas las acciones, también las de varios pasos, objetos, comida y descanso, en todos los lugares), 11.000 combates y 5.500 combates navales con las funciones reales, comprobando en cada paso: recursos y vida dentro de sus topes, guardar y leer idéntico, `estadoDados` al día, que lo que sale "disponible" funciona y lo "desactivado" da error, que el estado no se modifica por dentro (objetos congelados), que los cambios (el chivato) cuadran con el estado final y que las fases avanzan bien. **Cero fallos.** El script vive en la máquina de Claude (no en el repo).
-  - **Siguiente (paso 3):** las acciones de varios pasos (mercado, contratar marineros, buscar seguidor, dados y pulso) y los sobornos. **Paso 4:** el combate en texto y el viaje parcheado (elegir a mano el terreno de destino; idea del autor).
+  - ✅ Paso 3 (19-nov): las acciones de varios pasos y los sobornos. Componentes nuevos `mercado` (comprar y vender comida, vender cada objeto, rastrillo con casillas para marcar qué se tira si no cabe, salir), `marineros` (elegir cuántos), `seguidor-en-espera` (ficha del que se ofrece, contratar despidiendo a uno si el grupo está lleno, rechazar) y `mesa-de-dados` (apostar hasta levantarse). El panel del día enseña solo la acción a medias mientras dura (y sigue dentro al recargar), y pide antes la apuesta del pulso y los sobornos de buscar información en un puerto (con "Cancelar"). Servicio nuevo `ui/servicios/jugar.ts` (`Jugar.hacer`: `store.ejecutar` + registro; si la regla falla, apunta ERROR). Textos nuevos para mercado, apuestas, pulso y monos. **Fallo encontrado por los tests:** los ids de seguidor se reutilizan (despides a `forzudo_1` y el nuevo forzudo vuelve a ser `forzudo_1`), así que el registro nombraba mal al despedido; ahora los textos reciben los nombres de antes y de después (`NombresDeSeguidores`). El reaprovechamiento de ids es así en `core/` (no es un fallo de reglas).
+  - ✅ Pedido por el autor (19-nov): **el nombre del seguidor se ve antes de contratarlo** ("Cornelius Sinvergüenza (Pirata experto)"): `buscarSeguidor` lo sortea ya (`sortearNombreDeSeguidor` en `core/seguidores/crear-seguidor.ts`, gasta un número) y lo guarda en `SeguidorEnEspera.nombre`; `opcionesDelSeguidor` lo devuelve; `contratarSeguidor` lo pasa en el efecto `ganar_seguidor` (campo interno nuevo `nombre`, no se escribe en el JSON; el revisor ya lo rechaza) y `crearSeguidor` acepta `opciones.nombre` (entonces no tira dados). Partidas guardadas con un seguidor esperando sin nombre: se sortea al contratar. **Trampas de prueba** (`ui/componentes/trampas/`, desplegable en la pantalla de partida; no existirán en el juego): −10 tripulación, +100 oro, comida a 0, +5 comida, −5 vida, vida al máximo, +1 fama, darse un objeto, ponerse o quitarse una condición y darse un seguidor, todo con `aplicarEfectos`. (La tripulación inicial, 40, está escrita en `crear-personaje.ts`; para probar se usan las trampas.)
+  - ✅ **Máximo de seguidores: 2** (3 con carisma), decidido por el autor el 20-nov (`data/ajustes.json`, `maximoSeguidores`; los tests del amuleto y de la pantalla, ajustados). Relacionado con la duda abierta de "seguidores demasiado fuertes en combate" (sección 10, opción c).
+  - **Victoria, decidido por el autor (20-nov): se gana al LLEGAR a cualquier puerto con las dos cosas ya cumplidas** (10 de fama, o la objetivo actual, y los 4 puertos principales visitados): un regreso triunfal. El conformista también necesita los 4 puertos. Se programa en el paso 4 (puerto elegido a mano) y de verdad con el mapa.
+  - **Victoria (aclarado al autor el 19-nov):** llegar a 10 de fama todavía no hace ganar porque falta la otra mitad, los puertos; la victoria normal se programa con el mapa (Sprint 9). **Decidido: 4 puertos principales** (Tortuga, Port Royal, La Habana y Nassau, uno por esquina). Propuesta para el paso 4: elegir en "¿dónde estás?" qué puerto es, apuntarlo en `mundo.puertosVisitados`, enseñar "Puertos 1/4" y ganar al cumplir las dos cosas. El momento exacto ya está decidido (línea de arriba).
+  - **Hueco detectado:** la pantalla de pruebas todavía no deja **usar ni tirar objetos** (`usarObjeto`, `tirarObjeto`: el ungüento no se puede usar). Va en el paso 4.
+  - **Siguiente (paso 4):** el combate en texto (combate de prueba normal y naval, con la pantalla del combate; plan ya presentado al autor) y el viaje parcheado (elegir a mano el terreno de destino).
 - **Sprint 7: completado (combate normal y naval, 18-19 nov).** Decisiones en las secciones 3.12 (normal) y 3.13 (naval).
   - ✅ Paso 1: bestiario. Ficha `core/catalogos/enemigo.ts` (`id`, `nombre`, `descripcion?`, `imagen?`, `ataque`, `resistencia`, `libro?`), `data/enemigos.json` (34 enemigos de combate del libro, con sus números), cargador `cargar-enemigos.ts` (`ENEMIGOS`, `obtenerEnemigo`) y revisor `validar-enemigo.ts`.
   - ✅ Paso 2: tiradas de ataque en `core/combate/ataque.ts` (carpeta nueva): `ataqueDelJugador(castigo, dados)`, `ataqueBasico(ataque, castigo, dados, noPuedeFallar?)` (enemigos y seguidores), `castigoPorHambre(diasSinComer)` (tope `AJUSTES.castigoHambreMaximo`, 3) y `reducirDano(dano, reduccion)` (mínimo 1 si acierta). Devuelven `TiradaDeAtaque { dados, acierta, danoSinCastigo, castigoHambre, dano }`. Piel de piedra en datos: ajuste de condición nuevo `reduccionDano` (la ficha `piel_de_piedra` lleva 1) y consulta `reduccionDanoActual(jugador)`. Ayuda solo para tests: `core/dados/dados-trucados.ts` (`dadosTrucados([6, 6, 1])` saca esos números en orden; `restantes()`).
@@ -73,9 +79,9 @@
   - ✅ Naval, paso 3: huir, abordar (combate normal sin huida) y resumen para la pantalla de resultados.
   - ✅ Naval, paso 4: mejoras del barco (categoría `mejora`: cañones buenos, casco reforzado, velas nuevas).
   - ✅ Naval, paso 5: simulación; abordaje del galeón ajustado (capitán 3/10 + 1 soldado).
-- **Tests:** a Claude le pasan 1314 en 73 archivos, ya con `app.spec.ts` (al autor le deberían salir los mismos), tras los arreglos del paso 2 de la pantalla de pruebas.
+- **Tests:** a Claude le pasan 1329 en 75 archivos, ya con `app.spec.ts` (al autor le deberían salir los mismos), tras el nombre del seguidor y las trampas.
 
-**Dónde nos quedamos (19-nov, 14:00):** **Sprint 8 terminado.** Antes del Sprint 9 (mapa), el autor ha decidido hacer la **pantalla de pruebas** (sección 0, arriba): **pasos 1 y 2 hechos** (crear personaje y el día con botones). **Siguiente: paso 3** (acciones de varios pasos). **El autor ha probado a convertir los `.wxx` en mapas isométricos 3D** y le gustan mucho: al empezar el Sprint 9 se decide si el mapa definitivo es 3D o si se empieza plano y el 3D llega como "piel" después (las reglas no dependen de cómo se pinte). **Pendiente del naval:** decidir dónde se consiguen las mejoras del barco. **Idea del autor para cuando empiece la interfaz:** una pantalla de pruebas fea pero jugable cuanto antes, para ver funcionar las reglas antes del diseño bonito. El plan detallado por sprints lo mantiene el autor en un documento aparte.
+**Dónde nos quedamos (19-nov, 14:00):** **Sprint 8 terminado.** Antes del Sprint 9 (mapa), el autor ha decidido hacer la **pantalla de pruebas** (sección 0, arriba): **pasos 1, 2 y 3 hechos** (crear personaje, el día con botones y las acciones de varios pasos). **Siguiente: paso 4** (combate de prueba y viaje parcheado). **El autor ha probado a convertir los `.wxx` en mapas isométricos 3D** y le gustan mucho: al empezar el Sprint 9 se decide si el mapa definitivo es 3D o si se empieza plano y el 3D llega como "piel" después (las reglas no dependen de cómo se pinte). **Pendiente del naval:** decidir dónde se consiguen las mejoras del barco. **Idea del autor para cuando empiece la interfaz:** una pantalla de pruebas fea pero jugable cuanto antes, para ver funcionar las reglas antes del diseño bonito. El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
 ---
 
@@ -86,7 +92,7 @@ Adaptación a videojuego de **Pirate Prince**, un juego de aventuras **en solita
 - Un solo jugador, por turnos, muy basado en texto.
 - Única interfaz gráfica "mecánica": un **mapa de hexágonos** por el que te mueves.
 - Cada turno es un día. Se elige **una acción** según el hexágono, se resuelve con dados y tablas, y puede encadenar **eventos** (textos con decisiones, tiradas, combates, objetos...).
-- **Objetivo:** conseguir **10 puntos de Fama** y haber visitado los 3 puertos principales (3 puertos concretos de los varios que hay). **Se pierde** si la vida del personaje o la tripulación del barco llegan a 0.
+- **Objetivo:** conseguir **10 puntos de Fama** y haber visitado los **4 puertos principales** (uno en cada esquina del mapa: **Tortuga, Port Royal, La Habana y Nassau**; decidido por el autor el 19-nov, antes eran 3). **Se pierde** si la vida del personaje o la tripulación del barco llegan a 0.
 - El autor puede **cambiar reglas al digitalizar**: lo que en papel existe para ahorrar cuentas o guiar al jugador puede automatizarse o simplificarse.
 
 En `docs/`: el PDF de reglas (24 páginas; **no incluye el libro de eventos**) y el mapa prototipo (hecho con Worldographer). El archivo `.wxx` del mapa está pendiente de añadir al repositorio (el autor ya ha comprobado que se lee bien: sección 6).
@@ -165,7 +171,7 @@ Jugador { nombre: string;            // lo elige el jugador
           fama, famaObjetivo: number;
           diasSinComer: number;      // contador único del grupo
           inventario: ObjetoLlevado[]; capacidadInventario: number;   // huecos; un objeto puede ocupar varios
-          seguidores: Seguidor[];    // máximo 3
+          seguidores: Seguidor[];    // máximo 2 (3 con carisma); AJUSTES.maximoSeguidores
           condiciones: CondicionActiva[];   // maldiciones, bendiciones, enfermedades, tormenta...
           fasesAccionPerdidas: number }     // turnos en los que se pierde la acción (se come igual)
 
@@ -268,7 +274,7 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 - **Sobrenombre:** se elige con **`1d11` (uniforme)**, no con 2d6, o a elección. Las características con `1d3` (equivale al 1d6 del papel).
 - **Seguidores:** **sin inventario propio y sin necesidad de comer**. Su "ataque" es el daño que hacen al acertar. Descansar los cura.
 - **Comida:** una sola reserva por turno para todo el grupo (ver 4.6).
-- **Objetivo:** 10 de fama **y** haber visitado los 3 puertos principales de cada mapa (ver sección 6).
+- **Objetivo:** 10 de fama **y** haber visitado los 4 puertos principales de cada mapa (Tortuga, Port Royal, La Habana y Nassau, uno por esquina; ver sección 6).
 - **El veneno no existe** de momento. **Las notas azules del PDF se ignoran.**
 
 ### 3.9 Decisiones tras leer el libro de eventos
@@ -343,9 +349,9 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 - **Tipo `nativo` confirmado** (nombre "Nativo kalinago"). Su habilidad da +1 en `audiencia_aldea`, `buscar_info_aldea` y `el_mal`; la bruja vudú, +1 en `el_mal`.
 - **Nombres propios:** `data/nombres-seguidores.json` tiene tres listas del autor: `hombres` y `mujeres` (nombres de pirata, 60 + 60) y `nativos` (56, hombres y mujeres juntos). Un seguidor normal coge su nombre de `hombres` + `mujeres`, todo junto. La ficha de un tipo puede pedir otras listas con el campo `nombres`: **la bruja vudú, `["mujeres"]`** (siempre es mujer) y **el nativo, `["nativos"]`**. Al crearlo se elige uno al azar (gasta UN número del generador); si ya lo lleva alguien del grupo, se coge el siguiente de la lista. Cargador: `core/seguidores/nombres.ts` (`LISTAS_DE_NOMBRES`, `nombresDe`).
 - **Id del seguidor en la partida:** tipo + número (`forzudo_1`, `forzudo_2`).
-- **Efecto `ganar_seguidor` (paso 2 hecho):** `{ "tipo": "ganar_seguidor", "seguidor": "nativo", "inseparable"?: true }`. `aplicarEfectos` llama a `crearSeguidor` y lo mete en el grupo. No entra si una condición prohíbe `nuevos_seguidores` (se mira primero) o si el grupo está lleno (`AJUSTES.maximoSeguidores`, 3). Cambios nuevos: `seguidor_se_une`, `seguidor_no_se_une` (motivo `grupo_lleno` o `prohibido`) y `seguidor_despedido`.
+- **Efecto `ganar_seguidor` (paso 2 hecho):** `{ "tipo": "ganar_seguidor", "seguidor": "nativo", "inseparable"?: true }`. `aplicarEfectos` llama a `crearSeguidor` y lo mete en el grupo. No entra si una condición prohíbe `nuevos_seguidores` (se mira primero) o si el grupo está lleno (`AJUSTES.maximoSeguidores`, 2 desde el 20-nov; antes 3). Cambios nuevos: `seguidor_se_une`, `seguidor_no_se_une` (motivo `grupo_lleno` o `prohibido`) y `seguidor_despedido`.
 - **Grupo lleno: despedir para hacer sitio.** El juego pregunta ANTES "¿despides a alguien para que entre el nuevo?"; si el jugador elige a uno, el efecto lleva `despedir: "<id del seguidor en la partida>"` (no se escribe nunca en el JSON: el revisor lo rechaza), ese se va y entra el nuevo. Si dice que no, el nuevo no entra. **A un inseparable no se le puede despedir** (el hermano no puede librarse así de perder). Consultas para la interfaz en `core/seguidores/consultas.ts`: `grupoLleno`, `seguidoresDespedibles`.
-- **El hermano (paso 2b hecho):** al crear el personaje empieza con un seguidor de un tipo al azar entre **TODOS** los de `data/seguidores.json` (se contraten o no; misma probabilidad), gratis, **inseparable y vital**. Cuenta para el máximo de 3. Gasta dos números del generador (tipo y nombre), solo con ese sobrenombre.
+- **El hermano (paso 2b hecho):** al crear el personaje empieza con un seguidor de un tipo al azar entre **TODOS** los de `data/seguidores.json` (se contraten o no; misma probabilidad), gratis, **inseparable y vital**. Cuenta para el máximo de seguidores (2). Gasta dos números del generador (tipo y nombre), solo con ese sobrenombre.
 - **`Seguidor.vital`:** si muere, el jugador pierde la partida (`finPartida.motivo: 'seguidor'`). Es distinto de `inseparable`. Lo comprueba `aplicarEfectos` al morir un seguidor; el combate (Sprint 7) debe respetarlo también.
 - **`data/seguidores.json` es el catálogo de TODOS los seguidores**, vengan de contratar o de eventos. La tabla de contratar (2d6) será una tabla aparte que apunta a sus ids.
 - **Bonificadores de seguidores:** `calcularModificador` suma las habilidades de los seguidores. **Todo suma, también lo repetido** (dos nativos = +2): el autor quiere que el juego tenga combinaciones locas.
@@ -541,7 +547,7 @@ Implementados (Sprint 6): los `ajustes` numéricos (fuerte, conformista), los `m
 
 ### 4.3 Inventario y seguidores
 - **Inventario del jugador: 5 huecos** (tesoros y objetos especiales; un objeto puede ocupar varios). [Digital] **Sin bodega**: no hay almacén aparte en el barco. **Comida y oro tienen su propio contador** (la comida con máximo).
-- **Seguidores [digital]:** máximo 3. Datos: tipo, nombre, **ataque** (daño al acertar), **resistencia** (vida) y habilidades. Lo normal es resistencia 10 y ataque 2, y cada ficha lo escribe siempre (obligatorio desde el Sprint 7). Todos combaten salvo los de ataque 0 (el mono). **Sin inventario y sin necesidad de comer.** Atacan en combate. Al descansar se curan igual que el jugador.
+- **Seguidores [digital]:** máximo 2 (3 con carisma; decidido por el autor el 20-nov, antes 3). Datos: tipo, nombre, **ataque** (daño al acertar), **resistencia** (vida) y habilidades. Lo normal es resistencia 10 y ataque 2, y cada ficha lo escribe siempre (obligatorio desde el Sprint 7). Todos combaten salvo los de ataque 0 (el mono). **Sin inventario y sin necesidad de comer.** Atacan en combate. Al descansar se curan igual que el jugador.
 
 ### 4.4 Tipos de hexágono
 Playa, jungla, jungla profunda, costa, alta mar, puerto, aldea, monasterio, naufragio, ruinas, barco, abundancia (+ guarida pirata). Modelo de datos en la sección 6.
@@ -687,7 +693,7 @@ Códigos del libro de papel; en digital cada uno tendrá un id con nombre (ver 3
 | Reequilibrar pesca/caza y precio de la comida | **Resuelto (Sprint 6):** comida máxima 12, taberna 4, comprar a 5 y vender a 2. Se afina jugando |
 | Cocinero | **Resuelto (Sprint 6):** sustituido por el pescador (y el carpintero por el mono amaestrado) |
 | Inanición: ¿capacidad de carga a la mitad? | **Pendiente decidir** |
-| Victoria: ¿se gana al cumplir las dos condiciones o al entrar en un puerto después? Supuestos: "visitado" = entrar en el hex; el conformista también debe visitar los 3; el puerto de inicio cuenta si es principal | **Pendiente** (sprint de la condición de victoria) |
+| Victoria: ¿se gana al cumplir las dos condiciones o al entrar en un puerto después? | **Resuelto (20-nov):** al llegar a cualquier puerto con las dos cosas cumplidas (4 puertos principales visitados y la fama objetivo). El conformista también necesita los 4. "Visitado" = entrar en su casilla; el de inicio cuenta si es principal |
 | "Meditar" / guardado como mecánica | **Resuelto (Sprint 5):** "meditar" desaparece; no se guarda en monasterios |
 | El mal está a bordo, fila 5: el −1d6 de tripulación puede dejarte a 0 y hacerte perder aunque derrotes a la criatura | **Pendiente:** hoy está como en el libro |
 | Motín estando a pie, lejos del barco | **Pendiente:** hoy puede saltar siempre; se ajustará al escribir el evento |
@@ -719,7 +725,7 @@ interface Hexagono { col: number; fila: number; terreno: Terreno; rasgo?: Rasgo;
 - Los rasgos **cambian durante la partida** (el hex de barco se agota): la definición del mapa es fija y lo que cambia va en `estado.mundo`.
 
 ### Puertos principales (condición de victoria)
-Cada mapa declara **3 puertos principales** (concretos, entre los varios puertos que tiene); el resto son puertos normales que no cuentan para la victoria. `mundo.puertosVisitados` guarda sus ids. La `ui` debe mostrar el progreso ("Puertos 1/3") y señalarlos en el mapa.
+Cada mapa declara **4 puertos principales** (en el prototipo, uno por esquina: Tortuga, Port Royal, La Habana y Nassau, cada uno con su logo en la interfaz) (concretos, entre los varios puertos que tiene); el resto son puertos normales que no cuentan para la victoria. `mundo.puertosVisitados` guarda sus ids. La `ui` debe mostrar el progreso ("Puertos 1/4", con el logo de cada uno; más adelante en un menú) y señalarlos en el mapa.
 
 ### El mapa prototipo
 - **30 columnas × 20 filas** (etiquetas `col.fila`: de 000.000 a 029.019), ~600 hexágonos.
@@ -732,9 +738,9 @@ El autor creará **2 o 3 mapas a mano**; al empezar una partida se elige uno (al
 
 ```
 data/mapas/<id>.json → { id, nombre, columnas, filas, inicio: {col,fila},
-                         puertosPrincipales: [{col,fila} x3], hexagonos: [...] }
+                         puertosPrincipales: [{id, nombre, col, fila} x4], hexagonos: [...] }
 ```
-Ningún código debe asumir 30×20. Al cargar un mapa, comprobar que tiene exactamente 3 puertos principales y que cada uno es de verdad un puerto.
+Ningún código debe asumir 30×20. Al cargar un mapa, comprobar que tiene exactamente 4 puertos principales y que cada uno es de verdad un puerto.
 
 ### Origen de los datos: Worldographer
 Los mapas se dibujan con **Worldographer**. Su archivo `.wxx` es (según documentación de librerías de terceros para la versión 1.73) **XML comprimido en gzip y codificado en UTF-16**, con *tiles* (terreno) y *features* (iconos). Plan: **un script que convierta el `.wxx` al JSON del mapa**, reutilizable; hay que verificarlo con el archivo real (pendiente). Al dibujar: un único tipo de terreno por color y un icono distinto, siempre el mismo, por rasgo.

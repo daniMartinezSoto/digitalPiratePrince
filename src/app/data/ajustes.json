@@ -16,7 +16,7 @@
   "probabilidadDormirGenial": 50,
   "curaAlReposar": 2,
   "probabilidadEventoAlReposar": 20,
-  "maximoSeguidores": 3,
+  "maximoSeguidores": 2,
   "precioComprarComida": 5,
   "precioVenderComida": 2,
   "marinerosDisponibles": "1d6x3+4",

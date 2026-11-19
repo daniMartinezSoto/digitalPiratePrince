@@ -26,6 +26,7 @@
   @if (!estado.mundo.finPartida) {
     <app-donde-estas [(ubicacion)]="ubicacion" />
     <app-panel-del-dia [ubicacion]="ubicacion()" />
+    <app-trampas />
   }
 
   <app-registro />

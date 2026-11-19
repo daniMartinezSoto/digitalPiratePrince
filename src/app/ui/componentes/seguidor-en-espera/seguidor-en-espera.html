@@ -1,0 +1,24 @@
+@if (opciones(); as o) {
+  <h3>Se ofrece un seguidor</h3>
+  @if (ficha(); as f) {
+    <p>
+      @if (o.nombre) { <strong>{{ o.nombre }}</strong> ({{ f.nombre }}) } @else { <strong>{{ f.nombre }}</strong> } · ataque {{ f.ataque }} · resistencia {{ f.resistencia }} · precio {{ o.precio }}
+      @if (f.habilidades.length > 0) { · {{ f.habilidades.join(', ') }} }
+    </p>
+    <p>{{ f.descripcion }}</p>
+  }
+  @if (o.hayQueDespedir) {
+    <p>El grupo está lleno: para que entre, despide a alguien.</p>
+    <label>Despedir a:
+      <select name="despedir" (change)="despedir.set($any($event.target).value)">
+        <option value="">(nadie)</option>
+        @for (s of despedibles(); track s.id) {
+          <option [value]="s.id">{{ s.nombre }}</option>
+        }
+      </select>
+    </label>
+  }
+  <button type="button" [disabled]="!o.disponible" (click)="contratar()">Contratar ({{ o.precio }})</button>
+  @if (!o.disponible) { <small> No te llega el oro</small> }
+  <button type="button" (click)="rechazar()">Rechazar</button>
+}

@@ -543,7 +543,7 @@ function ganarSeguidor(jugador: Jugador, efecto: EfectoGanarSeguidor, dados: Dad
     efecto.seguidor,
     jugador.seguidores,
     dados,
-    { inseparable: efecto.inseparable },
+    { inseparable: efecto.inseparable, nombre: efecto.nombre },
     { tipos, nombres: catalogos.nombres ?? LISTAS_DE_NOMBRES },
   );
   jugador.seguidores.push(nuevo);

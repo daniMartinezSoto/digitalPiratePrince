@@ -211,8 +211,30 @@ describe('buscar un seguidor', () => {
   it('paso 1: sale un seguidor, con su precio, y espera la decisión', () => {
     const { estado } = buscarSeguidor(estadoCon(), EN_PUERTO, new Dados(SALE_FORZUDO));
 
-    expect(estado.mundo.accionEnCurso).toEqual({ tipo: 'seguidor', seguidor: 'forzudo', precio: 25 });
-    expect(opcionesDelSeguidor(estado)).toEqual({ seguidor: 'forzudo', precio: 25, disponible: true, hayQueDespedir: false });
+    expect(estado.mundo.accionEnCurso).toEqual({ tipo: 'seguidor', seguidor: 'forzudo', precio: 25, nombre: expect.any(String) });
+    expect(opcionesDelSeguidor(estado)).toEqual({
+      seguidor: 'forzudo',
+      nombre: expect.any(String),
+      precio: 25,
+      disponible: true,
+      hayQueDespedir: false,
+    });
+  });
+
+  it('su nombre se enseña antes de contratarlo, y entra con ese mismo nombre', () => {
+    const esperando = buscarSeguidor(estadoCon({ oro: 50 }), EN_PUERTO, new Dados(SALE_FORZUDO)).estado;
+    const nombre = opcionesDelSeguidor(esperando).nombre;
+    expect(nombre).toBeTruthy();
+    const { estado } = contratarSeguidor(esperando, new Dados(999));
+    expect(estado.jugador.seguidores[0].nombre).toBe(nombre);
+  });
+
+  it('una partida guardada antes de esto (seguidor esperando sin nombre): se sortea al contratar', () => {
+    const esperando = buscarSeguidor(estadoCon({ oro: 50 }), EN_PUERTO, new Dados(SALE_FORZUDO)).estado;
+    const antigua = { ...esperando, mundo: { ...esperando.mundo, accionEnCurso: { tipo: 'seguidor' as const, seguidor: 'forzudo', precio: 25 } } };
+    expect(opcionesDelSeguidor(antigua).nombre).toBeUndefined();
+    const { estado } = contratarSeguidor(antigua, new Dados(1));
+    expect(estado.jugador.seguidores[0].nombre).toBeTruthy();
   });
 
   it('si sale el cartógrafo, la acción termina y el evento queda pendiente', () => {
@@ -263,7 +285,7 @@ describe('buscar un seguidor', () => {
 
     const sinDespedir = contratarSeguidor(esperando, new Dados(1));
     expect(sinDespedir.estado.jugador.oro).toBe(50);
-    expect(sinDespedir.estado.mundo.accionEnCurso).toEqual({ tipo: 'seguidor', seguidor: 'forzudo', precio: 25 });
+    expect(sinDespedir.estado.mundo.accionEnCurso).toEqual({ tipo: 'seguidor', seguidor: 'forzudo', precio: 25, nombre: expect.any(String) });
 
     const despidiendo = contratarSeguidor(esperando, new Dados(1), 'b');
     expect(despidiendo.estado.jugador.seguidores.map(s => s.id)).toEqual(['a', 'c', 'forzudo_1']);

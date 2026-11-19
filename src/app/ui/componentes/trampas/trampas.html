@@ -1,0 +1,31 @@
+<details>
+  <summary>Trampas de prueba (no existirán en el juego)</summary>
+  <p>
+    <button type="button" (click)="aplicar('−10 tripulación', [{ tipo: 'tripulacion', cantidad: -10 }])">−10 tripulación</button>
+    <button type="button" (click)="aplicar('+100 oro', [{ tipo: 'oro', cantidad: 100 }])">+100 oro</button>
+    <button type="button" (click)="aplicar('comida a 0', [{ tipo: 'comida', operacion: 'todo' }])">Comida a 0</button>
+    <button type="button" (click)="aplicar('+5 comida', [{ tipo: 'comida', cantidad: 5 }])">+5 comida</button>
+    <button type="button" (click)="aplicar('−5 vida', [{ tipo: 'vida', cantidad: -5 }])">−5 vida</button>
+    <button type="button" (click)="aplicar('vida al máximo', [{ tipo: 'vida', operacion: 'maximo' }])">Vida al máximo</button>
+    <button type="button" (click)="aplicar('+1 fama', [{ tipo: 'fama', cantidad: 1 }])">+1 fama</button>
+  </p>
+  <p>
+    <select name="trampa-objeto" (change)="objeto.set($any($event.target).value)">
+      @for (o of objetos; track o.id) { <option [value]="o.id">{{ o.nombre }}</option> }
+    </select>
+    <button type="button" (click)="darObjeto()">Darme el objeto</button>
+  </p>
+  <p>
+    <select name="trampa-condicion" (change)="condicion.set($any($event.target).value)">
+      @for (c of condiciones; track c.id) { <option [value]="c.id">{{ c.nombre }}</option> }
+    </select>
+    <button type="button" (click)="ponerCondicion()">Ponerme la condición</button>
+    <button type="button" (click)="quitarCondicion()">Quitármela</button>
+  </p>
+  <p>
+    <select name="trampa-seguidor" (change)="seguidor.set($any($event.target).value)">
+      @for (s of seguidores; track s.id) { <option [value]="s.id">{{ s.nombre }}</option> }
+    </select>
+    <button type="button" (click)="darSeguidor()">Darme el seguidor</button>
+  </p>
+</details>

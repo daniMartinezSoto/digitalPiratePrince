@@ -50,7 +50,7 @@ describe('pantalla Partida: el día con botones', () => {
     expect(pantalla.textContent).toContain('Solo en puertos');
   });
 
-  it('en un puerto, las acciones de varios pasos se ven, pero aún no se pueden usar', async () => {
+  it('en un puerto se pueden usar todas sus acciones (también las de varios pasos)', async () => {
     const store = prepararJuego();
     store.nuevaPartida('Marta', 'mujer', 555);
     const harness = await abrir('/partida');
@@ -58,9 +58,9 @@ describe('pantalla Partida: el día con botones', () => {
     await pulsarYEsperar(harness, 'Empezar el día');
 
     const pantalla = harness.routeNativeElement!;
-    expect(boton(pantalla, 'Ir al mercado').disabled).toBe(true);
-    expect(pantalla.textContent).toContain('llega en el paso 3');
+    expect(boton(pantalla, 'Ir al mercado').disabled).toBe(false);
     expect(boton(pantalla, 'Dar un discurso').disabled).toBe(false);
+    expect(pantalla.textContent).not.toContain('llega en el paso 3');
   });
 
   it('el tesoro enterrado se recuerda por casilla: en otra casilla se puede volver a enterrar', async () => {

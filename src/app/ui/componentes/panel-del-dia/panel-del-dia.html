@@ -5,15 +5,43 @@
         <button type="button" (click)="empezarElDia()">Empezar el día</button>
       }
       @case ('accion') {
-        <h3>Acción (elige una)</h3>
-        <ul>
-          @for (a of acciones(); track a.id) {
-            <li>
-              <button type="button" [disabled]="!a.sePuede" (click)="accion(a.id)">{{ a.nombre }}</button>
-              @if (a.nota) { <small> {{ a.nota }}</small> }
-            </li>
+        @switch (estado.mundo.accionEnCurso?.tipo) {
+          @case ('mercado') { <app-mercado /> }
+          @case ('marineros') { <app-marineros /> }
+          @case ('seguidor') { <app-seguidor-en-espera /> }
+          @case ('dados') { <app-mesa-de-dados /> }
+          @default {
+            @if (eleccionPrevia() === 'sobornos') {
+              @if (sobornos(); as s) {
+                <h3>Buscar información</h3>
+                @if (s.amigos) { <p>Tienes amigos aquí: +1.</p> }
+                <button type="button" (click)="buscarInformacion(0)">Buscar sin sobornar</button>
+                @for (soborno of s.sobornos; track soborno.cantidad) {
+                  <button type="button" [disabled]="!soborno.disponible" (click)="buscarInformacion(soborno.cantidad)">
+                    Sobornar {{ soborno.precio }} (+{{ soborno.cantidad }})
+                  </button>
+                }
+                <button type="button" (click)="eleccionPrevia.set(null)">Cancelar</button>
+              }
+            } @else if (eleccionPrevia() === 'pulso') {
+              <h3>Echar un pulso: ¿cuánto apuestas?</h3>
+              @for (b of apuestas(); track b.texto) {
+                <button type="button" [disabled]="!b.disponible" (click)="pulso(b.apuesta)">Apostar {{ b.texto }}</button>
+              }
+              <button type="button" (click)="eleccionPrevia.set(null)">Cancelar</button>
+            } @else {
+              <h3>Acción (elige una)</h3>
+              <ul>
+                @for (a of acciones(); track a.id) {
+                  <li>
+                    <button type="button" [disabled]="!a.sePuede" (click)="accion(a.id)">{{ a.nombre }}</button>
+                    @if (a.nota) { <small> {{ a.nota }}</small> }
+                  </li>
+                }
+              </ul>
+            }
           }
-        </ul>
+        }
       }
       @case ('comida') {
         @if (comida(); as c) {

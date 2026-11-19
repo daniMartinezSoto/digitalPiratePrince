@@ -1,0 +1,8 @@
+@if (opciones(); as o) {
+  <h3>Contratar marineros</h3>
+  <p>Hoy hay {{ o.disponibles }} marineros, a {{ o.precio }} de oro cada uno. Puedes contratar como mucho {{ o.maximo }}.</p>
+  <label>¿Cuántos?
+    <input name="cantidad" type="number" min="0" [max]="o.maximo" [value]="cantidad()" (change)="elegir($any($event.target).value, o.maximo)" />
+  </label>
+  <button type="button" (click)="contratar()">Contratar {{ cantidad() }} ({{ cantidad() * o.precio }})</button>
+}

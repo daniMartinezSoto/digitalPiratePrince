@@ -1,7 +1,11 @@
 import type { AccionDisponible, MotivoNoDisponible } from '../../core/acciones/acciones-disponibles';
 import type { IdAccion, TiradaDeAccion } from '../../core/acciones/accion';
 import { CONDICIONES } from '../../core/catalogos/cargar-condiciones';
+import { HABILIDADES } from '../../core/catalogos/cargar-habilidades';
 import { OBJETOS } from '../../core/catalogos/cargar-objetos';
+import type { MotivoMercado } from '../../core/mercado/mercado';
+import type { RivalDePulso } from '../../core/guarida/pulso';
+import type { Apuesta } from '../../core/guarida/apuestas';
 import { TIPOS_SEGUIDOR } from '../../core/catalogos/cargar-seguidores';
 import type { Cambio } from '../../core/efectos/cambio';
 import type { Fase } from '../../core/estado/fase';
@@ -122,6 +126,32 @@ export function textoDeSobrenombre(id: string, retrato: Retrato): string {
   return nombreDeSobrenombre(id, retrato);
 }
 
+export const TEXTO_DE_MOTIVO_DEL_MERCADO: Record<MotivoMercado, string> = {
+  sin_oro: 'No te llega el oro',
+  comida_al_maximo: 'Ya tienes toda la comida que cabe',
+  sin_comida: 'No tienes comida',
+  ya_comprado: 'Ya lo has comprado',
+};
+
+export const NOMBRE_DEL_RIVAL: Record<RivalDePulso, string> = {
+  borracho: 'un borracho (−1 al dado)',
+  parroquiano: 'un parroquiano',
+  campeon: 'el campeón de pulsos (+1 al dado)',
+};
+
+/** "10", "25"... o "Todo (73)". */
+export function textoDeApuesta(apuesta: Apuesta, cantidad: number): string {
+  return apuesta === 'todo' ? `Todo (${cantidad})` : `${cantidad}`;
+}
+
+export function nombreDeTipoDeSeguidor(id: string): string {
+  return TIPOS_SEGUIDOR.find(t => t.id === id)?.nombre ?? id;
+}
+
+export function nombreDeHabilidad(id: string): string {
+  return HABILIDADES.find(h => h.id === id)?.nombre ?? id;
+}
+
 export function nombreDeObjeto(id: string): string {
   return OBJETOS.find(o => o.id === id)?.nombre ?? id;
 }
@@ -162,30 +192,38 @@ function conSigno(numero: number): string {
 }
 
 /**
- * Un cambio en una frase: "+5 comida (de 2 a 7)", "Ganas: Ungüento", "Ahora tienes: Tormenta (3 turnos)".
- * nombres: los nombres de los seguidores por su id ("forzudo_1" → "Rufus"), si se conocen.
+ * Los nombres de los seguidores por su id ("forzudo_1" → "Rufus"), ANTES y DESPUÉS del cambio.
+ * Hace falta separarlos porque un id se puede reutilizar: si despides a forzudo_1 y entra otro
+ * forzudo, el nuevo vuelve a ser forzudo_1. Quien se va se nombra con lo de antes; quien llega, con lo de después.
  */
-export function describirCambio(cambio: Cambio, nombres: Record<string, string> = {}): string {
-  const seguidor = (id: string) => nombres[id] ?? id;
+export interface NombresDeSeguidores {
+  antes: Record<string, string>;
+  despues: Record<string, string>;
+}
+
+/** Un cambio en una frase: "+5 comida (de 2 a 7)", "Ganas: Ungüento", "Ahora tienes: Tormenta (3 turnos)". */
+export function describirCambio(cambio: Cambio, nombres: NombresDeSeguidores = { antes: {}, despues: {} }): string {
+  const deAntes = (id: string) => nombres.antes[id] ?? nombres.despues[id] ?? id;
+  const deDespues = (id: string) => nombres.despues[id] ?? nombres.antes[id] ?? id;
   switch (cambio.tipo) {
     case 'recurso': {
       const motivo = cambio.motivo === 'contable' ? ' (el contable)' : cambio.motivo === 'objeto_magico' ? ' (objeto mágico)' : '';
       return `${conSigno(cambio.despues - cambio.antes)} ${NOMBRE_DE_RECURSO[cambio.recurso]} (de ${cambio.antes} a ${cambio.despues})${motivo}`;
     }
     case 'resistencia_seguidor':
-      return `${seguidor(cambio.seguidor)}: ${conSigno(cambio.despues - cambio.antes)} resistencia (de ${cambio.antes} a ${cambio.despues})`;
+      return `${deDespues(cambio.seguidor)}: ${conSigno(cambio.despues - cambio.antes)} resistencia (de ${cambio.antes} a ${cambio.despues})`;
     case 'seguidor_muerto':
-      return `${seguidor(cambio.seguidor)} ha muerto`;
+      return `${deAntes(cambio.seguidor)} ha muerto`;
     case 'seguidor_se_marcha':
-      return `${seguidor(cambio.seguidor)} se marcha`;
+      return `${deAntes(cambio.seguidor)} se marcha`;
     case 'seguidor_se_une':
-      return `${seguidor(cambio.seguidor)} se une al grupo`;
+      return `${deDespues(cambio.seguidor)} se une al grupo`;
     case 'seguidor_no_se_une': {
       const tipo = TIPOS_SEGUIDOR.find(t => t.id === cambio.tipoSeguidor)?.nombre ?? cambio.tipoSeguidor;
       return `${tipo} no se une (${cambio.motivo === 'grupo_lleno' ? 'el grupo está lleno' : 'no puedes tener seguidores nuevos'})`;
     }
     case 'seguidor_despedido':
-      return `Despides a ${seguidor(cambio.seguidor)}`;
+      return `Despides a ${deAntes(cambio.seguidor)}`;
     case 'objeto_ganado':
       return `Ganas: ${nombreDeObjeto(cambio.objeto)}`;
     case 'objeto_no_cabe':

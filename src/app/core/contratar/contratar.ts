@@ -6,6 +6,7 @@ import type { Dados } from '../dados/dados';
 import { aplicarEfectos } from '../efectos/aplicar-efectos';
 import type { Estado } from '../estado/estado';
 import type { AccionEnCurso, MarinerosDisponibles, SeguidorEnEspera } from '../estado/mundo';
+import { sortearNombreDeSeguidor } from '../seguidores/crear-seguidor';
 import { hayMarca, sinMarca } from '../estado/marcas';
 import { calcularModificador } from '../modificadores/calcular-modificador';
 import { seguidoresDespedibles } from '../seguidores/consultas';
@@ -146,13 +147,16 @@ export function buscarSeguidor(estado: Estado, sitio: Sitio, dados: Dados): Resu
     return { estado: cerrarFaseDeAccion(estado, dados), cambios: [], tirada: paraEnsenar(tirada), eventos: tirada.evento ? [tirada.evento] : [] };
   }
 
-  const enCurso: SeguidorEnEspera = { tipo: 'seguidor', seguidor: sale.seguidor, precio: precioDe(sale.seguidor) };
+  // El nombre se sortea ya (gasta un número), para enseñarlo antes de contratarlo.
+  const nombre = sortearNombreDeSeguidor(sale.seguidor, estado.jugador.seguidores, dados);
+  const enCurso: SeguidorEnEspera = { tipo: 'seguidor', seguidor: sale.seguidor, precio: precioDe(sale.seguidor), nombre };
   return { estado: conAccionEnCurso(estado, enCurso, dados), cambios: [], tirada: paraEnsenar(tirada), eventos: [] };
 }
 
 /** Lo que la interfaz necesita para enseñar al seguidor que espera. */
 export interface OpcionesSeguidor {
   seguidor: string; // id del tipo ("forzudo")
+  nombre?: string; // su nombre propio ("Cornelius Sinvergüenza"); falta solo en partidas guardadas antiguas
   precio: number;
   disponible: boolean;
   motivo?: 'sin_oro';
@@ -162,11 +166,12 @@ export interface OpcionesSeguidor {
 
 /** Solo consulta: el seguidor que espera, su precio y si se puede contratar. */
 export function opcionesDelSeguidor(estado: Estado): OpcionesSeguidor {
-  const { seguidor, precio } = enCursoDeTipo(estado, 'seguidor', 'opcionesDelSeguidor');
+  const { seguidor, precio, nombre } = enCursoDeTipo(estado, 'seguidor', 'opcionesDelSeguidor');
   const hayQueDespedir = estado.jugador.seguidores.length >= maximoSeguidoresActual(estado.jugador);
+  const conNombre = nombre === undefined ? {} : { nombre };
   return estado.jugador.oro < precio
-    ? { seguidor, precio, disponible: false, motivo: 'sin_oro', hayQueDespedir }
-    : { seguidor, precio, disponible: true, hayQueDespedir };
+    ? { seguidor, ...conNombre, precio, disponible: false, motivo: 'sin_oro', hayQueDespedir }
+    : { seguidor, ...conNombre, precio, disponible: true, hayQueDespedir };
 }
 
 /**
@@ -176,7 +181,7 @@ export function opcionesDelSeguidor(estado: Estado): OpcionesSeguidor {
  * Error si no le llega el oro o el despedido no se puede despedir.
  */
 export function contratarSeguidor(estado: Estado, dados: Dados, despedir?: string): ResultadoAccion {
-  const { seguidor, precio } = enCursoDeTipo(estado, 'seguidor', 'contratarSeguidor');
+  const { seguidor, precio, nombre } = enCursoDeTipo(estado, 'seguidor', 'contratarSeguidor');
   if (estado.jugador.oro < precio) {
     throw new Error(`contratarSeguidor: pide ${precio} y solo tiene ${estado.jugador.oro} de oro`);
   }
@@ -186,7 +191,7 @@ export function contratarSeguidor(estado: Estado, dados: Dados, despedir?: strin
 
   const unirse = aplicarEfectos(
     estado,
-    [despedir === undefined ? { tipo: 'ganar_seguidor', seguidor } : { tipo: 'ganar_seguidor', seguidor, despedir }],
+    [{ tipo: 'ganar_seguidor', seguidor, ...(despedir === undefined ? {} : { despedir }), ...(nombre === undefined ? {} : { nombre }) }],
     dados,
   );
   if (!unirse.cambios.some(c => c.tipo === 'seguidor_se_une')) {

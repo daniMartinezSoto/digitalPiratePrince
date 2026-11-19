@@ -10,6 +10,9 @@ export interface OpcionesSeguidor {
   inseparable?: boolean;
   // true = si muere, el jugador pierde la partida (el seguidor de "el hermano").
   vital?: boolean;
+  // Nombre propio ya elegido (el que se enseñó al buscar seguidor en un puerto). Si viene, no se
+  // sortea otro y no se gasta ningún número del generador.
+  nombre?: string;
 }
 
 /** De dónde salen las fichas y las listas de nombres. Por defecto, las del juego; los tests pueden pasar otras. */
@@ -28,7 +31,7 @@ const FUENTES_DEL_JUEGO: FuentesSeguidor = { tipos: TIPOS_SEGUIDOR, nombres: LIS
  *
  * SOLO lo fabrica: no lo mete en el grupo ni cobra su precio (eso es el efecto "se une un seguidor").
  * `seguidoresActuales` es el grupo que ya tiene el jugador: sirve para no repetir nombre ni id.
- * Gasta exactamente UN número del generador (el del nombre).
+ * Gasta exactamente UN número del generador (el del nombre), o NINGUNO si `opciones.nombre` ya lo trae.
  */
 export function crearSeguidor(
   idTipo: string,
@@ -48,7 +51,7 @@ export function crearSeguidor(
   const seguidor: Seguidor = {
     id: idLibre(tipo.id, seguidoresActuales),
     tipo: tipo.id,
-    nombre: nombreAlAzar(seguidoresActuales, dados, nombresDe(tipo.nombres, fuentes.nombres)),
+    nombre: opciones.nombre ?? nombreAlAzar(seguidoresActuales, dados, nombresDe(tipo.nombres, fuentes.nombres)),
     ataque: tipo.ataque,
     resistencia,
     resistenciaMaxima: resistencia,
@@ -63,6 +66,24 @@ export function crearSeguidor(
     seguidor.vital = true;
   }
   return seguidor;
+}
+
+/**
+ * Sortea el nombre propio de un seguidor de ese tipo sin fabricarlo todavía (para enseñarlo antes de
+ * contratarlo: "se ofrece Cornelius Sinvergüenza"). Mismas listas y misma regla que crearSeguidor
+ * (no repite nombre dentro del grupo). Gasta exactamente UN número del generador.
+ */
+export function sortearNombreDeSeguidor(
+  idTipo: string,
+  seguidoresActuales: readonly Seguidor[],
+  dados: Dados,
+  fuentes: FuentesSeguidor = FUENTES_DEL_JUEGO,
+): string {
+  const tipo = fuentes.tipos.find(t => t.id === idTipo);
+  if (!tipo) {
+    throw new Error(`sortearNombreDeSeguidor: no existe el tipo de seguidor "${idTipo}"`);
+  }
+  return nombreAlAzar(seguidoresActuales, dados, nombresDe(tipo.nombres, fuentes.nombres));
 }
 
 /**

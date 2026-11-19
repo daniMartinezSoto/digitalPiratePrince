@@ -89,7 +89,8 @@ type EfectoSinDados =
   // seguidor = id del TIPO en el catálogo ("forzudo"). El nombre propio se le pone al unirse.
   // despedir NO se escribe en el JSON: lo añade el juego cuando el grupo está lleno y el jugador
   // elige a quién despide para hacer sitio (es el id del seguidor en la partida, p. ej. "forzudo_1").
-  | { tipo: 'ganar_seguidor'; seguidor: string; inseparable?: boolean; despedir?: string };
+  // nombre TAMPOCO se escribe en el JSON: es el nombre propio ya elegido al buscar seguidor en un puerto.
+  | { tipo: 'ganar_seguidor'; seguidor: string; inseparable?: boolean; despedir?: string; nombre?: string };
 
 // Efecto tal como se escribe en el JSON.
 export type EfectoDefinicion =

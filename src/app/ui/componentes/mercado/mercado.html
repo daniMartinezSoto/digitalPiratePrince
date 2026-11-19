@@ -1,0 +1,46 @@
+@if (opciones(); as o) {
+  <h3>Mercado</h3>
+  <p>
+    <button type="button" [disabled]="!o.comprarComida.disponible" (click)="comprarComida()">
+      Comprar 1 de comida ({{ o.comprarComida.precio }})
+    </button>
+    @if (o.comprarComida.motivo; as m) { <small> {{ motivo[m] }}</small> }
+  </p>
+  <p>
+    <button type="button" [disabled]="!o.venderComida.disponible" (click)="venderComida()">
+      Vender 1 de comida ({{ o.venderComida.precio }})
+    </button>
+    @if (o.venderComida.motivo; as m) { <small> {{ motivo[m] }}</small> }
+  </p>
+
+  <h4>Vender objetos</h4>
+  @if (o.venderObjetos.length === 0) {
+    <p>No llevas nada que vender.</p>
+  }
+  @for (v of o.venderObjetos; track v.posicion) {
+    <p><button type="button" (click)="vender(v.posicion, v.objeto)">Vender {{ nombreDeObjeto(v.objeto) }} ({{ v.precio }})</button></p>
+  }
+
+  <h4>Rastrillo de hoy</h4>
+  @if (o.rastrillo; as r) {
+    @if (r.espaciosQueFaltan > 0) {
+      <p>No te cabe: te faltan {{ r.espaciosQueFaltan }} hueco(s). Marca qué tiras para hacerle sitio:</p>
+      @for (objeto of inventario(); track objeto.posicion) {
+        <label>
+          <input type="checkbox" [name]="'tirar-' + objeto.posicion" (change)="marcar(objeto.posicion, $any($event.target).checked)" />
+          {{ objeto.nombre }}
+        </label>
+      }
+    }
+    <p>
+      <button type="button" [disabled]="!r.disponible" (click)="comprarEnRastrillo(r.objeto)">
+        Comprar {{ nombreDeObjeto(r.objeto) }} ({{ r.precio }})
+      </button>
+      @if (r.motivo; as m) { <small> {{ motivo[m] }}</small> }
+    </p>
+  } @else {
+    <p>Hoy no queda nada en el rastrillo.</p>
+  }
+
+  <p><button type="button" (click)="salir()">Salir del mercado</button></p>
+}

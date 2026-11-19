@@ -73,21 +73,21 @@ describe('bendiciones del amuleto: se calculan, la hoja no cambia', () => {
   it('carisma: puede llevar 1 seguidor más', () => {
     const estado = conAmuleto(['carisma', 'hambre_insaciable']);
 
-    expect(maximoSeguidoresActual(estado.jugador)).toBe(4);
+    expect(maximoSeguidoresActual(estado.jugador)).toBe(3); // 2 normales + 1 (decidido por el autor el 19-nov: máximo 2)
   });
 
   it('piel de piedra: de momento solo es la ficha (la regla llega con el combate)', () => {
     const estado = conAmuleto(['piel_de_piedra', 'hambre_insaciable'], { fuerza: 3, ingenio: 3 });
 
     expect([fuerzaActual(estado.jugador), ingenioActual(estado.jugador), vidaMaxActual(estado.jugador)]).toEqual([3, 3, 15]);
-    expect(maximoSeguidoresActual(estado.jugador)).toBe(3);
+    expect(maximoSeguidoresActual(estado.jugador)).toBe(2);
   });
 
   it('sin amuleto, las consultas dan los valores de la hoja', () => {
     const estado = estadoCon({ fuerza: 2, ingenio: 4 });
 
     expect([fuerzaActual(estado.jugador), ingenioActual(estado.jugador), vidaMaxActual(estado.jugador)]).toEqual([2, 4, 15]);
-    expect(maximoSeguidoresActual(estado.jugador)).toBe(3);
+    expect(maximoSeguidoresActual(estado.jugador)).toBe(2);
   });
 
   it('fuerza, ingenio y vida máxima nunca bajan de 1, ni el máximo de seguidores de 0', () => {
@@ -127,27 +127,27 @@ describe('el tope de la vida y del grupo usan los valores actuales', () => {
     expect(estado.jugador.vida).toBe(15);
   });
 
-  it('con carisma entra un 4.º seguidor', () => {
-    const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: [seguidor('a'), seguidor('b'), seguidor('c')] });
+  it('con carisma entra un 3.er seguidor', () => {
+    const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: [seguidor('a'), seguidor('b')] });
     const { estado, cambios } = aplicarEfectos(inicial, [{ tipo: 'ganar_seguidor', seguidor: 'forzudo' }], new Dados(1));
 
-    expect(estado.jugador.seguidores).toHaveLength(4);
+    expect(estado.jugador.seguidores).toHaveLength(3);
     expect(cambios.map(c => c.tipo)).toEqual(['seguidor_se_une']);
   });
 
-  it('con carisma y 4 seguidores, ya no entra un 5.º', () => {
-    const cuatro = [seguidor('a'), seguidor('b'), seguidor('c'), seguidor('d')];
-    const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: cuatro });
+  it('con carisma y 3 seguidores, ya no entra un 4.º', () => {
+    const tres = [seguidor('a'), seguidor('b'), seguidor('c')];
+    const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: tres });
     const { cambios } = aplicarEfectos(inicial, [{ tipo: 'ganar_seguidor', seguidor: 'forzudo' }], new Dados(1));
 
     expect(cambios).toEqual([{ tipo: 'seguidor_no_se_une', tipoSeguidor: 'forzudo', motivo: 'grupo_lleno' }]);
   });
 
   it('grupoLleno tiene en cuenta el carisma', () => {
-    const tres = [seguidor('a'), seguidor('b'), seguidor('c')];
+    const dos = [seguidor('a'), seguidor('b')];
 
-    expect(grupoLleno(estadoCon({ seguidores: tres }).jugador)).toBe(true);
-    expect(grupoLleno(conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: tres }).jugador)).toBe(false);
+    expect(grupoLleno(estadoCon({ seguidores: dos }).jugador)).toBe(true);
+    expect(grupoLleno(conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: dos }).jugador)).toBe(false);
   });
 
   it('un "+1 de fuerza" de un evento cambia la hoja y se suma a lo del amuleto', () => {
@@ -188,14 +188,14 @@ describe('al quitarse el amuleto, todo vuelve a lo normal', () => {
     expect(cambios).toHaveLength(1);
   });
 
-  it('carisma: con 4 seguidores, se marcha uno y el chivato dice por qué', () => {
-    const cuatro = [seguidor('a'), seguidor('b'), seguidor('c'), seguidor('d')];
-    const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: cuatro });
+  it('carisma: con 3 seguidores, se marcha uno y el chivato dice por qué', () => {
+    const tres = [seguidor('a'), seguidor('b'), seguidor('c')];
+    const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: tres });
     const { estado, cambios } = aplicarEfectos(inicial, [QUITAR_UNA_MALDICION], new Dados(1));
 
     const seQueda = estado.jugador.seguidores.map(s => s.id);
-    const seVa = ['a', 'b', 'c', 'd'].find(id => !seQueda.includes(id));
-    expect(seQueda).toHaveLength(3);
+    const seVa = ['a', 'b', 'c'].find(id => !seQueda.includes(id));
+    expect(seQueda).toHaveLength(2);
     expect(cambios).toEqual([
       { tipo: 'condicion_quitada', condicion: 'amuleto_maldito' },
       { tipo: 'seguidor_se_marcha', seguidor: seVa, motivo: 'carisma_perdido' },
@@ -203,8 +203,8 @@ describe('al quitarse el amuleto, todo vuelve a lo normal', () => {
   });
 
   it('carisma: el que se marcha es al azar (con distintas semillas no es siempre el mismo)', () => {
-    const cuatro = [seguidor('a'), seguidor('b'), seguidor('c'), seguidor('d')];
-    const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: cuatro });
+    const tres = [seguidor('a'), seguidor('b'), seguidor('c')];
+    const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: tres });
     const seVan = new Set<string>();
     for (let semilla = 1; semilla <= 40; semilla++) {
       const { cambios } = aplicarEfectos(inicial, [QUITAR_UNA_MALDICION], new Dados(semilla));
@@ -214,29 +214,29 @@ describe('al quitarse el amuleto, todo vuelve a lo normal', () => {
       }
     }
 
-    expect(seVan.size).toBe(4);
+    expect(seVan.size).toBe(3);
   });
 
   it('carisma: un inseparable nunca entra en el sorteo', () => {
-    const cuatro = [seguidor('hermano', true), seguidor('b'), seguidor('c'), seguidor('d')];
-    const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: cuatro });
+    const tres = [seguidor('hermano', true), seguidor('b'), seguidor('c')];
+    const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: tres });
     for (let semilla = 1; semilla <= 40; semilla++) {
       const { estado } = aplicarEfectos(inicial, [QUITAR_UNA_MALDICION], new Dados(semilla));
 
       expect(estado.jugador.seguidores.map(s => s.id)).toContain('hermano');
-      expect(estado.jugador.seguidores).toHaveLength(3);
+      expect(estado.jugador.seguidores).toHaveLength(2);
     }
   });
 
   it('carisma: si todos son inseparables, no se marcha nadie', () => {
-    const cuatro = [seguidor('a', true), seguidor('b', true), seguidor('c', true), seguidor('d', true)];
-    const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: cuatro });
+    const tres = [seguidor('a', true), seguidor('b', true), seguidor('c', true)];
+    const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: tres });
     const { estado } = aplicarEfectos(inicial, [QUITAR_UNA_MALDICION], new Dados(1));
 
-    expect(estado.jugador.seguidores).toHaveLength(4);
+    expect(estado.jugador.seguidores).toHaveLength(3);
   });
 
-  it('carisma: con 3 o menos seguidores no se marcha nadie ni se gastan dados', () => {
+  it('carisma: con 2 o menos seguidores no se marcha nadie ni se gastan dados', () => {
     const inicial = conAmuleto(['carisma', 'hambre_insaciable'], { seguidores: [seguidor('a'), seguidor('b')] });
     const dados = new Dados(1);
     const antes = dados.obtenerEstado();
@@ -420,7 +420,7 @@ describe('"el maldito" empieza con su amuleto', () => {
 
     expect(estado.jugador.sobrenombre).toBe('el_maldito');
     expect(estado.jugador.condiciones).toEqual([{ id: 'amuleto_maldito', partes: ['carisma', 'ambicion_desmedida'] }]);
-    expect(maximoSeguidoresActual(estado.jugador)).toBe(4);
+    expect(maximoSeguidoresActual(estado.jugador)).toBe(3);
     expect(famaObjetivoActual(estado.jugador)).toBe(12);
   });
 

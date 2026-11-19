@@ -27,6 +27,9 @@ export interface SeguidorEnEspera {
   tipo: 'seguidor';
   seguidor: string;
   precio: number;
+  // Su nombre propio, sorteado al salir (se enseña antes de contratarlo). Opcional solo por las
+  // partidas guardadas antes de existir: si falta, se sortea al contratarlo.
+  nombre?: string;
 }
 
 // Sentado a la mesa de dados en una guarida: puede apostar tantas veces como quiera hasta levantarse.

@@ -14,8 +14,14 @@ describe('textos de la pantalla', () => {
   });
 
   it('los seguidores con su nombre propio si se conoce', () => {
-    expect(describirCambio({ tipo: 'seguidor_muerto', seguidor: 'forzudo_1' }, { forzudo_1: 'Rufus' })).toBe('Rufus ha muerto');
+    expect(describirCambio({ tipo: 'seguidor_muerto', seguidor: 'forzudo_1' }, { antes: { forzudo_1: 'Rufus' }, despues: {} })).toBe('Rufus ha muerto');
     expect(describirCambio({ tipo: 'seguidor_muerto', seguidor: 'forzudo_1' })).toBe('forzudo_1 ha muerto');
+  });
+
+  it('un id reutilizado: quien se va con el nombre de antes, quien llega con el de después', () => {
+    const nombres = { antes: { forzudo_1: 'Beatriz' }, despues: { forzudo_1: 'Rufus' } };
+    expect(describirCambio({ tipo: 'seguidor_despedido', seguidor: 'forzudo_1' }, nombres)).toBe('Despides a Beatriz');
+    expect(describirCambio({ tipo: 'seguidor_se_une', seguidor: 'forzudo_1' }, nombres)).toBe('Rufus se une al grupo');
   });
 
   it('el motivo de una acción desactivada', () => {
