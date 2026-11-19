@@ -11,6 +11,7 @@ import { motivoParaNoExplorar } from './explorar';
 import { motivoParaNoMendigar } from './mendigar';
 import { esPuerto } from '../turno/lugar';
 import type { IdAccion, Sitio } from './accion';
+import { hayCombate } from '../combate/hay-combate';
 
 // REGLA DE LA INTERFAZ (decidida por el autor): una acción que no se puede hacer SIEMPRE se ve,
 // desactivada (más clara) y con el motivo. Nunca se esconde.
@@ -97,7 +98,7 @@ export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponi
   const bloqueo: MotivoNoDisponible | undefined =
     estado.mundo.finPartida || estado.mundo.fase !== 'accion'
       ? 'no_es_momento'
-      : estado.mundo.combate
+      : hayCombate(estado)
         ? 'combate_en_curso'
         : estado.mundo.accionEnCurso
           ? 'accion_a_medias'

@@ -12,6 +12,7 @@ import type { Efecto } from '../tablas/efecto';
 import { TABLAS } from '../tablas/rangos/cargar-tablas';
 import { resolverEfecto, resolverTabla } from '../tablas/rangos/resolver-tabla';
 import type { Tabla } from '../tablas/rangos/tabla';
+import { hayCombate } from '../combate/hay-combate';
 
 /** Catálogos en los que buscar las fichas. Por defecto, los del juego; los tests pueden pasar otros. */
 export interface CatalogosTurno {
@@ -70,7 +71,7 @@ export function iniciarTurno(
   if (estado.mundo.finPartida) {
     throw new Error('iniciarTurno: la partida ya ha terminado');
   }
-  if (estado.mundo.combate) {
+  if (hayCombate(estado)) {
     throw new Error('iniciarTurno: hay un combate en curso; primero hay que terminarlo');
   }
   if (estado.mundo.fase !== 'inicio') {

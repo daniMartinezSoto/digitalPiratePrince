@@ -1,6 +1,7 @@
 import type { Dados } from '../dados/dados';
 import { aplicarEfectos, type CatalogosEfectos, type ResultadoEfectos } from '../efectos/aplicar-efectos';
 import type { Estado } from '../estado/estado';
+import { hayCombate } from '../combate/hay-combate';
 
 /**
  * El jugador tira el objeto de esa posición del inventario. Se puede en cualquier momento,
@@ -13,7 +14,7 @@ export function tirarObjeto(estado: Estado, posicion: number, dados: Dados, cata
   if (estado.mundo.finPartida) {
     throw new Error('tirarObjeto: la partida ya ha terminado');
   }
-  if (estado.mundo.combate) {
+  if (hayCombate(estado)) {
     throw new Error('tirarObjeto: hay un combate en curso; primero hay que terminarlo');
   }
   return aplicarEfectos(estado, [{ tipo: 'tirar_objeto', posicion }], dados, catalogos);

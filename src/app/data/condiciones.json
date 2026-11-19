@@ -139,5 +139,26 @@
     "descripcion": "Todo se te escurre de las manos: −1 al pescar y al cazar.",
     "categoria": "maldicion",
     "modificadores": { "pesca": -1, "caza": -1 }
+  },
+  {
+    "id": "canones_buenos",
+    "nombre": "Cañones buenos",
+    "descripcion": "Mejora del barco: +1 a tu dado en cada duelo de cañones.",
+    "categoria": "mejora",
+    "modificadores": { "disparo_naval": 1 }
+  },
+  {
+    "id": "casco_reforzado",
+    "nombre": "Casco reforzado",
+    "descripcion": "Mejora del barco: cada duelo de cañones que pierdes te cuesta 1 marinero menos (pero siempre al menos 1).",
+    "categoria": "mejora",
+    "ajustes": { "reduccionDanoNaval": 1 }
+  },
+  {
+    "id": "velas_nuevas",
+    "nombre": "Velas nuevas",
+    "descripcion": "Mejora del barco: +1 al dado cuando intentas huir de un combate naval.",
+    "categoria": "mejora",
+    "modificadores": { "huida_naval": 1 }
   }
 ]

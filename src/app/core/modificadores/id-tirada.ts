@@ -16,6 +16,8 @@ export const IDS_TIRADA = [
   'mendigar', // la acción del artista
   'ataque', // tu ataque en combate: se SUMA AL DAÑO si aciertas (el dado sigue decidiendo el fallo y el 6)
   'ataque_no_humano', // además de "ataque", contra enemigos que no son humanos (la lanza kalinago)
+  'disparo_naval', // tu dado en el duelo de cañones del combate naval (las mejoras del barco; el minijuego)
+  'huida_naval', // huir de un combate naval (1d6, con 3-6 huyes)
 ] as const;
 
 export type IdTirada = (typeof IDS_TIRADA)[number];

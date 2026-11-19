@@ -2,6 +2,7 @@ import { OBJETOS } from '../catalogos/cargar-objetos';
 import type { Objeto } from '../catalogos/objeto';
 import type { Estado } from '../estado/estado';
 import type { Jugador } from '../estado/jugador';
+import { hayCombate } from '../combate/hay-combate';
 
 // Preguntas sobre el inventario. Solo consultan: no cambian nada.
 // Sirven para que la interfaz sepa cuándo preguntar "No cabe. ¿Tiras algo para hacerle sitio?"
@@ -37,7 +38,7 @@ export function cabeObjeto(jugador: Jugador, idObjeto: string, objetos: readonly
  * Lista vacía = no hay nada que usar ahora.
  */
 export function objetosUsablesAhora(estado: Estado, objetos: readonly Objeto[] = OBJETOS): number[] {
-  if (estado.mundo.finPartida || estado.mundo.combate || estado.mundo.fase !== 'accion' || estado.mundo.accionEnCurso) {
+  if (estado.mundo.finPartida || hayCombate(estado) || estado.mundo.fase !== 'accion' || estado.mundo.accionEnCurso) {
     return [];
   }
   return estado.jugador.inventario.flatMap((llevado, posicion) => (fichaDe(llevado.id, objetos).cuandoSeUsa === 'accion' ? [posicion] : []));

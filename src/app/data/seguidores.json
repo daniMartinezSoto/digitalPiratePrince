@@ -12,7 +12,7 @@
     "id": "pescador",
     "nombre": "Pescador",
     "descripcion": "Sabe dónde pican. Con él, las redes siempre vuelven un poco más llenas.",
-    "ataque": 2,
+    "ataque": 1,
     "resistencia": 10,
     "habilidades": [
       "pesca_abundante"
@@ -57,7 +57,7 @@
     "id": "barbero_cirujano",
     "nombre": "Barbero-cirujano",
     "descripcion": "Cose heridas, arregla barbas y sabe cómo hablar a la gente importante.",
-    "ataque": 2,
+    "ataque": 1,
     "resistencia": 10,
     "habilidades": [
       "cirujano"
@@ -68,7 +68,7 @@
     "id": "navegante",
     "nombre": "Navegante",
     "descripcion": "Lee el viento y las estrellas: con él, tu barco llega más lejos.",
-    "ataque": 2,
+    "ataque": 1,
     "resistencia": 10,
     "habilidades": [
       "navegacion"

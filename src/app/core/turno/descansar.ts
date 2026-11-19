@@ -15,6 +15,7 @@ import { chequeo, type ResultadoChequeo } from '../chequeos/chequeo';
 import { conMarca, hayMarca } from '../estado/marcas';
 import { tieneVinculoNativo } from '../personaje/vinculo-nativo';
 import { esPuerto, TERRENO_POR_DEFECTO, type Lugar, type TerrenoAlRaso } from './lugar';
+import { hayCombate } from '../combate/hay-combate';
 
 /** Catálogos y listas que usa el descanso. Por defecto, los del juego; los tests pueden pasar otros. */
 export interface CatalogosDescanso {
@@ -146,7 +147,7 @@ export function descansar(
   if (estado.mundo.finPartida) {
     throw new Error('descansar: la partida ya ha terminado');
   }
-  if (estado.mundo.combate) {
+  if (hayCombate(estado)) {
     throw new Error('descansar: hay un combate en curso; primero hay que terminarlo');
   }
   if (estado.mundo.fase !== 'descanso') {

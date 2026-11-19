@@ -38,6 +38,7 @@ export function crearPartida(semilla: number, nombre: string, retrato: Retrato =
       finPartida: null,
       accionEnCurso: null,
       combate: null,
+      combateNaval: null,
       nochePagada: false,
       comidaGratis: false,
       ultimaBusquedaInformacion: null,

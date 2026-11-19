@@ -1,4 +1,5 @@
 import type { CombateEnCurso } from './combate';
+import type { CombateNavalEnCurso } from './combate-naval';
 import type { Fase } from './fase';
 import type { FinPartida } from './fin-partida';
 
@@ -128,6 +129,10 @@ export interface Mundo {
   // El combate que se está jugando (core/estado/combate.ts, Sprint 7). null si no hay ninguno.
   // Mientras hay uno, no se puede hacer nada más (ni acciones, ni comer, ni dormir, ni usar objetos).
   combate: CombateEnCurso | null;
+
+  // El combate naval que se está jugando (core/estado/combate-naval.ts, Sprint 7). null si no hay ninguno.
+  // Bloquea lo mismo que el combate normal. Durante el abordaje existen los dos a la vez.
+  combateNaval: CombateNavalEnCurso | null;
 
   // true = el grupo tiene ya pagada la noche donde está (monasterio o aldea): lo apuntan la acción
   // "Descansar en el monasterio" (su precio incluye dormir allí) y la fiesta de bienvenida de una aldea.

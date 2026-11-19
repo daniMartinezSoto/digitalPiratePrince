@@ -44,7 +44,7 @@ describe('validarCondiciones', () => {
   });
 
   it('acepta todas las categorías válidas', () => {
-    for (const categoria of ['maldicion', 'bendicion', 'enfermedad', 'clima', 'otra']) {
+    for (const categoria of ['maldicion', 'bendicion', 'enfermedad', 'clima', 'mejora', 'otra']) {
       expect(erroresDe({ ...escorbuto(), categoria })).toBe('');
     }
   });

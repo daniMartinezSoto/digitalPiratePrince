@@ -1,0 +1,70 @@
+[
+  {
+    "id": "chalupa_de_pescadores", "nombre": "Chalupa de pescadores",
+    "dano": 0, "resistencia": 1,
+    "abordaje": [{ "enemigo": "pescador", "cantidad": 2 }],
+    "botinAbordaje": { "efectos": [{ "tipo": "comida", "cantidad": "1d6" }] },
+    "libro": "E008"
+  },
+  {
+    "id": "barco_negrero", "nombre": "Barco negrero",
+    "dano": 2, "resistencia": 4,
+    "abordaje": [{ "enemigo": "esclavista", "cantidad": 2 }],
+    "eventosAlGanar": ["esclavos_del_negrero"],
+    "botinAbordaje": { "efectos": [{ "tipo": "oro", "cantidad": "1d6x10" }] },
+    "libro": "E008"
+  },
+  {
+    "id": "barco_fantasma", "nombre": "Barco fantasma",
+    "dano": 3, "resistencia": 4,
+    "abordaje": [{ "enemigo": "pirata_esqueleto", "cantidad": 3 }],
+    "recompensa": [{ "tipo": "fama", "cantidad": 1 }],
+    "eventosAlGanar": ["amuleto_fantasmal"],
+    "botinAbordaje": { "probabilidadTesoro": 50 },
+    "libro": "E008"
+  },
+  {
+    "id": "mercante_protegido", "nombre": "Barco mercante protegido",
+    "dano": 2, "resistencia": 6,
+    "abordaje": [{ "enemigo": "guardia", "cantidad": 2 }],
+    "recompensa": [{ "tipo": "fama", "cantidad": 1 }, { "tipo": "oro", "cantidad": "2d6x10" }],
+    "botinAbordaje": { "efectos": [{ "tipo": "oro", "cantidad": "1d6x10" }] },
+    "libro": "E008"
+  },
+  {
+    "id": "fragata_de_la_marina", "nombre": "Fragata de la marina",
+    "dano": 4, "resistencia": 4,
+    "abordaje": [{ "enemigo": "agente_de_la_marina", "resistencia": 8 }, { "enemigo": "guardia_de_la_marina", "cantidad": 2 }],
+    "recompensa": [{ "tipo": "fama", "cantidad": 1 }, { "tipo": "oro", "cantidad": "2d6x10" }],
+    "eventosAlGanar": ["cofre"],
+    "botinAbordaje": { "efectos": [{ "tipo": "oro", "cantidad": "1d6x10" }], "probabilidadTesoro": 25 },
+    "libro": "E008"
+  },
+  {
+    "id": "barco_pirata_neutral", "nombre": "Barco pirata",
+    "dano": "1d6", "resistencia": 5,
+    "abordaje": [{ "enemigo": "pirata", "cantidad": "1d3+1" }],
+    "recompensa": [{ "tipo": "oro", "cantidad": "1d6x10" }],
+    "eventosAlGanar": ["cofre"],
+    "botinAbordaje": { "efectos": [{ "tipo": "oro", "cantidad": "1d6x10" }], "probabilidadTesoro": 25 },
+    "libro": "E008"
+  },
+  {
+    "id": "barco_pirata_hostil", "nombre": "Barco pirata hostil",
+    "dano": "1d6", "resistencia": 5,
+    "abordaje": [{ "enemigo": "pirata", "cantidad": "1d3+1" }],
+    "recompensa": [{ "tipo": "oro", "cantidad": "1d6x10" }, { "tipo": "fama", "cantidad": 1 }],
+    "eventosAlGanar": ["cofre"],
+    "botinAbordaje": { "efectos": [{ "tipo": "oro", "cantidad": "1d6x10" }], "probabilidadTesoro": 25 },
+    "libro": "E008"
+  },
+  {
+    "id": "galeon_del_tesoro", "nombre": "Galeón del tesoro",
+    "dano": 5, "resistencia": 5,
+    "abordaje": [{ "enemigo": "capitan_del_galeon" }, { "enemigo": "soldado_del_galeon" }],
+    "recompensa": [{ "tipo": "fama", "cantidad": 1 }, { "tipo": "oro", "cantidad": "3d6x10" }],
+    "eventosAlGanar": ["cofre", "cofre"],
+    "botinAbordaje": { "efectos": [{ "tipo": "oro", "cantidad": "1d6x10" }], "probabilidadTesoro": 25 },
+    "libro": "E008"
+  }
+]

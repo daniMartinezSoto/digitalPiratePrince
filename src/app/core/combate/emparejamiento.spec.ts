@@ -35,11 +35,20 @@ describe('emparejar (sorteo inicial)', () => {
     expect(atacantesDe(objetivos, 'forzudo_1')).toEqual(['e1', 'e2']);
   });
 
-  it('también funciona si el bando grande es el nuestro: tres contra un jaguar', () => {
-    // El jaguar elige a quién ataca (posición 1 = forzudo_1); los otros dos van a por él.
-    const objetivos = emparejar(['jugador', 'forzudo_1', 'nativo_1'], ['jaguar_1'], dadosTrucados([1]));
+  it('si el bando grande es el nuestro, el enemigo va SIEMPRE a por el jugador: tres contra un jaguar', () => {
+    const dados = dadosTrucados([]);
+    const objetivos = emparejar(['jugador', 'forzudo_1', 'nativo_1'], ['jaguar_1'], dados);
 
-    expect(objetivos).toEqual({ jaguar_1: 'forzudo_1', forzudo_1: 'jaguar_1', jugador: 'jaguar_1', nativo_1: 'jaguar_1' });
+    expect(objetivos).toEqual({ jugador: 'jaguar_1', jaguar_1: 'jugador', forzudo_1: 'jaguar_1', nativo_1: 'jaguar_1' });
+    expect(dados.restantes()).toBe(0);
+  });
+
+  it('tres contra dos: uno de los enemigos (al azar) es el rival del jugador; el otro, de un seguidor', () => {
+    // El rival del jugador: posición 1 de [e1, e2] = e2. El e1 elige entre los seguidores: posición 1 = nativo_1.
+    // Sobra el forzudo, que va a por la posición 0 de [e1, e2] = e1.
+    const objetivos = emparejar(['jugador', 'forzudo_1', 'nativo_1'], ['e1', 'e2'], dadosTrucados([1, 1, 0]));
+
+    expect(objetivos).toEqual({ jugador: 'e2', e2: 'jugador', e1: 'nativo_1', nativo_1: 'e1', forzudo_1: 'e1' });
   });
 
   it('todos tienen objetivo y siempre es del otro bando', () => {
@@ -51,6 +60,15 @@ describe('emparejar (sorteo inicial)', () => {
       for (const e of enemigos) expect(aliados).toContain(objetivos[e]);
       // Cada uno del bando pequeño tiene, al menos, a su pareja encima.
       for (const a of aliados) expect(atacantesDe(objetivos, a).length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('al jugador siempre le ataca alguien, sean más o menos los enemigos', () => {
+    for (let semilla = 1; semilla <= 50; semilla++) {
+      for (const enemigos of [['e1'], ['e1', 'e2'], ['e1', 'e2', 'e3', 'e4']]) {
+        const objetivos = emparejar(['jugador', 's1', 's2'], enemigos, new Dados(semilla));
+        expect(atacantesDe(objetivos, 'jugador').length).toBeGreaterThanOrEqual(1);
+      }
     }
   });
 
@@ -96,6 +114,13 @@ describe('reemparejar (después de una ronda)', () => {
     expect(reemparejar(objetivos, ['jugador'], ['e1', 'e2', 'e3'], dadosTrucados([]))).toEqual({
       jugador: 'e3', e1: 'jugador', e2: 'jugador', e3: 'jugador',
     });
+  });
+
+  it('si ya nadie ataca al jugador, uno de los enemigos vivos (al azar) pasa a atacarle', () => {
+    // Tú y el forzudo contra e1 y e2. Muere tu rival (e2); e1 iba a por el forzudo.
+    const objetivos = { jugador: 'e2', e2: 'jugador', forzudo_1: 'e1', e1: 'forzudo_1' };
+    // Tú eliges nuevo rival (solo queda e1, sin tirar); nadie te ataca, así que e1 pasa a por ti (solo queda él).
+    expect(reemparejar(objetivos, ['jugador', 'forzudo_1'], ['e1'], dadosTrucados([]))).toEqual({ jugador: 'e1', forzudo_1: 'e1', e1: 'jugador' });
   });
 
   it('si un bando ha caído entero, se acaba: no hay objetivos', () => {

@@ -10,6 +10,7 @@ import type { Efecto } from '../tablas/efecto';
 import { tieneVinculoNativo } from '../personaje/vinculo-nativo';
 import type { Jugador } from '../estado/jugador';
 import { esPuerto, type Lugar } from './lugar';
+import { hayCombate } from '../combate/hay-combate';
 
 const CATALOGOS_DEL_JUEGO: CatalogosEfectos = { objetos: OBJETOS, condiciones: CONDICIONES };
 
@@ -101,7 +102,7 @@ export function comer(
   if (estado.mundo.finPartida) {
     throw new Error('comer: la partida ya ha terminado');
   }
-  if (estado.mundo.combate) {
+  if (hayCombate(estado)) {
     throw new Error('comer: hay un combate en curso; primero hay que terminarlo');
   }
   if (estado.mundo.fase !== 'comida') {

@@ -90,6 +90,14 @@ export function reduccionDanoActual(jugador: Jugador, condiciones: readonly Cond
   return Math.max(0, sumaDeAjustes(jugador, 'reduccionDano', condiciones));
 }
 
+/**
+ * Cuánta tripulación menos pierdes en cada duelo perdido del combate naval (casco reforzado: 1). 0 = nada.
+ * El combate naval deja siempre al menos 1 si el barco hace daño.
+ */
+export function reduccionDanoNavalActual(jugador: Jugador, condiciones: readonly Condicion[] = CONDICIONES): number {
+  return Math.max(0, sumaDeAjustes(jugador, 'reduccionDanoNaval', condiciones));
+}
+
 /** Suma lo que aportan a una regla todas las condiciones activas. */
 function sumaDeAjustes(jugador: Jugador, regla: AjusteDeCondicion, condiciones: readonly Condicion[]): number {
   let total = 0;

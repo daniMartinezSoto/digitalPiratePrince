@@ -188,7 +188,7 @@ describe('atacar (una ronda)', () => {
 
   it('el hambre también resta al daño de tus seguidores', () => {
     const inicio = iniciarCombate(partida({ diasSinComer: 1, seguidores: [seguidor('forzudo_1', 3, 10)] }), [{ enemigo: 'jaguar' }], dadosTrucados([0]));
-    // El jaguar ataca a la posición 0 (tú); tú y el forzudo le atacáis.
+    // El jaguar va siempre a por ti; tú y el forzudo le atacáis.
     const { sucesos } = atacar(inicio, dadosTrucados([1, 4, 1]));
     const delForzudo = sucesos.find(s => s.tipo === 'ataque' && s.atacante === 'forzudo_1');
     expect(delForzudo?.tipo === 'ataque' && delForzudo.dano).toBe(2);
@@ -240,10 +240,12 @@ describe('atacar (una ronda)', () => {
   });
 
   it('si muere el seguidor vital, pierdes aunque caigan los enemigos esa misma ronda', () => {
-    const hermano = seguidor('forzudo_1', 3, 2, { vital: true, inseparable: true });
-    // Dos contra un jaguar: el jaguar ataca a la posición 1 (el forzudo).
-    const inicio = iniciarCombate(partida({ seguidores: [hermano] }), [{ enemigo: 'jaguar' }], dadosTrucados([1]));
-    const { estado } = atacar(inicio, dadosTrucados([6, 2, 1, 3])); // matas al jaguar; él mata al forzudo
+    const hermano = seguidor('forzudo_1', 5, 2, { vital: true, inseparable: true });
+    // Dos contra dos piratas (1/5): tú eliges la posición 1 (enemigo_2); al forzudo le queda el 1.
+    const inicio = iniciarCombate(partida({ seguidores: [hermano] }), [{ enemigo: 'pirata', cantidad: 2 }], dadosTrucados([1]));
+    // Tú matas al 2 (5); el forzudo mata al 1 (5); el 1 saca un 6 (2) y mata al forzudo; el 2 falla.
+    const { estado } = atacar(inicio, dadosTrucados([5, 4, 6, 1]));
+    expect(estado.mundo.combate!.enemigos.every(e => e.resistencia === 0)).toBe(true);
 
     expect(estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'seguidor' });
     expect(estado.mundo.combate!.resultado).toBe('derrota');

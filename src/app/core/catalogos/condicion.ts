@@ -3,7 +3,9 @@ import type { EfectoDefinicion } from '../tablas/efecto';
 
 // Categorías de condición. Las reglas hablan muchas veces de la categoría, no de una
 // condición concreta: "el monasterio quita UNA MALDICIÓN", "la biblia te libra de una maldición".
-export const CATEGORIAS_CONDICION = ['maldicion', 'bendicion', 'enfermedad', 'clima', 'otra'] as const;
+// "mejora" = mejoras del barco (cañones buenos, casco reforzado, velas nuevas; Sprint 7): no ocupan
+// inventario y duran para siempre. No cuentan como maldición, así que rezar no se las lleva.
+export const CATEGORIAS_CONDICION = ['maldicion', 'bendicion', 'enfermedad', 'clima', 'mejora', 'otra'] as const;
 export type CategoriaCondicion = (typeof CATEGORIAS_CONDICION)[number];
 
 // Cosas que una condición puede IMPEDIR mientras dura. Lista cerrada: así no se puede
@@ -25,10 +27,12 @@ export type Prohibicion = (typeof PROHIBICIONES)[number];
 //   maximoSeguidores: 1  -> puedes llevar 1 seguidor más ("carisma").
 //   reduccionDano: 1     -> en combate, cada golpe que te aciertan te hace 1 menos, pero
 //                           siempre al menos 1 ("piel de piedra"; Sprint 7).
+//   reduccionDanoNaval: 1 -> en el combate naval, cada duelo que pierdes te cuesta 1 de tripulación
+//                           menos, pero siempre al menos 1 si el barco hace daño ("casco reforzado").
 // No se guardan en el personaje: se calculan mirando las condiciones activas (fuerzaActual,
 // vidaMaxActual... en condiciones/consultas.ts), así que al quitarse la condición la regla
 // vuelve sola a su valor. La hoja del personaje guarda solo SU valor, sin las condiciones.
-export const AJUSTES_DE_CONDICION = ['famaObjetivo', 'comidaPorDia', 'fuerza', 'ingenio', 'vidaMax', 'maximoSeguidores', 'reduccionDano'] as const;
+export const AJUSTES_DE_CONDICION = ['famaObjetivo', 'comidaPorDia', 'fuerza', 'ingenio', 'vidaMax', 'maximoSeguidores', 'reduccionDano', 'reduccionDanoNaval'] as const;
 export type AjusteDeCondicion = (typeof AJUSTES_DE_CONDICION)[number];
 export type AjustesDeCondicion = Partial<Record<AjusteDeCondicion, number>>;
 
