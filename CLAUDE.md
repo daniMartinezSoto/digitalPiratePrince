@@ -43,7 +43,8 @@
   - ✅ Estado: `Seguidor.inseparable?`. Cambio nuevo `seguidor_se_marcha`. `data/ajustes.json`: `precioTaberna` (5; hoy 4), `precioPosada` (5), `precioMonasterio` (7), `probabilidadEventoNocturno` (33; desde el Sprint 7, por terreno).
   - **La fase de acción sigue siendo un hueco:** `iniciarTurno` deja el día en `accion` y todavía nada lo pasa a `comida`; lo harán las acciones del Sprint 6.
 - **Sprint 6: completado (seguidores, objetos y acciones sin eventos, 17-18 nov).** Todas las decisiones y lo programado, en la sección 3.11: seguidores y el hermano, condiciones vigentes (apuntadas, partes, otorgadas), amuleto maldito completo, objetos (usar, tirar, elegir qué tirar, precios), y las acciones pescar, cazar, reposar, ir al mercado (con rastrillo), contratar (discurso, marineros, seguidor), monasterio (rezar, descansar), enterrar tesoro, buscar información (puertos, aldeas y guaridas), solicitar audiencia, la guarida pirata (dados y pulso), investigar naufragio, registrar ruinas y mendigar; además dormir en la aldea (chequeo de Ingenio) y los chequeos.
-- **Sprint 7: completado (combate normal y naval provisional, 18-19 nov).** Decisiones en las secciones 3.12 (normal) y 3.13 (naval).
+- **Sprint 8: en diseño (guardado).** Decisiones y plan en la sección 3.7. Nada programado todavía.
+- **Sprint 7: completado (combate normal y naval, 18-19 nov).** Decisiones en las secciones 3.12 (normal) y 3.13 (naval).
   - ✅ Paso 1: bestiario. Ficha `core/catalogos/enemigo.ts` (`id`, `nombre`, `descripcion?`, `imagen?`, `ataque`, `resistencia`, `libro?`), `data/enemigos.json` (34 enemigos de combate del libro, con sus números), cargador `cargar-enemigos.ts` (`ENEMIGOS`, `obtenerEnemigo`) y revisor `validar-enemigo.ts`.
   - ✅ Paso 2: tiradas de ataque en `core/combate/ataque.ts` (carpeta nueva): `ataqueDelJugador(castigo, dados)`, `ataqueBasico(ataque, castigo, dados, noPuedeFallar?)` (enemigos y seguidores), `castigoPorHambre(diasSinComer)` (tope `AJUSTES.castigoHambreMaximo`, 3) y `reducirDano(dano, reduccion)` (mínimo 1 si acierta). Devuelven `TiradaDeAtaque { dados, acierta, danoSinCastigo, castigoHambre, dano }`. Piel de piedra en datos: ajuste de condición nuevo `reduccionDano` (la ficha `piel_de_piedra` lleva 1) y consulta `reduccionDanoActual(jugador)`. Ayuda solo para tests: `core/dados/dados-trucados.ts` (`dadosTrucados([6, 6, 1])` saca esos números en orden; `restantes()`).
   - ✅ Paso 3: emparejamiento en `core/combate/emparejamiento.ts`: `Objetivos` (`Record<id, id>`: quién ataca a quién), `emparejar(aliados, enemigos, dados)`, `reemparejar(objetivos, aliadosVivos, enemigosVivos, dados)` y `atacantesDe(objetivos, id)`. Cada elección al azar gasta un número (ninguno si solo hay una opción); orden fijo: aliados y luego enemigos.
@@ -61,7 +62,7 @@
   - ✅ Naval, paso 5: simulación; abordaje del galeón ajustado (capitán 3/10 + 1 soldado).
 - **Tests:** a Claude le pasan 1145 en 60 archivos (sin `app.spec.ts`; al autor le deberían salir 1147 en 61).
 
-**Dónde nos quedamos (19-nov, 02:45):** **Sprint 7 terminado**: combate normal (pasos 1-6, simulaciones y equilibrio; sección 3.12) y **combate naval provisional** (duelo de cañones, huida, abordaje, resumen para la pantalla de resultados, mejoras del barco y simulación; sección 3.13). El autor lanza `ng test --watch=false` y hace commit y push. **Siguiente: Sprint 8 (guardado)**; antes, revisar la sección 3.7 (cómo encaja el guardado con un diseño tipo roguelike, que el autor está sopesando). **Pendiente del naval:** decidir dónde se consiguen las mejoras del barco (y pensar más). **Idea del autor para cuando empiece la interfaz:** una pantalla de pruebas fea pero jugable cuanto antes, para ver funcionar las reglas antes del diseño bonito. El plan detallado por sprints lo mantiene el autor en un documento aparte.
+**Dónde nos quedamos (19-nov, 03:30):** **Sprint 7 terminado** (commit `Sprint 7: combate naval provisional y cierre del combate normal`; "provisional" es solo el nombre heredado: el duelo de cañones es el combate naval definitivo y el minijuego solo dará +1). **Sprint 8 (guardado): diseño decidido con el autor** (sección 3.7) y plan por pasos escrito; **todavía no se ha programado nada**. **Siguiente: paso 1 del Sprint 8** (formato de la partida guardada y la semilla en el estado): presentar el plan del paso al autor, esperar su visto bueno y seguir el flujo de siempre. **Pendiente del naval:** decidir dónde se consiguen las mejoras del barco. **Idea del autor para cuando empiece la interfaz:** una pantalla de pruebas fea pero jugable cuanto antes, para ver funcionar las reglas antes del diseño bonito. El plan detallado por sprints lo mantiene el autor en un documento aparte.
 
 ---
 
@@ -226,12 +227,24 @@ Condicion { id, nombre, descripcion; imagen?; categoria: 'maldicion' | 'bendicio
 2. **Dados con semilla (seeded PRNG)**, nunca `Math.random()`: partidas reproducibles, depuración por semilla y, a futuro, verificación en servidor. Incluye los porcentajes (deserción, motín): usar `dados.probabilidad(p)`.
 3. **`banderas` y `marcas`** en el estado y **modificadores por identificador de tirada** (sección 7).
 
-### 3.7 Guardado
-- **Autoguardado** al final de cada turno (localStorage o IndexedDB; valorar `navigator.storage.persist()`).
-- **Exportar/importar** la partida como JSON.
-- Campo **`version`** para migrar partidas antiguas.
-- Posibles ranuras múltiples. **"Meditar" del monasterio desaparece (decidido en el Sprint 5):** no se guarda la partida en los monasterios.
-- **Sin decidir todavía (el autor lo está sopesando):** cómo encaja el guardado con un diseño tipo roguelike (sin volver atrás). Revisar esta sección antes del Sprint 8.
+### 3.7 Guardado (Sprint 8; diseño decidido por el autor el 19-nov, sin programar)
+
+**Decidido:**
+- **Solo roguelike:** una única partida en curso, **sin ranuras** (de momento), sin guardar ni cargar a mano y sin volver atrás. **Morir (o ganar) termina la partida**: se borra y pasa a la crónica. Un modo "fácil" con vuelta atrás queda descartado por ahora.
+- **Si el jugador cierra el juego, la partida queda guardada** y al volver sigue exactamente donde estaba (también a mitad de un combate, del mercado o de un evento).
+- **Autoguardado en CADA cambio del estado** (no solo por fases): se guarda en un único sitio, el store, cada vez que cambia el signal del estado. Es barato (la partida ocupa pocos KB; escribir tarda menos de un milisegundo), más sencillo de programar que guardar por fases y cierra la trampa de "cerrar antes de que se guarde y elegir otra cosa" (con los dados con semilla, cargar ya no cambia la suerte: `mundo.estadoDados` se guarda con todo).
+- **Dónde:** en el navegador (`localStorage`), detrás de una pieza intercambiable ("almacén") para poder guardar en la nube algún día sin tocar el resto. Al arrancar, pedir `navigator.storage.persist()` para que el navegador no borre los datos por su cuenta. **Aviso conocido:** si el jugador borra "cookies y datos de sitios" o juega en incógnito, se pierden la partida y la crónica (borrar solo el historial no afecta).
+- **Semilla en el estado:** campo nuevo **`mundo.semilla`** (hoy solo se guarda `estadoDados`, el punto en que van los dados). **El jugador debe poder verla** durante la partida y en la crónica (la pantalla, con la interfaz). Servirá para repetir una partida o retar a otro con la misma semilla.
+- **Versión:** `VERSION_ESTADO` sigue en 1 (aún no existe ninguna partida guardada que adaptar). Sistema de **adaptadores por versión** (1 → 2, 2 → 3...) preparado desde el principio, vacío de momento. Una partida de una versión más nueva que el juego no se carga.
+- **Crónica (decidido por el autor):** al terminar una partida (victoria o derrota) se guarda una ficha con semilla, nombre, sobrenombre, retrato, días, **fama**, **oro**, resultado y motivo, más la fecha (la pone el store; `core/` no usa fechas). **Se guardan todas** (ocupan muy poco). **Orden: por fama (de más a menos) y, a igual fama, por oro.**
+- **Exportar/importar:** de momento **nada** (ni la partida, que permitiría hacer trampa, ni la crónica). **Apuntado para más adelante:** un botón para exportar la crónica como recuerdo.
+- **"Meditar" del monasterio desaparece (decidido en el Sprint 5):** no se guarda la partida en los monasterios.
+
+**Plan por pasos (propuesto por Claude; cada paso con su plan → visto bueno → cambios → `ng test`):**
+1. **Formato de la partida guardada** (`core/guardado/`, TypeScript puro): `mundo.semilla` (lo rellena `crearPartida`); `guardarPartida(estado)` (estado → texto); `leerPartida(texto)` (texto → estado, comprobando que es una partida válida; si no, devuelve un motivo en vez de romper: `no_se_puede_leer`, `no_es_una_partida`, `version_futura`); adaptadores por versión (lista vacía, con un test que use uno de prueba 1 → 2); `dadosDePartida(estado)` = `new Dados(estado.mundo.estadoDados)`. Tests: ida y vuelta idéntica, los dados recuperados sacan lo mismo que habrían sacado sin cerrar, textos estropeados o incompletos, versión futura, semilla guardada.
+2. **La crónica** (`core/guardado/cronica.ts`): `EntradaCronica`, crear la ficha a partir del estado terminado (con la fecha que le pasen), añadirla a la lista y ordenarla (fama, luego oro). Leer y guardar la lista con el mismo cuidado que la partida.
+3. **El almacén:** formato común (`leer`, `escribir`, `borrar`), una versión en memoria para los tests (en `core/`) y la de `localStorage` en `store/` (con `try/catch`: el navegador puede negarse) más `navigator.storage.persist()`.
+4. **El store** (`store/juego.store.ts`, el **primero del proyecto**; las carpetas `store/` y `ui/` aún no existen): el estado en un signal, los `Dados` aparte (no son estado). Al arrancar, carga la partida si hay una; cada cambio se guarda solo; `nuevaPartida(nombre, retrato, semilla?)` (semilla al azar si no se da); al terminar la partida, ficha a la crónica y se borra la partida guardada. Tests del store con lo que permita Vitest/Angular.
 
 ### 3.8 Cambios respecto al juego de papel (decididos por el autor)
 - **Eventos aleatorios:** no existen las tablas de terreno de coordenadas (2d6 columna/fila). Cada terreno tiene una **lista de eventos (unos 30-40) entre los que se elige uno al azar**, con **pesos** (por defecto, cada repetición del libro = +1; si el autor prefiere probabilidades iguales, peso 1). Igual para el evento nocturno.
@@ -877,7 +890,7 @@ Los eventos van **después** del núcleo (detalle en el documento de sprints del
 5. ✅ Ciclo de turno: inicio de turno, comida (hambre, deserción, motín) y descanso, con las fichas de condición completas (secciones 0 y 3.10).
 6. ✅ Seguidores (efecto "se une un seguidor", catálogo de tipos, `inseparable`, bonificadores de seguidores), **condiciones otorgadas** por objetos, sobrenombres y seguidores (amuleto maldito, vínculo nativo con icono; sección 3.10), **pasar de la fase de acción a la de comida**, monasterio (rezar y descansar por 20 de oro), objetos (usos, descarte, vender en puertos y aldeas, elegir qué tirar si no cabe) y acciones sin eventos (pescar, cazar, comida, reclutar, descansar, enterrar tesoro). Todas las tablas de acciones del sprint están hechas (detalle en la sección 3.11).
 7. ✅ Combate normal (con habilidades especiales de enemigos, sección 3.9; el afortunado) y naval provisional (duelo de cañones con abordaje, sección 3.13).
-8. Guardado (autoguardado, exportar/importar, versión).
+8. Guardado (en diseño, sección 3.7): roguelike, autoguardado en cada cambio, semilla en el estado, versión con adaptadores y crónica de partidas.
 9. Mapa (conversión `.wxx` → JSON, SVG), viajar (respetando `prohibe: viajar`, avisando de las llegadas para `alLlegar` y calculando el lugar para comida y descanso), `posicionBarco`, eventos de una sola vez en las listas de terreno, eventos que cambian el mapa y condición de victoria (con `famaObjetivoActual`).
 10. Motor de eventos (punto único de tiradas con botones de objetos, atajos de escritura, paso "elige una cantidad", condiciones de ubicación) y primeros eventos reales (3-4 variados) para validar el formato.
 11. Contenido, interfaz pulida, minijuego naval y, más adelante, backend.
@@ -895,7 +908,7 @@ Hasta el punto 8 no hace falta ni mapa ni libro de eventos. El 9 necesita el `.w
 - Completar y equilibrar las **listas de eventos por terreno** (ya pasadas del papel, faltan algunos eventos).
 - **Libro de eventos**, empezando por 3-4 muestras variadas (tirada, decisión, combinado, con llamada y vuelta, y una con regla especial como el mapa del tesoro).
 - Tabla de objetos mágicos (E037), lista de objetos y estadísticas de enemigos y barcos.
-- Decidir cómo encaja el guardado con el diseño roguelike (sección 3.7), el momento exacto de la **victoria** y el diseño del **minijuego naval** (solo dará +1 a la tirada) y **dónde se consiguen las mejoras del barco** (y si hay más).
+- ~~Decidir cómo encaja el guardado con el diseño roguelike~~ (decidido el 19-nov, sección 3.7). Más adelante: botón para **exportar la crónica**. Decidir el momento exacto de la **victoria** y el diseño del **minijuego naval** (solo dará +1 a la tirada) y **dónde se consiguen las mejoras del barco** (y si hay más).
 - Decidir qué **eventos solo pueden salir una vez por partida** (de momento, el mal está a bordo).
 - ~~Retocar la tabla para dormir en la aldea~~ (hecho: regla nueva con chequeo de Ingenio, sección 4.7).
 - Revisar los combates de 4 enemigos del libro (E054, E082, E087) con el informe `claude/equilibrio-combate.md` (vida y nocturnos ya decididos).
