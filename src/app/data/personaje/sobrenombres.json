@@ -54,7 +54,7 @@
     "id": "el_superviviente",
     "nombre": "El superviviente",
     "nombreFemenino": "La superviviente",
-    "descripcion": "No necesita comida en la jungla densa y puede desplazarse 2 hexágonos.",
+    "descripcion": "No necesita comida en la jungla ni en la jungla profunda (allí la consigue sin ayuda) y puede desplazarse 2 hexágonos.",
     "ajustes": {},
     "modificadores": {}
   },

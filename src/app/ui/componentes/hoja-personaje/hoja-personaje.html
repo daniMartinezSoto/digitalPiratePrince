@@ -46,7 +46,8 @@
     <ul>
       @for (condicion of h.condiciones; track condicion.id) {
         <li>
-          {{ condicion.nombre }} ({{ condicion.dentroDe ?? condicion.categoria }})
+          {{ condicion.nombre }} · {{ condicion.dentroDe ?? condicion.categoria }}
+          @if (condicion.descripcion) { ({{ condicion.descripcion }}) }
           @if (condicion.turnosRestantes !== undefined) { · {{ condicion.turnosRestantes }} turnos }
           @if (condicion.origen === 'otorgada') { · [otorgada] }
         </li>

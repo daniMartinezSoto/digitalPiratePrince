@@ -55,4 +55,11 @@ describe('hojaDePersonaje (la hoja lista para enseñar)', () => {
     expect(partes.map(c => c.nombre).sort()).toEqual(['Ambición desmedida', 'Carisma']);
     expect(partes.every(c => c.dentroDe === 'Amuleto maldito')).toBe(true);
   });
+
+  it('cada condición trae lo que implica (su descripción del catálogo)', () => {
+    const { estado } = crearPartida(45, 'Marta');
+    const condiciones = hojaDePersonaje(estado.jugador).condiciones;
+    expect(condiciones.length).toBeGreaterThan(0);
+    expect(condiciones.every(c => c.descripcion.length > 0)).toBe(true);
+  });
 });

@@ -10,7 +10,7 @@
 }
 
 @if (estado(); as estado) {
-  <p>Día {{ estado.mundo.dia }} · fase: {{ estado.mundo.fase }}</p>
+  <p>Día {{ estado.mundo.dia }} · fase: {{ nombreDeFase[estado.mundo.fase] }}</p>
 
   @if (estado.mundo.finPartida; as fin) {
     <p class="fin">PARTIDA TERMINADA: {{ fin.resultado }} ({{ fin.motivo }})</p>
@@ -22,6 +22,13 @@
   } @else {
     <button type="button" (click)="confirmandoAbandono.set(true)">Abandonar</button>
   }
+
+  @if (!estado.mundo.finPartida) {
+    <app-donde-estas [(ubicacion)]="ubicacion" />
+    <app-panel-del-dia [ubicacion]="ubicacion()" />
+  }
+
+  <app-registro />
 
   @if (hoja(); as hoja) {
     <app-hoja-personaje [hoja]="hoja" [semilla]="estado.mundo.semilla" />

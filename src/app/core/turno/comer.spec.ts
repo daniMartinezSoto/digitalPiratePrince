@@ -75,6 +75,7 @@ describe('opcionesDeComida', () => {
       alcanzanLasReservas: false,
       pago: { precio: 2 * PRECIO, alcanzaElOro: true },
       invitado: false,
+      superviviente: false,
     });
   });
 });
@@ -330,3 +331,34 @@ describe('comer', () => {
     });
   });
 });
+
+describe('el superviviente consigue la comida él solo en la jungla y la jungla profunda', () => {
+  const superviviente = () => estadoCon({ sobrenombre: 'el_superviviente', comida: 0 });
+
+  it.each(['jungla', 'jungla_profunda'] as const)('al raso en %s sale su botón', terreno => {
+    expect(opcionesDeComida(superviviente(), 'intemperie', undefined, terreno).superviviente).toBe(true);
+  });
+
+  it('en la playa, en otro lugar o con otro sobrenombre, no', () => {
+    expect(opcionesDeComida(superviviente(), 'intemperie', undefined, 'playa').superviviente).toBe(false);
+    expect(opcionesDeComida(superviviente(), 'aldea', undefined, 'jungla').superviviente).toBe(false);
+    expect(opcionesDeComida(superviviente(), 'intemperie').superviviente).toBe(false);
+    expect(opcionesDeComida(estadoCon({ comida: 0 }), 'intemperie', undefined, 'jungla').superviviente).toBe(false);
+  });
+
+  it('come todo el grupo sin gastar reservas ni oro, y se le quita el hambre', () => {
+    const conHambre = { ...superviviente(), jugador: { ...superviviente().jugador, diasSinComer: 2, condiciones: [HAMBRE] } };
+    const resultado = comer(conHambre, 'superviviente', 'intemperie', new Dados(1), undefined, 'jungla_profunda');
+    expect(resultado.haComido).toBe(true);
+    expect(resultado.estado.jugador.comida).toBe(0);
+    expect(resultado.estado.jugador.oro).toBe(50);
+    expect(resultado.estado.jugador.diasSinComer).toBe(0);
+    expect(resultado.estado.jugador.condiciones.some(c => c.id === 'hambre')).toBe(false);
+    expect(resultado.estado.mundo.fase).toBe('descanso');
+  });
+
+  it('donde no le toca, error', () => {
+    expect(() => comer(superviviente(), 'superviviente', 'intemperie', new Dados(1), undefined, 'playa')).toThrow(/superviviente/);
+  });
+});
+

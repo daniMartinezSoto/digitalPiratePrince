@@ -1,0 +1,47 @@
+@if (estado(); as estado) {
+  @if (!estado.mundo.finPartida) {
+    @switch (estado.mundo.fase) {
+      @case ('inicio') {
+        <button type="button" (click)="empezarElDia()">Empezar el día</button>
+      }
+      @case ('accion') {
+        <h3>Acción (elige una)</h3>
+        <ul>
+          @for (a of acciones(); track a.id) {
+            <li>
+              <button type="button" [disabled]="!a.sePuede" (click)="accion(a.id)">{{ a.nombre }}</button>
+              @if (a.nota) { <small> {{ a.nota }}</small> }
+            </li>
+          }
+        </ul>
+      }
+      @case ('comida') {
+        @if (comida(); as c) {
+          <h3>Comida (hacen falta {{ c.necesarias }}; tienes {{ c.reservas }})</h3>
+          @if (c.superviviente) {
+            <button type="button" (click)="comer('superviviente')">{{ nombreDeComida.superviviente }}</button>
+          }
+          @if (c.invitado) {
+            <button type="button" (click)="comer('invitado')">{{ nombreDeComida.invitado }}</button>
+          }
+          <button type="button" (click)="comer('reservas')">{{ nombreDeComida.reservas }}</button>
+          @if (!c.alcanzanLasReservas) { <small> no llegan: pasarás hambre</small> }
+          @if (c.pago; as pago) {
+            <button type="button" [disabled]="!pago.alcanzaElOro" (click)="comer('pagar')">
+              {{ nombreDeComida.pagar }} ({{ pago.precio }})
+            </button>
+            @if (!pago.alcanzaElOro) { <small> no te llega el oro</small> }
+          }
+        }
+      }
+      @case ('descanso') {
+        <h3>Descanso</h3>
+        @for (o of descanso(); track o.eleccion) {
+          <button type="button" [disabled]="!o.alcanzaElOro" (click)="dormir(o.eleccion)">
+            {{ o.nombre }}@if (o.precio > 0) { ({{ o.precio }}) }
+          </button>
+        }
+      }
+    }
+  }
+}

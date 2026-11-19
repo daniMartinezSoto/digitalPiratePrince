@@ -38,13 +38,24 @@ export function escribir(raiz: HTMLElement, selector: string, valor: string): vo
   const campo = raiz.querySelector(selector) as HTMLInputElement | HTMLSelectElement;
   campo.value = valor;
   campo.dispatchEvent(new Event('input'));
+  campo.dispatchEvent(new Event('change'));
 }
 
-/** Pulsa el botón que tiene ese texto. */
-export function pulsar(raiz: HTMLElement, texto: string): void {
-  const boton = [...raiz.querySelectorAll('button')].find(b => b.textContent?.trim() === texto);
-  if (!boton) {
+/** El botón que tiene ese texto (sin contar espacios de más). */
+export function boton(raiz: HTMLElement, texto: string): HTMLButtonElement {
+  const limpio = (t: string | null) => (t ?? '').replace(/\s+/g, ' ').trim();
+  const encontrado = [...raiz.querySelectorAll('button')].find(b => limpio(b.textContent) === texto);
+  if (!encontrado) {
     throw new Error(`No hay ningún botón "${texto}"`);
   }
-  boton.click();
+  return encontrado;
+}
+
+/** Pulsa el botón que tiene ese texto, como lo haría el jugador. Falla si está desactivado. */
+export function pulsar(raiz: HTMLElement, texto: string): void {
+  const encontrado = boton(raiz, texto);
+  if (encontrado.disabled) {
+    throw new Error(`El botón "${texto}" está desactivado`);
+  }
+  encontrado.click();
 }

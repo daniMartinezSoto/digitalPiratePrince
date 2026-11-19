@@ -55,5 +55,6 @@ describe('pantalla Nueva partida', () => {
     const texto = harness.routeNativeElement!.textContent!;
     expect(texto).toContain('Marta');
     expect(texto).toContain('abandono');
+    expect(texto).not.toMatch(/\bel_[a-z]/); // el sobrenombre con su nombre bonito, no su id
   });
 });

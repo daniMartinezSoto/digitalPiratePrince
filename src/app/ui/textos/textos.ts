@@ -1,0 +1,219 @@
+import type { AccionDisponible, MotivoNoDisponible } from '../../core/acciones/acciones-disponibles';
+import type { IdAccion, TiradaDeAccion } from '../../core/acciones/accion';
+import { CONDICIONES } from '../../core/catalogos/cargar-condiciones';
+import { OBJETOS } from '../../core/catalogos/cargar-objetos';
+import { TIPOS_SEGUIDOR } from '../../core/catalogos/cargar-seguidores';
+import type { Cambio } from '../../core/efectos/cambio';
+import type { Fase } from '../../core/estado/fase';
+import type { Retrato } from '../../core/personaje/retrato';
+import { nombreDeSobrenombre } from '../../core/personaje/hoja-de-personaje';
+import type { TipoRecurso } from '../../core/tablas/efecto';
+import type { EleccionDeComida } from '../../core/turno/comer';
+import type { EleccionDeDescanso } from '../../core/turno/descansar';
+import type { Lugar, Rasgo, TerrenoAlRaso } from '../../core/turno/lugar';
+
+// TEXTOS DE LA PANTALLA (pantalla de pruebas): traducen los datos que devuelven las reglas
+// (cambios, motivos, ids...) a frases para el jugador. Son textos de pantalla, por eso van en ui/
+// y no en core/ (las reglas devuelven datos, no mensajes). Servirán también para la interfaz bonita.
+
+export const NOMBRE_DE_ACCION: Record<IdAccion, string> = {
+  pescar: 'Pescar',
+  cazar: 'Cazar',
+  reposar: 'Reposar',
+  ir_al_mercado: 'Ir al mercado',
+  dar_discurso: 'Dar un discurso',
+  contratar_marineros: 'Contratar marineros',
+  buscar_seguidor: 'Buscar seguidor',
+  rezar: 'Rezar',
+  descansar_en_monasterio: 'Descansar en el monasterio',
+  enterrar_tesoro: 'Enterrar tesoro',
+  buscar_informacion: 'Buscar información',
+  solicitar_audiencia: 'Solicitar audiencia',
+  jugar_a_los_dados: 'Jugar a los dados',
+  echar_un_pulso: 'Echar un pulso',
+  investigar_naufragio: 'Investigar naufragio',
+  registrar_ruinas: 'Registrar ruinas',
+  mendigar: 'Mendigar',
+};
+
+export const NOMBRE_DE_LUGAR: Record<Lugar, string> = {
+  barco: 'A bordo (mar)',
+  puerto: 'Puerto',
+  guarida: 'Guarida pirata (neutral)',
+  aldea: 'Aldea',
+  monasterio: 'Monasterio',
+  intemperie: 'Al raso (tierra salvaje)',
+};
+
+export const NOMBRE_DE_FASE: Record<Fase, string> = {
+  inicio: 'inicio del día',
+  accion: 'acción',
+  comida: 'comida',
+  descanso: 'descanso',
+};
+
+export const NOMBRE_DE_TERRENO: Record<TerrenoAlRaso, string> = {
+  playa: 'Playa',
+  jungla: 'Jungla',
+  jungla_profunda: 'Jungla profunda',
+};
+
+export const NOMBRE_DE_RASGO: Record<Rasgo, string> = {
+  naufragio: 'Naufragio',
+  ruinas: 'Ruinas',
+};
+
+export const NOMBRE_DE_COMIDA: Record<EleccionDeComida, string> = {
+  reservas: 'Comer de las reservas',
+  pagar: 'Pagar la comida con oro',
+  invitado: 'Comer invitado',
+  superviviente: 'Conseguir comida (Superviviente)',
+};
+
+export const NOMBRE_DE_DESCANSO: Record<EleccionDeDescanso, string> = {
+  a_bordo: 'Dormir a bordo',
+  techo_solo: 'Dormir bajo techo (solo tú)',
+  techo_todos: 'Dormir bajo techo (todo el grupo)',
+  intemperie: 'Dormir al raso',
+  tienda: 'Dormir en la tienda de campaña',
+  convencer_nativos: 'Convencer a los nativos para dormir en la aldea',
+};
+
+const NOMBRE_DE_RECURSO: Record<TipoRecurso, string> = {
+  oro: 'oro',
+  comida: 'comida',
+  tripulacion: 'tripulación',
+  vida: 'vida',
+  fama: 'fama',
+  fuerza: 'fuerza',
+  ingenio: 'ingenio',
+  vidaMax: 'vida máxima',
+};
+
+const TEXTO_DE_MOTIVO: Record<MotivoNoDisponible, string> = {
+  sin_agua: 'Hay que estar a bordo o junto al agua',
+  solo_salvaje: 'Solo en tierra salvaje',
+  solo_puerto: 'Solo en puertos y guaridas',
+  prohibido: 'No puedes',
+  tripulacion_al_maximo: 'Ya tienes toda la tripulación',
+  sin_oro: 'No te llega el oro',
+  grupo_lleno: 'El grupo está lleno',
+  solo_monasterio: 'Solo en un monasterio',
+  sin_maldiciones: 'No tienes ninguna maldición',
+  nadie_herido: 'Nadie necesita descansar',
+  tesoro_ya_enterrado: 'Ya has enterrado un tesoro aquí',
+  solo_puerto_o_aldea: 'Solo en puertos, guaridas y aldeas',
+  espera: 'Tienes que esperar',
+  solo_puerto_aldea_o_guarida: 'Solo en puertos, aldeas y guaridas',
+  audiencia_ya_concedida: 'Ya te concedieron audiencia aquí',
+  audiencia_vetada: 'Aquí no quieren volver a verte',
+  solo_guarida: 'Solo en guaridas piratas',
+  sin_naufragio: 'Aquí no hay ningún naufragio',
+  sin_ruinas: 'Aquí no hay ruinas',
+  ya_explorado: 'Ya lo has explorado',
+  sin_artista: 'Necesitas un artista en el grupo',
+  no_es_momento: 'No es el momento',
+  combate_en_curso: 'Hay un combate en curso',
+  accion_a_medias: 'Termina antes lo que has empezado',
+};
+
+/** "el_afortunado" con retrato de mujer → "La afortunada" (para la crónica). */
+export function textoDeSobrenombre(id: string, retrato: Retrato): string {
+  return nombreDeSobrenombre(id, retrato);
+}
+
+export function nombreDeObjeto(id: string): string {
+  return OBJETOS.find(o => o.id === id)?.nombre ?? id;
+}
+
+export function nombreDeCondicion(id: string): string {
+  return CONDICIONES.find(c => c.id === id)?.nombre ?? id;
+}
+
+/** "taberna_clandestina" → "taberna clandestina" (los eventos aún no tienen ficha con nombre). */
+export function nombreDeEvento(id: string): string {
+  return id.replaceAll('_', ' ');
+}
+
+/** Por qué no se puede: "No puedes: Hedor nauseabundo", "Tienes que esperar (falta 1 día)". */
+export function textoDeMotivo(accion: AccionDisponible): string {
+  if (!accion.motivo) {
+    return '';
+  }
+  const base = TEXTO_DE_MOTIVO[accion.motivo];
+  if (accion.motivo === 'prohibido' && accion.condiciones?.length) {
+    return `${base}: ${accion.condiciones.map(nombreDeCondicion).join(', ')}`;
+  }
+  if (accion.motivo === 'espera' && accion.faltanDias !== undefined) {
+    return `${base} (falta${accion.faltanDias === 1 ? '' : 'n'} ${accion.faltanDias} día${accion.faltanDias === 1 ? '' : 's'})`;
+  }
+  return base;
+}
+
+/** "dados 3 + 4 (+1) = 8 · Buena pesca." */
+export function describirTirada(tirada: Pick<TiradaDeAccion, 'dados' | 'modificador' | 'total' | 'texto'>): string {
+  const modificador = tirada.modificador === 0 ? '' : ` (${tirada.modificador > 0 ? '+' : ''}${tirada.modificador})`;
+  const texto = tirada.texto ? ` · ${tirada.texto}` : '';
+  return `dados ${tirada.dados.join(' + ')}${modificador} = ${tirada.total}${texto}`;
+}
+
+function conSigno(numero: number): string {
+  return numero > 0 ? `+${numero}` : `${numero}`;
+}
+
+/**
+ * Un cambio en una frase: "+5 comida (de 2 a 7)", "Ganas: Ungüento", "Ahora tienes: Tormenta (3 turnos)".
+ * nombres: los nombres de los seguidores por su id ("forzudo_1" → "Rufus"), si se conocen.
+ */
+export function describirCambio(cambio: Cambio, nombres: Record<string, string> = {}): string {
+  const seguidor = (id: string) => nombres[id] ?? id;
+  switch (cambio.tipo) {
+    case 'recurso': {
+      const motivo = cambio.motivo === 'contable' ? ' (el contable)' : cambio.motivo === 'objeto_magico' ? ' (objeto mágico)' : '';
+      return `${conSigno(cambio.despues - cambio.antes)} ${NOMBRE_DE_RECURSO[cambio.recurso]} (de ${cambio.antes} a ${cambio.despues})${motivo}`;
+    }
+    case 'resistencia_seguidor':
+      return `${seguidor(cambio.seguidor)}: ${conSigno(cambio.despues - cambio.antes)} resistencia (de ${cambio.antes} a ${cambio.despues})`;
+    case 'seguidor_muerto':
+      return `${seguidor(cambio.seguidor)} ha muerto`;
+    case 'seguidor_se_marcha':
+      return `${seguidor(cambio.seguidor)} se marcha`;
+    case 'seguidor_se_une':
+      return `${seguidor(cambio.seguidor)} se une al grupo`;
+    case 'seguidor_no_se_une': {
+      const tipo = TIPOS_SEGUIDOR.find(t => t.id === cambio.tipoSeguidor)?.nombre ?? cambio.tipoSeguidor;
+      return `${tipo} no se une (${cambio.motivo === 'grupo_lleno' ? 'el grupo está lleno' : 'no puedes tener seguidores nuevos'})`;
+    }
+    case 'seguidor_despedido':
+      return `Despides a ${seguidor(cambio.seguidor)}`;
+    case 'objeto_ganado':
+      return `Ganas: ${nombreDeObjeto(cambio.objeto)}`;
+    case 'objeto_no_cabe':
+      return `No te cabe: ${nombreDeObjeto(cambio.objeto)}`;
+    case 'objeto_perdido':
+      return `Pierdes: ${nombreDeObjeto(cambio.objeto)}`;
+    case 'objeto_tirado':
+      return `Tiras: ${nombreDeObjeto(cambio.objeto)}`;
+    case 'objeto_usado':
+      return `Usas: ${nombreDeObjeto(cambio.objeto)} (quedan ${cambio.usosRestantes} usos)`;
+    case 'objeto_agotado':
+      return `Se agota: ${nombreDeObjeto(cambio.objeto)}`;
+    case 'objeto_vendido':
+      return `Vendes: ${nombreDeObjeto(cambio.objeto)}`;
+    case 'condicion_puesta': {
+      const turnos = cambio.turnos === undefined ? '' : ` (${cambio.turnos} turnos)`;
+      const partes = cambio.partes?.length ? ` [${cambio.partes.map(nombreDeCondicion).join(' + ')}]` : '';
+      return `Ahora tienes: ${nombreDeCondicion(cambio.condicion)}${turnos}${partes}`;
+    }
+    case 'condicion_quitada':
+      return `Ya no tienes: ${nombreDeCondicion(cambio.condicion)}`;
+    case 'condicion_no_puesta':
+      return `No puedes recibir otro: ${nombreDeCondicion(cambio.condicion)} (ya lo llevas)`;
+    case 'turnos_perdidos':
+      return `Pierdes ${cambio.cantidad} fase${cambio.cantidad === 1 ? '' : 's'} de acción`;
+    case 'bandera':
+      return `(se apunta: ${cambio.bandera})`;
+    case 'fin_partida':
+      return `FIN DE LA PARTIDA: ${cambio.fin.resultado} (${cambio.fin.motivo})`;
+  }
+}

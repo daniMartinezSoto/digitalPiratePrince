@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { esSemillaValida, SEMILLA_MAXIMA } from '../../../core/partida/semilla';
 import type { Retrato } from '../../../core/personaje/retrato';
 import { JuegoStore } from '../../../store/juego.store';
+import { Registro } from '../../servicios/registro';
+import { nombreDeEvento, textoDeSobrenombre } from '../../textos/textos';
 
 // PANTALLA "NUEVA PARTIDA" (pantalla de pruebas): nombre, hombre o mujer y semilla opcional.
 // Comprueba lo escrito (para avisar en la pantalla) y le pide la partida al store: la pantalla
@@ -15,10 +17,12 @@ import { JuegoStore } from '../../../store/juego.store';
 export class PantallaNuevaPartida {
   private readonly store = inject(JuegoStore);
   private readonly router = inject(Router);
+  private readonly registro = inject(Registro);
 
   protected readonly cronica = this.store.cronica;
   protected readonly error = signal<string | null>(null);
   protected readonly semillaMaxima = SEMILLA_MAXIMA;
+  protected readonly textoDeSobrenombre = textoDeSobrenombre;
 
   protected empezar(nombre: string, retrato: string, semillaEscrita: string): void {
     const nombreLimpio = nombre.trim();
@@ -35,7 +39,12 @@ export class PantallaNuevaPartida {
       }
     }
     this.error.set(null);
-    this.store.nuevaPartida(nombreLimpio, retrato as Retrato, semilla);
+    const eventos = this.store.nuevaPartida(nombreLimpio, retrato as Retrato, semilla);
+    this.registro.vaciar();
+    this.registro.apuntar(1, [
+      `Empieza la partida (semilla ${this.store.estado()?.mundo.semilla}).`,
+      ...eventos.map(e => `  Evento pendiente: ${nombreDeEvento(e)}`),
+    ]);
     void this.router.navigate(['/partida']);
   }
 }

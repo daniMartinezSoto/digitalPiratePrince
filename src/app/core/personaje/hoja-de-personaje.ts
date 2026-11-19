@@ -37,12 +37,19 @@ export interface HojaDePersonaje {
     inseparable: boolean; vital: boolean;
   }[];
   // dentroDe: el nombre de la condición que la lleva dentro ("Amuleto maldito"), solo en las partes.
-  condiciones: { id: string; nombre: string; categoria: string; turnosRestantes?: number; origen: string; dentroDe?: string }[];
+  // descripcion: lo que implica ("Pierdes 1 PV por día sin comer..."), de la ficha del catálogo.
+  condiciones: { id: string; nombre: string; descripcion: string; categoria: string; turnosRestantes?: number; origen: string; dentroDe?: string }[];
 }
 
 // nombreFemenino: "La maldita", "La hermana"... (se usa con el retrato de mujer).
 interface FichaSobrenombre { id: string; nombre: string; nombreFemenino?: string; descripcion: string }
 const SOBRENOMBRES = sobrenombresJson as FichaSobrenombre[];
+
+/** El nombre del sobrenombre para enseñar, en femenino con el retrato de mujer ("La afortunada"). */
+export function nombreDeSobrenombre(id: string, retrato: Jugador['retrato']): string {
+  const ficha = SOBRENOMBRES.find(s => s.id === id);
+  return (retrato === 'mujer' ? ficha?.nombreFemenino : undefined) ?? ficha?.nombre ?? id;
+}
 
 export function hojaDePersonaje(jugador: Jugador): HojaDePersonaje {
   const sobrenombre = SOBRENOMBRES.find(s => s.id === jugador.sobrenombre);
@@ -50,8 +57,7 @@ export function hojaDePersonaje(jugador: Jugador): HojaDePersonaje {
     nombre: jugador.nombre,
     sobrenombre: {
       id: jugador.sobrenombre,
-      nombre:
-        (jugador.retrato === 'mujer' ? sobrenombre?.nombreFemenino : undefined) ?? sobrenombre?.nombre ?? jugador.sobrenombre,
+      nombre: nombreDeSobrenombre(jugador.sobrenombre, jugador.retrato),
       descripcion: sobrenombre?.descripcion ?? '',
     },
     retrato: jugador.retrato,
@@ -88,6 +94,7 @@ export function hojaDePersonaje(jugador: Jugador): HojaDePersonaje {
       return {
         id: c.id,
         nombre: ficha?.nombre ?? c.id,
+        descripcion: ficha?.descripcion ?? '',
         categoria: ficha?.categoria ?? 'otra',
         ...(c.turnosRestantes === undefined ? {} : { turnosRestantes: c.turnosRestantes }),
         origen: c.origen,

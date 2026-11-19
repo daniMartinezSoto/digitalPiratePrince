@@ -24,7 +24,7 @@
   <ol>
     @for (entrada of cronica(); track $index) {
       <li>
-        {{ entrada.nombre }} ({{ entrada.sobrenombre }}) · {{ entrada.resultado }} ({{ entrada.motivo }}) · fama
+        {{ entrada.nombre }}, {{ textoDeSobrenombre(entrada.sobrenombre, entrada.retrato) }} · {{ entrada.resultado }} ({{ entrada.motivo }}) · fama
         {{ entrada.fama }} · oro {{ entrada.oro }} · {{ entrada.dias }} días · semilla {{ entrada.semilla }} ·
         {{ entrada.fecha }}
       </li>

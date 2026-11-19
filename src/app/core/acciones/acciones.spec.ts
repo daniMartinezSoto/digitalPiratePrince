@@ -54,6 +54,10 @@ describe('dónde se puede cada acción', () => {
     expect(sePuedePescar(A_BORDO)).toBe(true);
     expect(sePuedePescar(EN_LA_PLAYA)).toBe(true);
     expect(sePuedePescar(EN_UN_PUERTO)).toBe(true);
+    // Los puertos y las guaridas siempre están junto al agua, aunque no se diga.
+    expect(sePuedePescar({ lugar: 'puerto' })).toBe(true);
+    expect(sePuedePescar({ lugar: 'guarida' })).toBe(true);
+    expect(sePuedePescar({ lugar: 'aldea' })).toBe(false);
     expect(sePuedePescar(EN_LA_JUNGLA)).toBe(false);
   });
 

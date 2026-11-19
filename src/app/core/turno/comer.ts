@@ -9,7 +9,7 @@ import type { Estado } from '../estado/estado';
 import type { Efecto } from '../tablas/efecto';
 import { tieneVinculoNativo } from '../personaje/vinculo-nativo';
 import type { Jugador } from '../estado/jugador';
-import { esPuerto, type Lugar } from './lugar';
+import { esPuerto, type Lugar, type TerrenoAlRaso } from './lugar';
 import { hayCombate } from '../combate/hay-combate';
 
 const CATALOGOS_DEL_JUEGO: CatalogosEfectos = { objetos: OBJETOS, condiciones: CONDICIONES };
@@ -17,11 +17,17 @@ const CATALOGOS_DEL_JUEGO: CatalogosEfectos = { objetos: OBJETOS, condiciones: C
 // Id de la condición que se ve (con su icono) mientras el jugador pasa hambre.
 export const CONDICION_HAMBRE = 'hambre';
 
+// "El superviviente" no necesita comer en la jungla ni en la jungla profunda (decidido por el autor el
+// 19-nov: en las dos): allí consigue la comida él solo. En la fase de comida sale su botón.
+export const SOBRENOMBRE_SUPERVIVIENTE = 'el_superviviente';
+export const TERRENOS_DEL_SUPERVIVIENTE: readonly TerrenoAlRaso[] = ['jungla', 'jungla_profunda'];
+
 // Lo que elige el jugador en la fase de comida:
 //   reservas: gastar sus reservas de comida.
 //   pagar:    pagar con oro. En un puerto es "comer en la taberna"; en una aldea, "intercambiar oro por comida".
 //   invitado: hoy le invitan (fiesta de bienvenida en una aldea: mundo.comidaGratis). No gasta nada.
-export const ELECCIONES_DE_COMIDA = ['reservas', 'pagar', 'invitado'] as const;
+//   superviviente: "el superviviente", al raso en jungla o jungla profunda, consigue la comida él solo. No gasta nada.
+export const ELECCIONES_DE_COMIDA = ['reservas', 'pagar', 'invitado', 'superviviente'] as const;
 export type EleccionDeComida = (typeof ELECCIONES_DE_COMIDA)[number];
 
 /** Lo que la interfaz necesita para pintar la fase de comida (qué botones hay y cuáles se pueden pulsar). */
@@ -34,6 +40,8 @@ export interface OpcionesDeComida {
   pago: { precio: number; alcanzaElOro: boolean } | null;
   // true = hoy le invitan a comer (mundo.comidaGratis): sale el botón "invitado".
   invitado: boolean;
+  // true = es "el superviviente" y está al raso en jungla o jungla profunda: sale su botón.
+  superviviente: boolean;
 }
 
 /** Lo que devuelve comer. Son datos, no mensajes: la interfaz decide cómo contarlo. */
@@ -45,8 +53,16 @@ export interface ResultadoComida {
   eventos: string[];       // ids de eventos pendientes ("motin")
 }
 
-/** Solo consulta: qué puede hacer el jugador en la fase de comida estando en ese lugar. */
-export function opcionesDeComida(estado: Estado, lugar: Lugar, catalogos: CatalogosEfectos = CATALOGOS_DEL_JUEGO): OpcionesDeComida {
+/**
+ * Solo consulta: qué puede hacer el jugador en la fase de comida estando en ese lugar.
+ * terreno: solo cuenta al raso (para "el superviviente"); lo dirá el mapa (Sprint 9).
+ */
+export function opcionesDeComida(
+  estado: Estado,
+  lugar: Lugar,
+  catalogos: CatalogosEfectos = CATALOGOS_DEL_JUEGO,
+  terreno?: TerrenoAlRaso,
+): OpcionesDeComida {
   const necesarias = comidaPorDia(estado.jugador, catalogos.condiciones);
   const precio = necesarias * AJUSTES.precioTaberna;
   return {
@@ -55,6 +71,11 @@ export function opcionesDeComida(estado: Estado, lugar: Lugar, catalogos: Catalo
     alcanzanLasReservas: estado.jugador.comida >= necesarias,
     pago: sePuedePagarConOro(estado.jugador, lugar) ? { precio, alcanzaElOro: estado.jugador.oro >= precio } : null,
     invitado: estado.mundo.comidaGratis,
+    superviviente:
+      estado.jugador.sobrenombre === SOBRENOMBRE_SUPERVIVIENTE &&
+      lugar === 'intemperie' &&
+      terreno !== undefined &&
+      TERRENOS_DEL_SUPERVIVIENTE.includes(terreno),
   };
 }
 
@@ -75,6 +96,8 @@ export function sePuedePagarConOro(jugador: Jugador, lugar: Lugar): boolean {
  *   "reservas": gasta las reservas que hacen falta hoy. Si no llegan, gasta las que haya y pasa hambre.
  *   "invitado": hoy le invitan (mundo.comidaGratis): come todo el grupo sin gastar nada. Si hoy no
  *               le invitan, error.
+ *   "superviviente": "el superviviente", al raso en jungla o jungla profunda (terreno), consigue la
+ *               comida él solo: come todo el grupo sin gastar nada. En otro sitio, error.
  *   "pagar":    paga AJUSTES.precioTaberna de oro por cada reserva que haría falta. Solo donde se
  *               puede (ver sePuedePagarConOro) y si llega el oro (si no, error: la interfaz no debe
  *               dejar pulsar el botón).
@@ -98,6 +121,7 @@ export function comer(
   lugar: Lugar,
   dados: Dados,
   catalogos: CatalogosEfectos = CATALOGOS_DEL_JUEGO,
+  terreno?: TerrenoAlRaso,
 ): ResultadoComida {
   if (estado.mundo.finPartida) {
     throw new Error('comer: la partida ya ha terminado');
@@ -109,7 +133,7 @@ export function comer(
     throw new Error(`comer: solo se puede comer en la fase "comida" (la partida está en "${estado.mundo.fase}")`);
   }
 
-  const opciones = opcionesDeComida(estado, lugar, catalogos);
+  const opciones = opcionesDeComida(estado, lugar, catalogos, terreno);
   const teniaHambre = estado.jugador.condiciones.some(c => c.id === CONDICION_HAMBRE);
   const efectos: Efecto[] = [];
   let haComido: boolean;
@@ -118,6 +142,11 @@ export function comer(
   if (eleccion === 'invitado') {
     if (!opciones.invitado) {
       throw new Error('comer: hoy no le invitan a comer');
+    }
+    haComido = true;
+  } else if (eleccion === 'superviviente') {
+    if (!opciones.superviviente) {
+      throw new Error('comer: solo "el superviviente", al raso en jungla o jungla profunda, consigue la comida él solo');
     }
     haComido = true;
   } else if (eleccion === 'pagar') {

@@ -76,9 +76,12 @@ export interface AccionDisponible {
   faltanDias?: number;
 }
 
-/** Pescar: a bordo, o en tierra si hay agua en una casilla de al lado. */
+/**
+ * Pescar: a bordo, en un puerto o una guarida pirata (siempre están junto al agua: decidido por el
+ * autor el 19-nov), o en otro sitio de tierra si hay agua en una casilla de al lado.
+ */
 export function sePuedePescar(sitio: Sitio): boolean {
-  return sitio.lugar === 'barco' || sitio.juntoAlAgua === true;
+  return sitio.lugar === 'barco' || esPuerto(sitio.lugar) || sitio.juntoAlAgua === true;
 }
 
 /** Cazar: en tierra salvaje (playa, jungla, jungla profunda). Ni a bordo ni donde vive gente. */
