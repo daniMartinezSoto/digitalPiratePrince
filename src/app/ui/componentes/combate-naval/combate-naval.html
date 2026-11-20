@@ -1,0 +1,24 @@
+@if (naval(); as n) {
+  <h3>Combate naval contra {{ n.nombre }} · ronda {{ n.ronda }}</h3>
+  <p>
+    {{ n.nombre }}: resistencia {{ n.resistencia }}/{{ n.resistenciaMaxima }} · daño {{ n.dano }} ·
+    tu tripulación: {{ tripulacion() }} (has perdido {{ n.tripulacionPerdida }})
+  </p>
+
+  @if (n.abordaje) {
+    <app-combate />
+  }
+
+  @if (n.resultado || abordajeTerminado()) {
+    <p class="fin">EL COMBATE NAVAL HA TERMINADO@if (n.resultado) {: {{ n.resultado }}}</p>
+    <button type="button" (click)="cerrar()">Cerrar el combate naval</button>
+  } @else if (opciones(); as o) {
+    @if (!n.abordaje) {
+      <button type="button" [disabled]="!o.disparar" (click)="disparar()">Disparar</button>
+      <button type="button" [disabled]="!o.huir.disponible" (click)="huir()">Huir</button>
+      @if (o.huir.motivo; as m) { <small> {{ textoNoHuir[m] }}</small> }
+      <button type="button" [disabled]="!o.abordar.disponible" (click)="abordar()">Abordar</button>
+      @if (o.abordar.motivo === 'resistencia_alta') { <small> Podrás abordar cuando le quede {{ o.abordar.resistenciaParaAbordar }}</small> }
+    }
+  }
+}

@@ -158,6 +158,9 @@ function aplicarUno(estado: Estado, efecto: Efecto, dados: Dados, catalogos: Cat
     case 'ganar_partida':
       terminarPartida(estado, { resultado: 'victoria', motivo: 'evento' }, cambios);
       return;
+    case 'victoria_normal':
+      terminarPartida(estado, { resultado: 'victoria', motivo: 'fama_y_puertos' }, cambios);
+      return;
     case 'perder_partida':
       terminarPartida(estado, { resultado: 'derrota', motivo: 'evento' }, cambios);
       return;

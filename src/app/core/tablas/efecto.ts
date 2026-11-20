@@ -74,7 +74,8 @@ export type CantidadDefinicion = number | string;
 //   tirar_objeto: el jugador tira ese objeto (core/objetos/tirar-objeto.ts).
 //   vender_objeto: el jugador lo vende en el mercado: sale del inventario (el oro va en otro efecto).
 //   herir_seguidor: el combate le quita "cantidad" de resistencia a un seguidor concreto (su id en la partida).
-export const EFECTOS_INTERNOS = ['gastar_uso', 'tirar_objeto', 'vender_objeto', 'herir_seguidor'] as const;
+//   victoria_normal: la partida se gana por fama y puertos (al llegar a un puerto con todo cumplido).
+export const EFECTOS_INTERNOS = ['gastar_uso', 'tirar_objeto', 'vender_objeto', 'herir_seguidor', 'victoria_normal'] as const;
 
 // Efectos que son iguales en el JSON y ya resueltos (no llevan dados).
 type EfectoSinDados =
@@ -109,6 +110,7 @@ export type Efecto =
   | { tipo: 'tirar_objeto'; posicion: number }
   | { tipo: 'vender_objeto'; posicion: number }
   | { tipo: 'herir_seguidor'; seguidor: string; cantidad: number }
+  | { tipo: 'victoria_normal' }
   | { tipo: TipoRecurso; operacion: 'mitad' | 'maximo' | 'todo'; destino?: Destino; siNoHay?: Efecto[] }
   | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: number; destino?: Destino; siNoHay?: Efecto[] }
   | { tipo: 'poner_condicion'; condicion: string; turnos?: number; partes?: string[] }

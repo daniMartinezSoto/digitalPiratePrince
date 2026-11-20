@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, computed, inject, model, signal } from '@angular/core';
 import { accionesDisponibles } from '../../../core/acciones/acciones-disponibles';
 import type { IdAccion, ResultadoAccion, Sitio } from '../../../core/acciones/accion';
 import { solicitarAudiencia } from '../../../core/acciones/audiencia';
@@ -20,6 +20,9 @@ import { descansarEnMonasterio, rezar } from '../../../core/monasterio/monasteri
 import { comer, opcionesDeComida, type EleccionDeComida } from '../../../core/turno/comer';
 import { descansar, opcionesDeDescanso, type EleccionDeDescanso } from '../../../core/turno/descansar';
 import { iniciarTurno } from '../../../core/turno/iniciar-turno';
+import { esAgua, LUGARES, TERRENOS, type Lugar, type Rasgo, type Terreno } from '../../../core/turno/lugar';
+import { PUERTOS_PRINCIPALES, progresoDePuertos } from '../../../core/viaje/puertos-principales';
+import { condicionesQueImpidenViajar, viajar, type Destino } from '../../../core/viaje/viajar';
 import { JuegoStore } from '../../../store/juego.store';
 import { Jugar } from '../../servicios/jugar';
 import {
@@ -34,6 +37,9 @@ import {
   NOMBRE_DE_ACCION,
   NOMBRE_DE_COMIDA,
   NOMBRE_DE_DESCANSO,
+  NOMBRE_DE_LUGAR,
+  NOMBRE_DE_TERRENO,
+  nombreDeCondicion,
   nombreDeObjeto,
   nombreDeTipoDeSeguidor,
   textoDeApuesta,
@@ -63,7 +69,7 @@ const ACCIONES_DE_UN_CLIC: Partial<Record<IdAccion, AccionDeUnClic>> = {
 };
 
 /** Acciones que antes de hacerse piden elegir algo aquí mismo: la apuesta del pulso o los sobornos. */
-type EleccionPrevia = 'pulso' | 'sobornos' | null;
+type EleccionPrevia = 'pulso' | 'sobornos' | 'viaje' | null;
 
 // EL PANEL DEL DÍA (pantalla de pruebas): los botones de la fase en que está la partida.
 // Con una acción a medias (mercado, marineros, seguidor, mesa de dados) enseña solo esa acción.
@@ -76,7 +82,7 @@ type EleccionPrevia = 'pulso' | 'sobornos' | null;
   styleUrl: './panel-del-dia.css',
 })
 export class PanelDelDia {
-  readonly ubicacion = input.required<Ubicacion>();
+  readonly ubicacion = model.required<Ubicacion>();
 
   private readonly store = inject(JuegoStore);
   private readonly jugar = inject(Jugar);
@@ -126,6 +132,77 @@ export class PanelDelDia {
   });
 
   protected readonly nombreDeComida = NOMBRE_DE_COMIDA;
+
+  // --- Viajar sin mapa: a dónde se llega (lo elige el jugador hasta que exista el mapa) ---
+  protected readonly impidenViajar = computed(() => {
+    const estado = this.estado();
+    return estado ? condicionesQueImpidenViajar(estado).map(nombreDeCondicion) : [];
+  });
+  protected readonly terrenos = TERRENOS.map(id => ({ id, nombre: NOMBRE_DE_TERRENO[id] }));
+  protected readonly puertosPrincipales = PUERTOS_PRINCIPALES;
+  protected readonly destino = signal<Destino & { col: number; fila: number }>({ terreno: 'costa', lugar: 'barco', col: 1, fila: 0 });
+  /** En el agua solo se va a bordo; en tierra, cualquier lugar menos a bordo. */
+  protected readonly lugaresDelDestino = computed(() =>
+    (esAgua(this.destino().terreno) ? (['barco'] as Lugar[]) : LUGARES.filter(l => l !== 'barco')).map(id => ({ id, nombre: NOMBRE_DE_LUGAR[id] })),
+  );
+
+  protected prepararViaje(): void {
+    const u = this.ubicacion();
+    this.destino.set({ terreno: 'costa', lugar: 'barco', col: u.col + 1, fila: u.fila });
+    this.eleccionPrevia.set('viaje');
+  }
+
+  protected cambiarDestino(campo: 'terreno' | 'lugar' | 'rasgo' | 'puertoPrincipal' | 'col' | 'fila', valor: string): void {
+    this.destino.update(d => {
+      const nuevo: Destino & { col: number; fila: number } = { ...d };
+      if (campo === 'terreno') {
+        nuevo.terreno = valor as Terreno;
+        nuevo.lugar = esAgua(nuevo.terreno) ? 'barco' : d.lugar === 'barco' ? 'intemperie' : d.lugar;
+      } else if (campo === 'lugar') {
+        nuevo.lugar = valor as Lugar;
+      } else if (campo === 'rasgo') {
+        nuevo.rasgo = valor === 'ninguno' ? undefined : (valor as Rasgo);
+      } else if (campo === 'puertoPrincipal') {
+        nuevo.puertoPrincipal = valor === '' ? undefined : valor;
+      } else {
+        const n = Math.floor(Number(valor));
+        nuevo[campo] = Number.isFinite(n) ? n : 0;
+      }
+      if (nuevo.lugar !== 'puerto') nuevo.puertoPrincipal = undefined;
+      return nuevo;
+    });
+  }
+
+  protected viajar(): void {
+    const destino = this.destino();
+    const { col, fila, ...paraLasReglas } = destino;
+    this.eleccionPrevia.set(null);
+    const resultado = this.jugar.hacer(
+      (e, d) => viajar(e, paraLasReglas, d),
+      (r, n) => {
+        const donde = `${NOMBRE_DE_TERRENO[destino.terreno]}${destino.lugar === 'barco' || destino.lugar === 'intemperie' ? '' : ` · ${NOMBRE_DE_LUGAR[destino.lugar]}`}`;
+        const puerto = destino.puertoPrincipal ? PUERTOS_PRINCIPALES.find(p => p.id === destino.puertoPrincipal)?.nombre : undefined;
+        const lineas = lineasDeAccion(`Viajas a ${donde}${puerto ? ` (${puerto})` : ''}`, r, n);
+        if (r.puertoNuevo) {
+          const progreso = progresoDePuertos(r.estado.mundo);
+          lineas.splice(1, 0, `  ¡Primera visita a ${puerto}! Puertos ${progreso.visitados}/${progreso.total}`);
+        }
+        return lineas;
+      },
+    );
+    if (resultado) {
+      // Al llegar, "¿dónde estás?" pasa a ser el destino.
+      this.ubicacion.set({
+        lugar: destino.lugar,
+        terreno: esAgua(destino.terreno) ? this.ubicacion().terreno : (destino.terreno as Ubicacion['terreno']),
+        juntoAlAgua: false,
+        rasgo: destino.rasgo ?? 'ninguno',
+        col,
+        fila,
+        ...(destino.puertoPrincipal ? { puerto: destino.puertoPrincipal } : {}),
+      });
+    }
+  }
 
   protected empezarElDia(): void {
     this.jugar.hacer((e, d) => iniciarTurno(e, d), lineasDeAmanecer);

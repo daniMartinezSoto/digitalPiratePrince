@@ -1,0 +1,31 @@
+<details>
+  <summary>Combates de prueba (en el juego los lanzarán los eventos)</summary>
+  <p>
+    <label>Enemigo:
+      <select name="prueba-enemigo" (change)="enemigo.set($any($event.target).value)">
+        @for (e of enemigos; track e.id) { <option [value]="e.id">{{ e.texto }}</option> }
+      </select>
+    </label>
+    <label>Cuántos: <input name="prueba-cantidad" type="number" min="1" max="4" [value]="cantidad()" (change)="elegirCantidad($any($event.target).value)" /></label>
+  </p>
+  <p>
+    <label><input type="checkbox" name="prueba-puede-huir" [checked]="puedeHuir()" (change)="puedeHuir.set($any($event.target).checked)" /> Se puede huir</label>
+    <label><input type="checkbox" name="prueba-no-mortal" [checked]="noMortal()" (change)="noMortal.set($any($event.target).checked)" /> No mortal</label>
+    <label>Sorpresa:
+      <select name="prueba-sorpresa" (change)="sorpresa.set($any($event.target).value)">
+        <option value="">Ninguna</option>
+        <option value="nuestra">La nuestra (emboscáis vosotros)</option>
+        <option value="suya">La suya (¡emboscada!)</option>
+      </select>
+    </label>
+  </p>
+  <p><button type="button" (click)="empezar()">Empezar combate</button></p>
+  <p>
+    <label>Barco:
+      <select name="prueba-barco" (change)="barco.set($any($event.target).value)">
+        @for (b of barcos; track b.id) { <option [value]="b.id">{{ b.texto }}</option> }
+      </select>
+    </label>
+    <button type="button" (click)="empezarNaval()">Empezar combate naval</button>
+  </p>
+</details>

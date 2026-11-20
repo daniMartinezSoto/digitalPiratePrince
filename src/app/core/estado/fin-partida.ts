@@ -3,12 +3,14 @@
 //   seguidor: ha muerto un seguidor "vital" (el de "el hermano"): derrota.
 //   evento: un efecto "ganar_partida" o "perder_partida" (la isla misteriosa, "mueres"...).
 //   abandono: el jugador se ha rendido (botón "Abandonar"; Sprint 8): cuenta como derrota.
+//   fama_y_puertos: la victoria normal: llegar a un puerto con la fama objetivo y los 4 puertos
+//                   principales ya visitados (core/viaje/llegar.ts; decidido por el autor el 20-nov).
 // La victoria normal (fama y puertos) llegará con el mapa (Sprint 9).
 // Las listas sirven también para comprobar las fichas de la crónica (core/guardado/cronica.ts).
 export const RESULTADOS_DE_PARTIDA = ['victoria', 'derrota'] as const;
 export type ResultadoDePartida = (typeof RESULTADOS_DE_PARTIDA)[number];
 
-export const MOTIVOS_DE_FIN = ['vida', 'tripulacion', 'seguidor', 'evento', 'abandono'] as const;
+export const MOTIVOS_DE_FIN = ['vida', 'tripulacion', 'seguidor', 'evento', 'abandono', 'fama_y_puertos'] as const;
 export type MotivoDeFin = (typeof MOTIVOS_DE_FIN)[number];
 
 export interface FinPartida {

@@ -1,0 +1,19 @@
+@if (objetos().length > 0) {
+  <h3>Tus objetos</h3>
+  <ul>
+    @for (o of objetos(); track o.posicion) {
+      <li>
+        {{ o.nombre }}@if (o.usos !== undefined) { ({{ o.usos }} usos) }
+        <button type="button" [name]="'usar-' + o.posicion" [disabled]="!o.usable" (click)="usar(o.posicion, o.nombre)">Usar</button>
+        @if (confirmandoTirar() === o.posicion) {
+          ¿Tirarlo? No se recupera.
+          <button type="button" (click)="tirar(o.posicion, o.nombre)">Sí, tirar</button>
+          <button type="button" (click)="confirmandoTirar.set(null)">No</button>
+        } @else {
+          <button type="button" [name]="'tirar-' + o.posicion" [disabled]="!o.sePuedeTirar" (click)="confirmandoTirar.set(o.posicion)">Tirar</button>
+        }
+      </li>
+    }
+  </ul>
+  <small>"Usar" solo funciona en la fase de acción con objetos que se usan entonces (el ungüento); los de combate, en el combate.</small>
+}

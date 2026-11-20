@@ -29,8 +29,46 @@
                 <button type="button" [disabled]="!b.disponible" (click)="pulso(b.apuesta)">Apostar {{ b.texto }}</button>
               }
               <button type="button" (click)="eleccionPrevia.set(null)">Cancelar</button>
+            } @else if (eleccionPrevia() === 'viaje') {
+              @let d = destino();
+              <h3>Viajar: ¿a dónde llegas? (sin mapa, lo eliges tú)</h3>
+              <p>
+                <label>Terreno:
+                  <select name="viaje-terreno" (change)="cambiarDestino('terreno', $any($event.target).value)">
+                    @for (t of terrenos; track t.id) { <option [value]="t.id" [selected]="t.id === d.terreno">{{ t.nombre }}</option> }
+                  </select>
+                </label>
+                <label>Lugar:
+                  <select name="viaje-lugar" (change)="cambiarDestino('lugar', $any($event.target).value)">
+                    @for (l of lugaresDelDestino(); track l.id) { <option [value]="l.id" [selected]="l.id === d.lugar">{{ l.nombre }}</option> }
+                  </select>
+                </label>
+                @if (d.lugar === 'puerto') {
+                  <label>¿Qué puerto?
+                    <select name="viaje-puerto" (change)="cambiarDestino('puertoPrincipal', $any($event.target).value)">
+                      <option value="">Un puerto cualquiera</option>
+                      @for (p of puertosPrincipales; track p.id) { <option [value]="p.id" [selected]="p.id === d.puertoPrincipal">{{ p.nombre }}</option> }
+                    </select>
+                  </label>
+                }
+                <label>Rasgo:
+                  <select name="viaje-rasgo" (change)="cambiarDestino('rasgo', $any($event.target).value)">
+                    <option value="ninguno">Ninguno</option>
+                    <option value="naufragio">Naufragio</option>
+                    <option value="ruinas">Ruinas</option>
+                  </select>
+                </label>
+                <label>Casilla: col <input name="viaje-col" type="number" [value]="d.col" (change)="cambiarDestino('col', $any($event.target).value)" /></label>
+                <label>fila <input name="viaje-fila" type="number" [value]="d.fila" (change)="cambiarDestino('fila', $any($event.target).value)" /></label>
+              </p>
+              <button type="button" (click)="viajar()">Viajar</button>
+              <button type="button" (click)="eleccionPrevia.set(null)">Cancelar</button>
             } @else {
               <h3>Acción (elige una)</h3>
+              <p>
+                <button type="button" [disabled]="impidenViajar().length > 0" (click)="prepararViaje()">Viajar…</button>
+                @if (impidenViajar().length > 0) { <small> No puedes: {{ impidenViajar().join(', ') }}</small> }
+              </p>
               <ul>
                 @for (a of acciones(); track a.id) {
                   <li>

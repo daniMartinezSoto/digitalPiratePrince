@@ -1,0 +1,37 @@
+@if (combate(); as c) {
+  <h3>{{ esAbordaje() ? 'Abordaje' : 'Combate' }} · ronda {{ c.ronda }}</h3>
+  <p>
+    <strong>Tu bando:</strong>
+    @for (a of aliados(); track a.id) { {{ a.nombre }} {{ a.vida }}/{{ a.maximo }}@if (!$last) { · } }
+  </p>
+  <p><strong>Enemigos:</strong></p>
+  <ul>
+    @for (e of enemigos(); track e.id) {
+      <li>
+        {{ e.nombre }}: @if (e.resistencia > 0) { {{ e.resistencia }}/{{ e.resistenciaMaxima }} · ataque {{ e.ataque }} } @else { muerto }
+        @if (e.habilidadesTexto) { · {{ e.habilidadesTexto }} }
+      </li>
+    }
+  </ul>
+  @if (parejas().length > 0 && !c.resultado) {
+    <p><strong>Quién ataca a quién:</strong> {{ parejas().join(' · ') }}</p>
+  }
+  @if (c.noPuedenFallar) { <p>Tras tu huida fallida, los enemigos no fallarán esta ronda.</p> }
+
+  @if (c.resultado) {
+    <p class="fin">EL COMBATE HA TERMINADO: {{ c.resultado }}</p>
+    @if (!esAbordaje()) {
+      <button type="button" (click)="cerrar()">Cerrar el combate</button>
+    }
+  } @else if (opciones(); as o) {
+    <button type="button" [disabled]="!o.atacar" (click)="atacar()">Atacar</button>
+    <button type="button" [disabled]="!o.huir.disponible" (click)="huir()">Huir</button>
+    @if (o.huir.motivo; as m) { <small> {{ textoNoHuir[m] }}</small> }
+    @for (obj of o.objetos; track obj.posicion) {
+      <p>
+        <button type="button" [disabled]="!obj.disponible" (click)="usar(obj.posicion, obj.objeto)">Usar {{ nombreDeObjeto(obj.objeto) }}</button>
+        @if (obj.motivo; as m) { <small> {{ textoNoUsar[m] }}</small> }
+      </p>
+    }
+  }
+}

@@ -46,7 +46,7 @@ describe('pantalla Partida', () => {
     await harness.fixture.whenStable();
     expect(store.hayPartidaEnCurso()).toBe(false);
     expect(store.cronica()).toHaveLength(1);
-    expect(harness.routeNativeElement!.textContent).toContain('PARTIDA TERMINADA: derrota (abandono)');
+    expect(harness.routeNativeElement!.textContent).toContain('PARTIDA TERMINADA · DERROTA: has abandonado');
     pulsar(harness.routeNativeElement!, 'Nueva partida');
     await harness.fixture.whenStable();
     expect(urlActual()).toBe('/nueva-partida');

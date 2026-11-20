@@ -11,9 +11,16 @@
 
 @if (estado(); as estado) {
   <p>Día {{ estado.mundo.dia }} · fase: {{ nombreDeFase[estado.mundo.fase] }}</p>
+  @if (puertos(); as p) {
+    <p>
+      Puertos {{ p.visitados }}/{{ p.total }}:
+      @for (puerto of p.puertos; track puerto.id) { {{ puerto.nombre }} {{ puerto.visitado ? '✓' : '·' }}@if (!$last) { , } }
+      · Fama {{ estado.jugador.fama }}/{{ famaObjetivo() }}
+    </p>
+  }
 
   @if (estado.mundo.finPartida; as fin) {
-    <p class="fin">PARTIDA TERMINADA: {{ fin.resultado }} ({{ fin.motivo }})</p>
+    <p class="fin">PARTIDA TERMINADA · {{ textoDeFin(fin) }}</p>
     <button type="button" (click)="nuevaPartida()">Nueva partida</button>
   } @else if (confirmandoAbandono()) {
     <p>¿Seguro? Contará como derrota en la crónica.</p>
@@ -24,9 +31,17 @@
   }
 
   @if (!estado.mundo.finPartida) {
-    <app-donde-estas [(ubicacion)]="ubicacion" />
-    <app-panel-del-dia [ubicacion]="ubicacion()" />
-    <app-trampas />
+    @if (estado.mundo.combateNaval) {
+      <app-combate-naval />
+    } @else if (estado.mundo.combate) {
+      <app-combate />
+    } @else {
+      <app-donde-estas [(ubicacion)]="ubicacion" />
+      <app-panel-del-dia [(ubicacion)]="ubicacion" />
+      <app-objetos />
+      <app-combate-de-prueba />
+      <app-trampas />
+    }
   }
 
   <app-registro />

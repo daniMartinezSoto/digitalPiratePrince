@@ -22,6 +22,16 @@ export const TERRENOS_AL_RASO = ['playa', 'jungla', 'jungla_profunda'] as const;
 export type TerrenoAlRaso = (typeof TERRENOS_AL_RASO)[number];
 export const TERRENO_POR_DEFECTO: TerrenoAlRaso = 'jungla';
 
+// Todos los terrenos (el color de la casilla), de agua y de tierra. Decide la lista de eventos al
+// viajar (data/eventos-terreno/). Lo dirá el mapa (Sprint 9).
+export const TERRENOS_DE_AGUA = ['alta_mar', 'costa'] as const;
+export const TERRENOS = [...TERRENOS_DE_AGUA, ...TERRENOS_AL_RASO] as const;
+export type Terreno = (typeof TERRENOS)[number];
+
+export function esAgua(terreno: Terreno): boolean {
+  return (TERRENOS_DE_AGUA as readonly string[]).includes(terreno);
+}
+
 /** ¿Funciona como un puerto (mercado, contratar, taberna, posada...)? Los puertos y las guaridas piratas neutrales. */
 export function esPuerto(lugar: Lugar): boolean {
   return lugar === 'puerto' || lugar === 'guarida';

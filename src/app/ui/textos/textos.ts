@@ -14,7 +14,8 @@ import { nombreDeSobrenombre } from '../../core/personaje/hoja-de-personaje';
 import type { TipoRecurso } from '../../core/tablas/efecto';
 import type { EleccionDeComida } from '../../core/turno/comer';
 import type { EleccionDeDescanso } from '../../core/turno/descansar';
-import type { Lugar, Rasgo, TerrenoAlRaso } from '../../core/turno/lugar';
+import type { Lugar, Rasgo, Terreno } from '../../core/turno/lugar';
+import type { FinPartida, MotivoDeFin } from '../../core/estado/fin-partida';
 
 // TEXTOS DE LA PANTALLA (pantalla de pruebas): traducen los datos que devuelven las reglas
 // (cambios, motivos, ids...) a frases para el jugador. Son textos de pantalla, por eso van en ui/
@@ -56,11 +57,27 @@ export const NOMBRE_DE_FASE: Record<Fase, string> = {
   descanso: 'descanso',
 };
 
-export const NOMBRE_DE_TERRENO: Record<TerrenoAlRaso, string> = {
+export const NOMBRE_DE_TERRENO: Record<Terreno, string> = {
+  alta_mar: 'Alta mar',
+  costa: 'Costa',
   playa: 'Playa',
   jungla: 'Jungla',
   jungla_profunda: 'Jungla profunda',
 };
+
+const TEXTO_DE_FIN: Record<MotivoDeFin, string> = {
+  vida: 'te has quedado sin vida',
+  tripulacion: 'te has quedado sin tripulación',
+  seguidor: 'ha muerto tu seguidor vital',
+  evento: 'por un evento',
+  abandono: 'has abandonado',
+  fama_y_puertos: '¡fama y los cuatro puertos: eres una leyenda pirata!',
+};
+
+/** "VICTORIA: ¡fama y los cuatro puertos...!", "DERROTA: te has quedado sin vida". */
+export function textoDeFin(fin: FinPartida): string {
+  return `${fin.resultado === 'victoria' ? 'VICTORIA' : 'DERROTA'}: ${TEXTO_DE_FIN[fin.motivo]}`;
+}
 
 export const NOMBRE_DE_RASGO: Record<Rasgo, string> = {
   naufragio: 'Naufragio',
@@ -252,6 +269,6 @@ export function describirCambio(cambio: Cambio, nombres: NombresDeSeguidores = {
     case 'bandera':
       return `(se apunta: ${cambio.bandera})`;
     case 'fin_partida':
-      return `FIN DE LA PARTIDA: ${cambio.fin.resultado} (${cambio.fin.motivo})`;
+      return `FIN DE LA PARTIDA · ${textoDeFin(cambio.fin)}`;
   }
 }

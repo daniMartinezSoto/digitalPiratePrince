@@ -52,7 +52,7 @@
   {
     "id": "unguento",
     "nombre": "Ungüento curativo",
-    "descripcion": "Un ungüento de hierbas del chamán. Al usarlo, recuperas 1d6 de vida.",
+    "descripcion": "Un ungüento de hierbas del chamán. Al usarlo, recuperas 1d6 de vida. Solo se puede usar fuera de combate.",
     "tipo": "activo",
     "usosMaximos": 1,
     "cuandoSeUsa": "accion",

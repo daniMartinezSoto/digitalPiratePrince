@@ -11,6 +11,8 @@ export interface Ubicacion {
   rasgo: Rasgo | 'ninguno';
   col: number;
   fila: number;
+  // Si estás en uno de los puertos principales al que has llegado viajando, cuál ("tortuga").
+  puerto?: string;
 }
 
 export const UBICACION_INICIAL: Ubicacion = {

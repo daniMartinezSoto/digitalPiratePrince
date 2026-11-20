@@ -1,6 +1,7 @@
 @let u = ubicacion();
 <fieldset>
   <legend>¿Dónde estás? (provisional, hasta que exista el mapa)</legend>
+  @if (u.puerto) { <p>Estás en <strong>{{ nombreDelPuerto(u.puerto) }}</strong> (puerto principal).</p> }
   <label>Lugar:
     <select name="lugar" (change)="cambiar('lugar', $any($event.target).value)">
       @for (l of lugares; track l.id) {
