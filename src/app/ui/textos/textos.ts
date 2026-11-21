@@ -136,6 +136,7 @@ const TEXTO_DE_MOTIVO: Record<MotivoNoDisponible, string> = {
   no_es_momento: 'No es el momento',
   combate_en_curso: 'Hay un combate en curso',
   accion_a_medias: 'Termina antes lo que has empezado',
+  debes_salir: 'Aquí no te quieren: tienes que irte (viaja a otra casilla)',
 };
 
 /** "el_afortunado" con retrato de mujer → "La afortunada" (para la crónica). */

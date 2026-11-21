@@ -1,0 +1,24 @@
+<app-mapa [mapa]="mapa" [rejilla]="rejilla()" [marcasDePrueba]="marcas()" [barco]="barco()" />
+
+<details class="pruebas">
+  <summary>Pruebas</summary>
+  <label>
+    <input type="checkbox" [checked]="rejilla()" (change)="cambiarRejilla($event)" />
+    Rejilla
+  </label>
+  <label>
+    <input type="checkbox" [checked]="marcas()" (change)="cambiarMarcas($event)" />
+    Marcas de prueba
+  </label>
+  <fieldset>
+    <legend>Barco</legend>
+    <label>
+      <input type="radio" name="barco" [checked]="barco() === '3d'" (change)="cambiarBarco('3d')" />
+      3D
+    </label>
+    <label>
+      <input type="radio" name="barco" [checked]="barco() === '2d'" (change)="cambiarBarco('2d')" />
+      2D
+    </label>
+  </fieldset>
+</details>

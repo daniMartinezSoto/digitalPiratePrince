@@ -1,35 +1,45 @@
-import { Component, model } from '@angular/core';
-import { LUGARES, RASGOS, TERRENOS_AL_RASO } from '../../../core/turno/lugar';
-import { PUERTOS_PRINCIPALES } from '../../../core/viaje/puertos-principales';
-import { NOMBRE_DE_LUGAR, NOMBRE_DE_RASGO, NOMBRE_DE_TERRENO } from '../../textos/textos';
-import type { Ubicacion } from '../../ubicacion';
+import { Component, computed, inject } from '@angular/core';
+import { vasABordo } from '../../../core/mapa/donde-estas';
+import type { Coordenada } from '../../../core/mapa/mapa';
+import { opcionesDeEmbarque } from '../../../core/viaje/embarcar';
+import { JuegoStore } from '../../../store/juego.store';
+import { Navegar } from '../../servicios/navegar';
+import { describirCasilla, TEXTO_SIN_EMBARQUE } from '../../textos/textos-del-mapa';
 
-// "¿DÓNDE ESTÁS?" (pantalla de pruebas): los selectores provisionales hasta que exista el mapa.
-// Solo cambia la ubicación elegida en la pantalla; no toca la partida.
+// DÓNDE ESTÁS (pantalla de pruebas, Sprint 9): ya no se elige a mano; lo dice el mapa. Enseña la
+// casilla del jugador y la del barco, y los botones para desembarcar o embarcar (sin gastar la
+// acción, una vez por turno, antes de elegir la acción). En el mapa, esas casillas salen en amarillo.
 @Component({
   selector: 'app-donde-estas',
   templateUrl: './donde-estas.html',
   styleUrl: './donde-estas.css',
 })
 export class DondeEstas {
-  readonly ubicacion = model.required<Ubicacion>();
+  private readonly store = inject(JuegoStore);
+  private readonly navegar = inject(Navegar);
 
-  protected readonly lugares = LUGARES.map(id => ({ id, nombre: NOMBRE_DE_LUGAR[id] }));
-  protected readonly terrenos = TERRENOS_AL_RASO.map(id => ({ id, nombre: NOMBRE_DE_TERRENO[id] }));
-  protected readonly rasgos = [
-    { id: 'ninguno', nombre: 'Ninguno' },
-    ...RASGOS.map(id => ({ id, nombre: NOMBRE_DE_RASGO[id] })),
-  ];
+  protected readonly info = computed(() => {
+    const estado = this.store.estado();
+    if (!estado) return null;
+    const { posicion, posicionBarco } = estado.mundo;
+    const aBordo = vasABordo(estado);
+    const opciones = opcionesDeEmbarque(estado);
+    return {
+      aBordo,
+      aqui: `${describirCasilla(estado, posicion, aBordo)} (${posicion.col},${posicion.fila})`,
+      barco: `${describirCasilla(estado, posicionBarco, true)} (${posicionBarco.col},${posicionBarco.fila})`,
+      enAccion: estado.mundo.fase === 'accion',
+      embarcar: opciones.embarcar,
+      desembarcar: opciones.desembarcar.map(c => ({ casilla: c, texto: this.navegar.textoDelDesembarco(c) })),
+      motivo: opciones.motivo ? TEXTO_SIN_EMBARQUE[opciones.motivo] : '',
+    };
+  });
 
-  protected readonly nombreDelPuerto = (id: string) => PUERTOS_PRINCIPALES.find(p => p.id === id)?.nombre ?? id;
-
-  /** Cambiar algo a mano es "estar en otro sitio": deja de estar en el puerto principal al que llegó. */
-  protected cambiar<K extends keyof Ubicacion>(campo: K, valor: Ubicacion[K]): void {
-    this.ubicacion.update(u => ({ ...u, [campo]: valor, puerto: undefined }));
+  protected embarcar(): void {
+    this.navegar.embarcar();
   }
 
-  protected numero(texto: string): number {
-    const n = Number(texto);
-    return Number.isInteger(n) ? n : 0;
+  protected desembarcar(casilla: Coordenada): void {
+    this.navegar.desembarcar(casilla);
   }
 }

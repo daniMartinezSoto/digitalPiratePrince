@@ -1,0 +1,19 @@
+<canvas #agua class="agua" aria-hidden="true"></canvas>
+<canvas #tinta class="tinta" aria-label="Mapa del Caribe en pergamino"></canvas>
+<canvas #barco class="barco" aria-hidden="true"></canvas>
+<div class="abajo">
+  <div class="info">
+    @if (info().titulo) {
+      <b>{{ info().titulo }}</b>
+      @if (info().detalles.length) {
+        ·
+      }
+    }
+    {{ info().detalles.join(' · ') }}
+  </div>
+  <div class="botones">
+    <button type="button" aria-label="Alejar" (click)="alejar()">−</button>
+    <button type="button" aria-label="Acercar" (click)="acercar()">+</button>
+    <button type="button" (click)="centrar()">Centrar</button>
+  </div>
+</div>

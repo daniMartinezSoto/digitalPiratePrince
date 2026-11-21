@@ -1,36 +1,18 @@
-@let u = ubicacion();
-<fieldset>
-  <legend>¿Dónde estás? (provisional, hasta que exista el mapa)</legend>
-  @if (u.puerto) { <p>Estás en <strong>{{ nombreDelPuerto(u.puerto) }}</strong> (puerto principal).</p> }
-  <label>Lugar:
-    <select name="lugar" (change)="cambiar('lugar', $any($event.target).value)">
-      @for (l of lugares; track l.id) {
-        <option [value]="l.id" [selected]="l.id === u.lugar">{{ l.nombre }}</option>
+@if (info(); as i) {
+  <fieldset>
+    <legend>Dónde estás</legend>
+    <p>
+      Estás en <strong>{{ i.aqui }}</strong>, {{ i.aBordo ? 'a bordo' : 'a pie' }}.
+      @if (!i.aBordo) { El barco está en {{ i.barco }}. }
+    </p>
+    @if (i.enAccion) {
+      @if (i.embarcar) {
+        <button type="button" (click)="embarcar()">Embarcar</button>
       }
-    </select>
-  </label>
-  @if (u.lugar === 'intemperie') {
-    <label>Terreno:
-      <select name="terreno" (change)="cambiar('terreno', $any($event.target).value)">
-        @for (t of terrenos; track t.id) {
-          <option [value]="t.id" [selected]="t.id === u.terreno">{{ t.nombre }}</option>
-        }
-      </select>
-    </label>
-  }
-  @if (u.lugar !== 'barco' && u.lugar !== 'puerto' && u.lugar !== 'guarida') {
-    <label>
-      <input type="checkbox" name="juntoAlAgua" [checked]="u.juntoAlAgua" (change)="cambiar('juntoAlAgua', $any($event.target).checked)" />
-      Junto al agua
-    </label>
-  }
-  <label>Rasgo:
-    <select name="rasgo" (change)="cambiar('rasgo', $any($event.target).value)">
-      @for (r of rasgos; track r.id) {
-        <option [value]="r.id" [selected]="r.id === u.rasgo">{{ r.nombre }}</option>
+      @for (d of i.desembarcar; track d.texto) {
+        <button type="button" (click)="desembarcar(d.casilla)">{{ d.texto }}</button>
       }
-    </select>
-  </label>
-  <label>Casilla: col <input name="col" type="number" [value]="u.col" (change)="cambiar('col', numero($any($event.target).value))" /></label>
-  <label>fila <input name="fila" type="number" [value]="u.fila" (change)="cambiar('fila', numero($any($event.target).value))" /></label>
-</fieldset>
+      @if (i.motivo) { <small>Barco: {{ i.motivo }}</small> }
+    }
+  </fieldset>
+}

@@ -1,3 +1,4 @@
+import { aldeaOfendida } from '../mapa/sitio-actual';
 import { AJUSTES } from '../ajustes/ajustes';
 import { condicionesQueProhiben, maximoSeguidoresActual } from '../condiciones/consultas';
 import type { Estado } from '../estado/estado';
@@ -39,6 +40,7 @@ import { hayCombate } from '../combate/hay-combate';
 //   sin_artista:   mendigar necesita un artista en el grupo.
 //   no_es_momento: no es la fase de acción (o la partida ha terminado): ninguna acción se puede.
 //   accion_a_medias: ya hay una acción empezada (mercado, mesa de dados...): primero hay que terminarla.
+//   debes_salir:   estás en una aldea ofendida (te echaron u ofendiste al jefe): solo puedes viajar (Sprint 9).
 export type MotivoNoDisponible =
   | 'sin_agua'
   | 'solo_salvaje'
@@ -63,7 +65,8 @@ export type MotivoNoDisponible =
   | 'sin_artista'
   | 'no_es_momento'
   | 'combate_en_curso'
-  | 'accion_a_medias';
+  | 'accion_a_medias'
+  | 'debes_salir';
 
 /** Una acción tal como la enseña la interfaz: si no está disponible, sale desactivada con su motivo. */
 export interface AccionDisponible {
@@ -105,7 +108,9 @@ export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponi
         ? 'combate_en_curso'
         : estado.mundo.accionEnCurso
           ? 'accion_a_medias'
-          : undefined;
+          : sitio.hex && aldeaOfendida(estado, sitio.hex)
+            ? 'debes_salir'
+            : undefined;
   return bloqueo ? todas.map(a => ({ accion: a.accion, disponible: false, motivo: bloqueo })) : todas;
 }
 

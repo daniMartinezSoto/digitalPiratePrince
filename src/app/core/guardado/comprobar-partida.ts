@@ -15,7 +15,8 @@ const NUMEROS_DEL_JUGADOR = [
 ] as const;
 const LISTAS_DEL_JUGADOR = ['inventario', 'seguidores', 'condiciones'] as const;
 const LISTAS_DEL_MUNDO = ['marcas', 'pilaEventos', 'puertosVisitados'] as const;
-const OBJETOS_O_NULL_DEL_MUNDO = ['posicion', 'finPartida', 'accionEnCurso', 'combate', 'combateNaval'] as const;
+const OBJETOS_O_NULL_DEL_MUNDO = ['finPartida', 'accionEnCurso', 'combate', 'combateNaval'] as const;
+const CASILLAS_DEL_MUNDO = ['posicion', 'posicionBarco'] as const; // desde la versión 2 (Sprint 9)
 
 export function tieneFormaDePartida(datos: unknown): boolean {
   if (!esObjeto(datos) || !esEnteroPositivo(datos['version'])) {
@@ -38,7 +39,8 @@ function jugadorValido(jugador: unknown): boolean {
 function mundoValido(mundo: unknown): boolean {
   return (
     esObjeto(mundo) &&
-    (mundo['mapaId'] === null || typeof mundo['mapaId'] === 'string') &&
+    typeof mundo['mapaId'] === 'string' &&
+    CASILLAS_DEL_MUNDO.every(campo => esCasilla(mundo[campo])) &&
     esNumero(mundo['dia']) &&
     (FASES as readonly unknown[]).includes(mundo['fase']) &&
     Number.isInteger(mundo['semilla']) &&
@@ -50,6 +52,11 @@ function mundoValido(mundo: unknown): boolean {
     typeof mundo['comidaGratis'] === 'boolean' &&
     (mundo['ultimaBusquedaInformacion'] === null || esNumero(mundo['ultimaBusquedaInformacion']))
   );
+}
+
+/** Una casilla del mapa: { col, fila } con números enteros. */
+function esCasilla(valor: unknown): boolean {
+  return esObjeto(valor) && Number.isInteger(valor['col']) && Number.isInteger(valor['fila']);
 }
 
 export function esObjeto(valor: unknown): valor is Datos {

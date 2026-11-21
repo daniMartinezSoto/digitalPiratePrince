@@ -9,7 +9,7 @@ import type { Estado } from '../estado/estado';
 import { resolverEfecto } from '../tablas/rangos/resolver-tabla';
 import type { Efecto } from '../tablas/efecto';
 import type { Lugar, Rasgo } from '../turno/lugar';
-import { esPuertoPrincipal, PUERTOS_PRINCIPALES, todosLosPuertosVisitados, type PuertoPrincipal } from './puertos-principales';
+import { esPuertoPrincipal, puertosPrincipalesDe, todosLosPuertosVisitados, type PuertoPrincipal } from './puertos-principales';
 
 // LLEGAR A UN SITIO (tras el Sprint 8, para la pantalla de pruebas; lo usará viajar con el mapa).
 // Lo que pasa al llegar, en este orden:
@@ -50,7 +50,7 @@ export function llegar(
   llegada: Llegada,
   dados: Dados,
   condiciones: readonly Condicion[] = CONDICIONES,
-  puertos: readonly PuertoPrincipal[] = PUERTOS_PRINCIPALES,
+  puertos: readonly PuertoPrincipal[] = puertosPrincipalesDe(estado),
 ): ResultadoLlegada {
   if (llegada.puertoPrincipal !== undefined) {
     if (llegada.lugar !== 'puerto') {
@@ -88,7 +88,7 @@ export function llegar(
   if (
     !actual.mundo.finPartida &&
     llegada.lugar === 'puerto' &&
-    todosLosPuertosVisitados(actual.mundo, puertos) &&
+    todosLosPuertosVisitados(actual, puertos) &&
     actual.jugador.fama >= famaObjetivoActual(actual.jugador, condiciones)
   ) {
     const victoria = aplicarEfectos(actual, [{ tipo: 'victoria_normal' }], dados, { objetos: OBJETOS, condiciones });

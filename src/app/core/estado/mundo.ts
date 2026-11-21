@@ -1,3 +1,4 @@
+import type { Coordenada, RasgoDelMapa } from '../mapa/mapa';
 import type { CombateEnCurso } from './combate';
 import type { CombateNavalEnCurso } from './combate-naval';
 import type { Fase } from './fase';
@@ -52,7 +53,14 @@ export type AccionEnCurso = VisitaMercado | MarinerosDisponibles | SeguidorEnEsp
 //   naufragio_investigado, ruinas_registradas: ya se exploraron (solo se puede una vez).
 //   echado_de_la_aldea:  falló al convencer a los nativos para dormir allí: le echaron y no puede
 //                        volver a intentarlo (bloquear la casilla y mandarle a un vecino, con el mapa).
-// Irán llegando más tipos (casillas bloqueadas, aldeas ofendidas...).
+//   Del mapa (Sprint 9, paso 4; las pondrán los eventos del Sprint 10):
+//   rasgo_cambiado:      la casilla tiene otro rasgo PARA EL RESTO DE LA PARTIDA (decidido por el autor el
+//                        20-nov): un evento crea una aldea o un puerto (E004, E055), unas ruinas son una ciudad
+//                        pirata, una guarida estaba abandonada ("ninguno": queda solo su terreno)... Lleva
+//                        "rasgo". Si hay varias en la misma casilla, manda la última.
+//   guarida_neutral:     la guarida de esta casilla es neutral (lo decidió E038 al entrar): funciona como un
+//                        puerto pirata (lugar "guarida").
+//   casilla_bloqueada:   no se puede entrar (camino bloqueado de E047, guarida hostil...). En el mapa, una roca.
 export const TIPOS_DE_MARCA = [
   'evento',
   'tesoro_enterrado',
@@ -65,6 +73,9 @@ export const TIPOS_DE_MARCA = [
   'naufragio_investigado',
   'ruinas_registradas',
   'echado_de_la_aldea',
+  'rasgo_cambiado',
+  'guarida_neutral',
+  'casilla_bloqueada',
 ] as const;
 export type TipoDeMarca = (typeof TIPOS_DE_MARCA)[number];
 
@@ -74,20 +85,23 @@ export interface Marca {
   tipo: TipoDeMarca;
   evento?: string; // solo en las marcas de tipo "evento"
   dia?: number; // solo en las que caducan: el día en que se puso (audiencia_aplazada)
+  rasgo?: RasgoDelMapa | 'ninguno'; // solo en las de tipo "rasgo_cambiado": el rasgo nuevo de la casilla
 }
 
 export interface Mundo {
-  // Identificador del mapa en el que se encuentra el jugador.
-  // Es null mientras todavía no se haya asignado ningún mapa.
-  mapaId: string | null;
+  // Identificador del mapa de la partida (data/mapas/<id>.json). Desde el Sprint 9 siempre tiene uno.
+  mapaId: string;
 
-  // Posición actual del jugador en el mapa hexagonal.
-  // col = columna y fila = fila del hexágono.
-  // Es null si todavía no se ha establecido una posición.
-  posicion: {
-    col: number;
-    fila: number;
-  } | null;
+  // Dónde está el jugador (col = columna, fila = fila del hexágono). Al empezar, la casilla de inicio.
+  posicion: Coordenada;
+
+  // Dónde está el barco (Sprint 9). Si el jugador está en la misma casilla, va a bordo; si no, a pie
+  // (consulta vasABordo en core/mapa/donde-estas.ts). Al empezar, en el agua junto a La Habana.
+  posicionBarco: Coordenada;
+
+  // Día en que se desembarcó o embarcó por última vez (Sprint 9, paso 6): solo se puede una vez por
+  // turno. Sin poner = nunca. Es opcional a propósito: las partidas guardadas antes no lo tienen.
+  diaDeEmbarque?: number;
 
   // Día actual de la aventura.
   dia: number;

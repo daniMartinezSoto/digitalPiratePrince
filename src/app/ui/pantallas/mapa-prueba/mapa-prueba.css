@@ -1,0 +1,65 @@
+/* El mapa ocupa toda la ventana, sin márgenes. */
+app-mapa {
+  position: fixed;
+  inset: 0;
+}
+
+/* Desplegable de pruebas, arriba a la derecha, con el mismo estilo de papel que los botones del mapa. */
+.pruebas {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  right: max(14px, env(safe-area-inset-right, 0px));
+  min-width: 160px;
+  background: #ead9ae;
+  color: #3a2717;
+  border: 1.5px solid #3a2717;
+  border-radius: 3px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+  font: 16px/1.35 'IM Fell English', Georgia, serif;
+}
+
+summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 13px;
+  font-family: 'Pirata One', Georgia, serif;
+  font-size: 19px;
+  color: #9b2a1c;
+}
+
+summary:focus-visible {
+  outline: 2px solid #9b2a1c;
+  outline-offset: 2px;
+}
+
+.pruebas[open] summary {
+  border-bottom: 1px dashed rgba(58, 39, 23, 0.4);
+}
+
+label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 13px;
+  cursor: pointer;
+}
+
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 4px 0 8px;
+}
+
+legend {
+  padding: 4px 13px 0;
+  font-style: italic;
+}
+
+input {
+  accent-color: #9b2a1c;
+  width: 18px;
+  height: 18px;
+}

@@ -1,3 +1,5 @@
+import { casillaActual } from '../mapa/donde-estas';
+import { echarAVecinaAlAzar } from '../viaje/mover';
 import { AJUSTES } from '../ajustes/ajustes';
 import { CONDICIONES } from '../catalogos/cargar-condiciones';
 import { OBJETOS } from '../catalogos/cargar-objetos';
@@ -69,6 +71,8 @@ export interface ResultadoDescanso {
   // Solo al intentar convencer a los nativos: el chequeo de Ingenio y si le han echado.
   chequeo?: ResultadoChequeo;
   echado?: boolean;
+  // Si le echaron: la casilla vecina donde ha acabado (Sprint 9).
+  expulsadoA?: { col: number; fila: number };
 }
 
 /**
@@ -108,7 +112,7 @@ export function opcionesDeDescanso(estado: Estado, lugar: Lugar, hex?: { col: nu
   if (!esPuerto(lugar) && estado.jugador.inventario.some(o => o.id === ID_TIENDA_DE_CAMPANA)) {
     opciones.push(opcion('tienda', 0));
   }
-  if (lugar === 'aldea' && !hayMarca(estado, 'echado_de_la_aldea', hex)) {
+  if (lugar === 'aldea' && !hayMarca(estado, 'echado_de_la_aldea', hex) && !hayMarca(estado, 'audiencia_vetada', hex)) {
     // Con vínculo nativo, los nativos os acogen sin más: dormir en la aldea, gratis y sin chequeo.
     // Sin él, hay que convencerlos (chequeo de Ingenio).
     opciones.push(tieneVinculoNativo(estado.jugador) ? opcion('techo_todos', 0) : opcion('convencer_nativos', 0));
@@ -184,7 +188,22 @@ export function descansar(
   }
   const resultado = aplicarEfectos(estado, efectos, dados, catalogos);
   const echado = chequeoNativos !== undefined && !chequeoNativos.superado;
-  const trasLaNoche = echado ? conMarca(resultado.estado, 'echado_de_la_aldea', hex) : resultado.estado;
+  let trasLaNoche = echado ? conMarca(resultado.estado, 'echado_de_la_aldea', hex) : resultado.estado;
+  const cambios = [...resultado.cambios];
+
+  // 1b. Si le echan de la aldea (Sprint 9): la aldea queda bloqueada y aparece en una casilla de
+  //     tierra vecina al azar (1 número si hay varias), donde duerme al raso (con su terreno).
+  let expulsadoA: { col: number; fila: number } | undefined;
+  if (echado) {
+    const fuera = echarAVecinaAlAzar(trasLaNoche, dados);
+    if (fuera.destino) {
+      expulsadoA = fuera.destino;
+      trasLaNoche = fuera.estado;
+      cambios.push(...fuera.cambios);
+      const nuevoTerreno = casillaActual(trasLaNoche).terreno;
+      if (nuevoTerreno === 'playa' || nuevoTerreno === 'jungla' || nuevoTerreno === 'jungla_profunda') terreno = nuevoTerreno;
+    }
+  }
 
   // 2. ¿Evento nocturno?
   const eventos: string[] = [];
@@ -212,9 +231,10 @@ export function descansar(
 
   return {
     estado: nuevo,
-    cambios: resultado.cambios,
+    cambios,
     ...(haDormidoGenial === undefined ? {} : { haDormidoGenial }),
     eventos,
     ...(chequeoNativos ? { chequeo: chequeoNativos, echado } : {}),
+    ...(expulsadoA ? { expulsadoA } : {}),
   };
 }

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { aplicarEfectos } from '../../../core/efectos/aplicar-efectos';
 import { Registro } from '../../servicios/registro';
-import { abrir, boton, escribir, prepararJuego, pulsar } from '../../probar-pantallas';
+import { abrir, boton, escribir, ponerEn, prepararJuego, pulsar } from '../../probar-pantallas';
 
 /** Pulsa y espera a que la pantalla se repinte. */
 async function pulsarYEsperar(harness: Awaited<ReturnType<typeof abrir>>, texto: string): Promise<void> {
@@ -9,15 +9,11 @@ async function pulsarYEsperar(harness: Awaited<ReturnType<typeof abrir>>, texto:
   await harness.fixture.whenStable();
 }
 
-async function cambiarYEsperar(harness: Awaited<ReturnType<typeof abrir>>, selector: string, valor: string): Promise<void> {
-  escribir(harness.routeNativeElement!, selector, valor);
-  await harness.fixture.whenStable();
-}
-
 describe('pantalla Partida: el día con botones', () => {
   it('un día completo a bordo: empezar el día → pescar → comer → dormir → día 2', async () => {
     const store = prepararJuego();
     store.nuevaPartida('Marta', 'mujer', 555);
+    ponerEn(store, 'barco');
     const harness = await abrir('/partida');
 
     await pulsarYEsperar(harness, 'Empezar el día');
@@ -40,6 +36,7 @@ describe('pantalla Partida: el día con botones', () => {
   it('las acciones que no se pueden salen desactivadas, con su motivo', async () => {
     const store = prepararJuego();
     store.nuevaPartida('Marta', 'mujer', 555);
+    ponerEn(store, 'barco');
     const harness = await abrir('/partida');
     await pulsarYEsperar(harness, 'Empezar el día');
 
@@ -53,8 +50,8 @@ describe('pantalla Partida: el día con botones', () => {
   it('en un puerto se pueden usar todas sus acciones (también las de varios pasos)', async () => {
     const store = prepararJuego();
     store.nuevaPartida('Marta', 'mujer', 555);
+    ponerEn(store, 'puerto');
     const harness = await abrir('/partida');
-    await cambiarYEsperar(harness, 'select[name=lugar]', 'puerto');
     await pulsarYEsperar(harness, 'Empezar el día');
 
     const pantalla = harness.routeNativeElement!;
@@ -67,8 +64,8 @@ describe('pantalla Partida: el día con botones', () => {
     const store = prepararJuego();
     store.nuevaPartida('Marta', 'mujer', 555);
     store.ejecutar((estado, dados) => aplicarEfectos(estado, [{ tipo: 'oro', cantidad: 300 }], dados));
+    ponerEn(store, 'intemperie');
     const harness = await abrir('/partida');
-    await cambiarYEsperar(harness, 'select[name=lugar]', 'intemperie');
 
     await pulsarYEsperar(harness, 'Empezar el día');
     await pulsarYEsperar(harness, 'Enterrar tesoro');
@@ -80,7 +77,8 @@ describe('pantalla Partida: el día con botones', () => {
     expect(boton(pantalla, 'Enterrar tesoro').disabled).toBe(true);
     expect(pantalla.textContent).toContain('Ya has enterrado un tesoro aquí');
 
-    await cambiarYEsperar(harness, 'input[name=col]', '1');
+    ponerEn(store, { col: 5, fila: 0 }); // otra casilla de jungla
+    await harness.fixture.whenStable();
     expect(boton(pantalla, 'Enterrar tesoro').disabled).toBe(false);
   });
 

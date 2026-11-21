@@ -113,6 +113,10 @@ describe('leerPartida: textos que no sirven (nunca rompe)', () => {
     ['sin semilla', d => delete d.mundo.semilla],
     ['estadoDados con decimales', d => (d.mundo.estadoDados = 3.5)],
     ['combate que no es un objeto ni null', d => (d.mundo.combate = 'sí')],
+    ['sin barco (versión 2)', d => delete d.mundo.posicionBarco],
+    ['posición vacía (versión 2)', d => (d.mundo.posicion = null)],
+    ['casilla con decimales', d => (d.mundo.posicionBarco = { col: 6.5, fila: 1 })],
+    ['sin mapa (versión 2)', d => (d.mundo.mapaId = null)],
   ];
   it.each(estropeadas)('partida %s → no_es_una_partida', (_nombre, retocar) => {
     expect(leerPartida(partidaRetocada(retocar))).toEqual({ ok: false, motivo: 'no_es_una_partida' });
@@ -134,43 +138,70 @@ describe('leerPartida: textos que no sirven (nunca rompe)', () => {
 });
 
 describe('adaptadores por versión', () => {
-  // Adaptador de prueba: en una "versión 2" imaginaria, el jugador tiene un loro.
-  const deUnoADos: Adaptador = datos => ({
+  // Estos tests usan versiones imaginarias POR ENCIMA de la actual (V), con adaptadores de prueba.
+  const V = VERSION_ESTADO;
+  // Adaptador de prueba: en una versión futura imaginaria, el jugador tiene un loro.
+  const conLoro: Adaptador = datos => ({
     ...datos,
     jugador: { ...(datos['jugador'] as Record<string, unknown>), loro: 'Capitán Flint' },
   });
 
   it('una partida antigua pasa por su adaptador y sale con la versión nueva', () => {
     const { estado } = crearPartida(123, 'Marta');
-    const resultado = leerPartida(guardarPartida(estado), { 1: deUnoADos }, 2);
+    const resultado = leerPartida(guardarPartida(estado), { [V]: conLoro }, V + 1);
     expect(resultado.ok).toBe(true);
     if (!resultado.ok) return;
-    expect(resultado.estado.version).toBe(2);
+    expect(resultado.estado.version).toBe(V + 1);
     expect((resultado.estado.jugador as any).loro).toBe('Capitán Flint');
     expect(resultado.estado.jugador.nombre).toBe('Marta'); // lo demás, igual
   });
 
-  it('se encadenan en orden: 1 → 2 → 3', () => {
+  it('se encadenan en orden: V → V+1 → V+2', () => {
     const orden: number[] = [];
     const adaptadores: Record<number, Adaptador> = {
-      1: datos => (orden.push(1), datos),
-      2: datos => (orden.push(2), datos),
+      [V]: datos => (orden.push(V), datos),
+      [V + 1]: datos => (orden.push(V + 1), datos),
     };
     const { estado } = crearPartida(123, 'Marta');
-    const resultado = leerPartida(guardarPartida(estado), adaptadores, 3);
-    expect(orden).toEqual([1, 2]);
-    expect(resultado.ok && resultado.estado.version).toBe(3);
+    const resultado = leerPartida(guardarPartida(estado), adaptadores, V + 2);
+    expect(orden).toEqual([V, V + 1]);
+    expect(resultado.ok && resultado.estado.version).toBe(V + 2);
   });
 
   it('si falta un adaptador por el camino, no se carga', () => {
     const { estado } = crearPartida(123, 'Marta');
-    expect(leerPartida(guardarPartida(estado), {}, 2)).toEqual({ ok: false, motivo: 'no_es_una_partida' });
+    expect(leerPartida(guardarPartida(estado), {}, V + 1)).toEqual({ ok: false, motivo: 'no_es_una_partida' });
   });
 
   it('una partida de la versión actual no pasa por ningún adaptador', () => {
     const { estado } = crearPartida(123, 'Marta');
-    const resultado = leerPartida(guardarPartida(estado), { 1: () => { throw new Error('no debería llamarse'); } }, 1);
+    const nuncaSeLlama: Adaptador = () => {
+      throw new Error('no debería llamarse');
+    };
+    const resultado = leerPartida(guardarPartida(estado), { [V - 1]: nuncaSeLlama, [V]: nuncaSeLlama }, V);
     expect(resultado.ok).toBe(true);
+  });
+
+  // El primero de verdad (Sprint 9): las partidas de antes del mapa no sabían dónde estaba nadie.
+  it('1 → 2: una partida de antes del mapa se abre en la casilla de inicio, con el barco junto a La Habana', () => {
+    const vieja = JSON.parse(guardarPartida(crearPartida(123, 'Marta').estado));
+    vieja.version = 1;
+    vieja.mundo.mapaId = null;
+    vieja.mundo.posicion = null;
+    delete vieja.mundo.posicionBarco;
+    vieja.mundo.dia = 9;
+    vieja.jugador.oro = 77;
+
+    const resultado = leerPartida(JSON.stringify(vieja));
+
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    expect(resultado.estado.version).toBe(2);
+    expect(resultado.estado.mundo.mapaId).toBe('primer-mapa-prueba');
+    expect(resultado.estado.mundo.posicion).toEqual({ col: 6, fila: 0 });
+    expect(resultado.estado.mundo.posicionBarco).toEqual(crearPartida(1, 'X').estado.mundo.posicionBarco);
+    expect(resultado.estado.mundo.dia).toBe(9); // lo demás, igual
+    expect(resultado.estado.jugador.oro).toBe(77);
   });
 
   it('el juego tiene un adaptador para cada versión entre la 1 y la actual (no falta ningún eslabón)', () => {

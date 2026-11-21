@@ -3,7 +3,7 @@ import { aplicarEfectos } from '../../../core/efectos/aplicar-efectos';
 import { AlmacenEnMemoria } from '../../../core/guardado/almacen-en-memoria';
 import type { Efecto } from '../../../core/tablas/efecto';
 import type { JuegoStore } from '../../../store/juego.store';
-import { abrir, boton, escribir, prepararJuego, pulsar } from '../../probar-pantallas';
+import { abrir, boton, escribir, ponerEn, prepararJuego, pulsar, type SitioDePrueba } from '../../probar-pantallas';
 
 type Harness = Awaited<ReturnType<typeof abrir>>;
 
@@ -30,11 +30,11 @@ async function pulsarQueEmpieza(harness: Harness, inicio: string): Promise<void>
 }
 
 /** Partida nueva con estos efectos aplicados, abierta y ya en la fase de acción en ese lugar. */
-async function enLaAccion(store: JuegoStore, lugar: string, efectos: Efecto[], semilla = 555): Promise<Harness> {
+async function enLaAccion(store: JuegoStore, lugar: SitioDePrueba, efectos: Efecto[], semilla = 555): Promise<Harness> {
   store.nuevaPartida('Marta', 'mujer', semilla);
   if (efectos.length) store.ejecutar((e, d) => aplicarEfectos(e, efectos, d));
+  ponerEn(store, lugar);
   const harness = await abrir('/partida');
-  await cambiarYEsperar(harness, 'select[name=lugar]', lugar);
   await pulsarYEsperar(harness, 'Empezar el día');
   return harness;
 }

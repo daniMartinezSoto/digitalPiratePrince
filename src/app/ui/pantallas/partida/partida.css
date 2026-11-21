@@ -1,1 +1,11 @@
 /* Pantalla de pruebas: sin estilos a propósito. */
+
+/* El mapa (Sprint 9): una franja alta, con el resto de la pantalla debajo. */
+.mapa-de-la-partida {
+  height: 65vh;
+  min-height: 360px;
+}
+
+.mapa-de-la-partida app-mapa {
+  height: 100%;
+}

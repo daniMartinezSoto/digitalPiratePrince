@@ -1,5 +1,5 @@
 import { aplicarEfectos } from '../../../core/efectos/aplicar-efectos';
-import { abrir, boton, escribir, prepararJuego, pulsar } from '../../probar-pantallas';
+import { abrir, boton, ponerEn, prepararJuego, pulsar } from '../../probar-pantallas';
 
 type Harness = Awaited<ReturnType<typeof abrir>>;
 
@@ -8,45 +8,85 @@ async function pulsarYEsperar(harness: Harness, texto: string): Promise<void> {
   await harness.fixture.whenStable();
 }
 
-async function elegir(harness: Harness, selector: string, valor: string): Promise<void> {
-  escribir(harness.routeNativeElement!, selector, valor);
+/** Pulsa el botón cuyo texto empieza por eso. */
+async function pulsarQueEmpieza(harness: Harness, inicio: string): Promise<void> {
+  const b = [...harness.routeNativeElement!.querySelectorAll('button')].find(x => (x.textContent ?? '').replace(/\s+/g, ' ').trim().startsWith(inicio));
+  if (!b) throw new Error(`No hay ningún botón que empiece por "${inicio}"`);
+  b.click();
   await harness.fixture.whenStable();
 }
 
-async function viajarA(harness: Harness, terreno: string, lugar: string, puerto = ''): Promise<void> {
-  await pulsarYEsperar(harness, 'Viajar…');
-  await elegir(harness, 'select[name=viaje-terreno]', terreno);
-  await elegir(harness, 'select[name=viaje-lugar]', lugar);
-  if (puerto) await elegir(harness, 'select[name=viaje-puerto]', puerto);
-  await pulsarYEsperar(harness, 'Viajar');
-}
-
-describe('pantalla Partida: viajar sin mapa, puertos y victoria', () => {
-  it('viajar a Tortuga: gasta la acción, apunta el puerto y "¿dónde estás?" pasa a ser Tortuga', async () => {
+describe('pantalla Partida: viajar por el mapa, el barco, puertos y victoria', () => {
+  it('"Dónde estás" lo dice el mapa: al empezar, a pie en la jungla profunda y el barco junto a La Habana', async () => {
     const store = prepararJuego();
     store.nuevaPartida('Marta', 'mujer', 555);
+    const harness = await abrir('/partida');
+    const texto = harness.routeNativeElement!.textContent!;
+    expect(texto).toContain('Estás en Jungla profunda (6,0), a pie');
+    expect(texto).toContain('El barco está en Costa (7,2)');
+  });
+
+  it('viajar a pie hasta La Habana: salen las casillas vecinas y el puerto queda visitado', async () => {
+    const store = prepararJuego();
+    store.nuevaPartida('Marta', 'mujer', 555);
+    ponerEn(store, { col: 6, fila: 1 });
     const harness = await abrir('/partida');
     const pantalla = harness.routeNativeElement!;
     expect(pantalla.textContent).toContain('Puertos 0/4');
 
     await pulsarYEsperar(harness, 'Empezar el día');
-    await viajarA(harness, 'playa', 'puerto', 'tortuga');
+    await pulsarYEsperar(harness, 'Viajar…');
+    await pulsarQueEmpieza(harness, 'Viajar al S (6,2): La Habana (puerto principal)');
 
     expect(store.estado()?.mundo.fase).toBe('comida');
-    expect(store.estado()?.mundo.puertosVisitados).toEqual(['tortuga']);
+    expect(store.estado()?.mundo.posicion).toEqual({ col: 6, fila: 2 });
+    expect(store.estado()?.mundo.puertosVisitados).toEqual(['la_habana']);
     expect(pantalla.textContent).toContain('Puertos 1/4');
-    expect(pantalla.textContent).toContain('¡Primera visita a Tortuga!');
-    expect(pantalla.textContent).toContain('Estás en Tortuga');
+    expect(pantalla.textContent).toContain('Estás en La Habana (puerto principal) (6,2), a pie');
+  });
+
+  it('embarcar en La Habana (sin gastar la acción) y navegar', async () => {
+    const store = prepararJuego();
+    store.nuevaPartida('Marta', 'mujer', 555);
+    ponerEn(store, 'puerto');
+    const harness = await abrir('/partida');
+    await pulsarYEsperar(harness, 'Empezar el día');
+    await pulsarYEsperar(harness, 'Embarcar');
+
+    expect(store.estado()?.mundo.posicion).toEqual({ col: 7, fila: 2 });
+    expect(store.estado()?.mundo.fase).toBe('accion');
+    expect(harness.routeNativeElement!.textContent).toContain('a bordo');
+    expect(harness.routeNativeElement!.textContent).toContain('Ya has subido o bajado del barco hoy');
+
+    await pulsarYEsperar(harness, 'Viajar…');
+    await pulsarQueEmpieza(harness, 'Viajar al');
+    const { posicion, posicionBarco } = store.estado()!.mundo;
+    expect(posicion).toEqual(posicionBarco); // el barco va contigo
+  });
+
+  it('desembarcar en La Habana desde el barco', async () => {
+    const store = prepararJuego();
+    store.nuevaPartida('Marta', 'mujer', 555);
+    ponerEn(store, 'barco');
+    const harness = await abrir('/partida');
+    await pulsarYEsperar(harness, 'Empezar el día');
+    await pulsarQueEmpieza(harness, 'Desembarcar al NO (6,2): La Habana');
+
+    expect(store.estado()?.mundo.posicion).toEqual({ col: 6, fila: 2 });
+    expect(store.estado()?.mundo.puertosVisitados).toEqual(['la_habana']);
+    expect(store.estado()?.mundo.fase).toBe('accion');
   });
 
   it('al llegar al 4.º puerto con 10 de fama, VICTORIA y a la crónica', async () => {
     const store = prepararJuego();
     store.nuevaPartida('Marta', 'mujer', 555);
     store.ejecutar((e, d) => aplicarEfectos(e, [{ tipo: 'fama', cantidad: 10 }], d));
-    store.ejecutar(e => ({ estado: { ...e, mundo: { ...e.mundo, puertosVisitados: ['tortuga', 'port_royal', 'la_habana'] } } }));
+    store.ejecutar(e => ({ estado: { ...e, mundo: { ...e.mundo, puertosVisitados: ['tortuga', 'port_royal', 'nassau'] } } }));
+    ponerEn(store, { col: 6, fila: 1 });
     const harness = await abrir('/partida');
     await pulsarYEsperar(harness, 'Empezar el día');
-    await viajarA(harness, 'playa', 'puerto', 'nassau');
+    await pulsarYEsperar(harness, 'Viajar…');
+    await pulsarQueEmpieza(harness, 'Viajar al S (6,2)');
 
     expect(store.estado()?.mundo.finPartida).toEqual({ resultado: 'victoria', motivo: 'fama_y_puertos' });
     expect(harness.routeNativeElement!.textContent).toContain('PARTIDA TERMINADA · VICTORIA');
@@ -65,16 +105,19 @@ describe('pantalla Partida: viajar sin mapa, puertos y victoria', () => {
     expect(harness.routeNativeElement!.textContent).toContain('No puedes: Tormenta');
   });
 
-  it('en el agua solo se puede llegar a bordo', async () => {
+  it('abrir "Viajar…" y luego desembarcar: la lista se cierra y salen las acciones de la casilla nueva', async () => {
     const store = prepararJuego();
     store.nuevaPartida('Marta', 'mujer', 555);
+    ponerEn(store, 'barco');
     const harness = await abrir('/partida');
     await pulsarYEsperar(harness, 'Empezar el día');
     await pulsarYEsperar(harness, 'Viajar…');
-    await elegir(harness, 'select[name=viaje-terreno]', 'alta_mar');
-    const opciones = [...harness.routeNativeElement!.querySelectorAll('select[name=viaje-lugar] option')].map(o => o.getAttribute('value'));
-    expect(opciones).toEqual(['barco']);
-    await pulsarYEsperar(harness, 'Cancelar');
-    expect(store.estado()?.mundo.fase).toBe('accion');
+    expect(harness.routeNativeElement!.textContent).toContain('Viajar: ¿a qué casilla?');
+
+    await pulsarQueEmpieza(harness, 'Desembarcar al NO (6,2): La Habana');
+
+    const pantalla = harness.routeNativeElement!;
+    expect(pantalla.textContent).not.toContain('Viajar: ¿a qué casilla?');
+    expect(boton(pantalla, 'Ir al mercado').disabled).toBe(false); // estás en un puerto y la acción no se ha gastado
   });
 });

@@ -59,3 +59,27 @@ export function pulsar(raiz: HTMLElement, texto: string): void {
   }
   encontrado.click();
 }
+
+/**
+ * Sitios del primer mapa de prueba para colocar al jugador en los tests (Sprint 9: el sitio sale del
+ * mapa). barco = a bordo (7,2) · puerto = La Habana (6,2, el barco al lado) · intemperie = la casilla
+ * de inicio (6,0) · aldea (18,7) · monasterio (20,3) · guarida = 18,2 marcada como neutral.
+ */
+export type SitioDePrueba = 'barco' | 'puerto' | 'intemperie' | 'aldea' | 'monasterio' | 'guarida';
+
+const CASILLAS_DE_PRUEBA: Record<Exclude<SitioDePrueba, 'barco'>, { col: number; fila: number }> = {
+  puerto: { col: 6, fila: 2 },
+  intemperie: { col: 6, fila: 0 },
+  aldea: { col: 18, fila: 7 },
+  monasterio: { col: 20, fila: 3 },
+  guarida: { col: 18, fila: 2 },
+};
+
+/** Pone al jugador en ese sitio (como una trampa de prueba: cambia la partida directamente). */
+export function ponerEn(store: JuegoStore, sitio: SitioDePrueba | { col: number; fila: number }): void {
+  store.ejecutar(e => {
+    const posicion = typeof sitio === 'object' ? sitio : sitio === 'barco' ? e.mundo.posicionBarco : CASILLAS_DE_PRUEBA[sitio];
+    const marcas = sitio === 'guarida' ? [...e.mundo.marcas, { ...posicion, tipo: 'guarida_neutral' as const }] : e.mundo.marcas;
+    return { estado: { ...e, mundo: { ...e.mundo, posicion: { ...posicion }, marcas } } };
+  });
+}

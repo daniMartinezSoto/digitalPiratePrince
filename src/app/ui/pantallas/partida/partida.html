@@ -30,14 +30,35 @@
     <button type="button" (click)="confirmandoAbandono.set(true)">Abandonar</button>
   }
 
+  @if (mapa(); as mapa) {
+    <div class="mapa-de-la-partida">
+      <app-mapa
+        modo="partida"
+        [mapa]="mapa"
+        [barco]="tipoDeBarco()"
+        [posiciones]="posiciones()"
+        [destinos]="destinos()"
+        [embarques]="embarques()"
+        [marcasDelMapa]="marcasDelMapa()"
+        (casillaElegida)="viajarA($event)"
+        (embarqueElegido)="embarcarODesembarcar($event)"
+      />
+    </div>
+    <p>
+      Barco:
+      <label><input type="radio" name="tipo-de-barco" [checked]="tipoDeBarco() === '3d'" (change)="tipoDeBarco.set('3d')" /> 3D</label>
+      <label><input type="radio" name="tipo-de-barco" [checked]="tipoDeBarco() === '2d'" (change)="tipoDeBarco.set('2d')" /> 2D</label>
+    </p>
+  }
+
   @if (!estado.mundo.finPartida) {
     @if (estado.mundo.combateNaval) {
       <app-combate-naval />
     } @else if (estado.mundo.combate) {
       <app-combate />
     } @else {
-      <app-donde-estas [(ubicacion)]="ubicacion" />
-      <app-panel-del-dia [(ubicacion)]="ubicacion" />
+      <app-donde-estas />
+      <app-panel-del-dia />
       <app-objetos />
       <app-combate-de-prueba />
       <app-trampas />

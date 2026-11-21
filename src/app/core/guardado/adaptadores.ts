@@ -1,3 +1,6 @@
+import { obtenerMapa } from '../mapa/cargar-mapas';
+import { casillaInicialDelBarco } from '../mapa/donde-estas';
+
 // ADAPTADORES POR VERSIÓN (Sprint 8).
 //
 // Cuando cambie el formato del estado (un campo nuevo, uno que cambia de nombre...), se sube
@@ -23,8 +26,25 @@ export type DatosDePartida = Record<string, unknown>;
 /** Pasa una partida de una versión a la siguiente. */
 export type Adaptador = (datos: DatosDePartida) => DatosDePartida;
 
-/** Los adaptadores del juego. Vacío: todavía no ha cambiado el formato (VERSION_ESTADO = 1). */
-export const ADAPTADORES: Readonly<Record<number, Adaptador>> = {};
+/**
+ * 1 → 2 (Sprint 9, el primero de verdad): las partidas de antes del mapa no sabían dónde estaba
+ * nadie (mapaId y posicion vacíos, sin posicionBarco). Se rellenan como en una partida nueva: el
+ * primer mapa de prueba, el jugador a pie en la casilla de inicio y el barco junto a La Habana.
+ * Lo demás (vida, oro, día, un combate a medias...) se queda igual.
+ * OJO: el adaptador fija el mapa por su id ('primer-mapa-prueba') a propósito: aunque un día el
+ * mapa por defecto sea otro, las partidas de entonces se jugaban en este.
+ */
+function adaptador1a2(datos: DatosDePartida): DatosDePartida {
+  const mundo = { ...(datos['mundo'] as Record<string, unknown>) };
+  const mapa = obtenerMapa('primer-mapa-prueba');
+  mundo['mapaId'] = mapa.id;
+  mundo['posicion'] = { ...mapa.inicio };
+  mundo['posicionBarco'] = casillaInicialDelBarco(mapa);
+  return { ...datos, mundo };
+}
+
+/** Los adaptadores del juego (la clave es la versión DE ORIGEN). */
+export const ADAPTADORES: Readonly<Record<number, Adaptador>> = { 1: adaptador1a2 };
 
 /**
  * Lleva una partida de su versión a versionActual pasando por los adaptadores, en orden.

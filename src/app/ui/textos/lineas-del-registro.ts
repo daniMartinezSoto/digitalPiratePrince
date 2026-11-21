@@ -62,7 +62,8 @@ export function lineasDeDescanso(nombreDeLaEleccion: string, resultado: Resultad
     lineas.push(`  Chequeo de ${c.caracteristica} (${c.valor}): dado ${c.dado} → ${c.superado ? 'superado' : 'fallado'}`);
   }
   if (resultado.echado) {
-    lineas.push('  Te echan de la aldea: duermes al raso.');
+    const donde = resultado.expulsadoA ? ` en ${resultado.expulsadoA.col},${resultado.expulsadoA.fila}` : '';
+    lineas.push(`  Te echan de la aldea: duermes al raso${donde}.`);
   }
   if (resultado.haDormidoGenial === true) {
     lineas.push('  Has dormido genial.');

@@ -2,10 +2,21 @@ import type { Retrato } from '../personaje/retrato';
 import { recibirAmuletoMaldito } from '../amuleto-maldito/recibir-amuleto-maldito';
 import { Dados } from '../dados/dados';
 import { Estado } from '../estado/estado';
+import { obtenerMapa } from '../mapa/cargar-mapas';
+import { casillaInicialDelBarco } from '../mapa/donde-estas';
 import { crearPersonaje } from '../personaje/crear-personaje';
 
-// Versión actual de la estructura del estado. Se sube cuando cambie su formato.
-export const VERSION_ESTADO = 1;
+// Versión actual de la estructura del estado. Se sube cuando cambie su formato (y se escribe su
+// adaptador en core/guardado/adaptadores.ts).
+//   1 → 2 (Sprint 9): mapaId, posicion y posicionBarco siempre rellenos.
+export const VERSION_ESTADO = 2;
+
+/**
+ * El mapa con el que empiezan las partidas. Hoy solo hay uno; cuando haya 2 o 3 se elegirá (con un
+ * menú o al azar). Elegirlo al azar NO debe gastar dados de la partida sin pensarlo: cambiaría lo
+ * que sale con cada semilla.
+ */
+export const MAPA_POR_DEFECTO = 'primer-mapa-prueba';
 
 const SOBRENOMBRE_MALDITO = 'el_maldito';
 
@@ -18,16 +29,21 @@ export interface Partida {
   eventos: string[];
 }
 
-export function crearPartida(semilla: number, nombre: string, retrato: Retrato = 'hombre'): Partida {
+export function crearPartida(semilla: number, nombre: string, retrato: Retrato = 'hombre', mapaId: string = MAPA_POR_DEFECTO): Partida {
   const dados = new Dados(semilla);
   const jugador = crearPersonaje(nombre, dados, retrato);
+  // Empiezas a pie en la casilla de inicio; el barco te espera junto al puerto principal más cercano.
+  const mapa = obtenerMapa(mapaId);
+  const posicionBarco = casillaInicialDelBarco(mapa);
+  if (!posicionBarco) throw new Error(`crearPartida: el mapa "${mapaId}" no tiene sitio para el barco al empezar`);
 
   let estado: Estado = {
     version: VERSION_ESTADO,
     jugador,
     mundo: {
-      mapaId: null,
-      posicion: null,
+      mapaId: mapa.id,
+      posicion: { ...mapa.inicio },
+      posicionBarco,
       dia: 1,
       fase: 'inicio',
       banderas: {},

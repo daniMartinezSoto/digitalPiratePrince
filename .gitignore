@@ -42,3 +42,9 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Recursos con licencia que NO se pueden redistribuir (ver CREDITOS.md): no se suben a GitHub
+/public/iconosMapa/
+/docs/ContextoMapa/iconos/
+/docs/ContextoMapa/mapa.html
+/public/barco/Ship.png
