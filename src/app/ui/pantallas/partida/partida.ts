@@ -1,5 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { DadosEnElMapa } from '../../componentes/dados-en-el-mapa/dados-en-el-mapa';
+import { MesaDeTiradas } from '../../servicios/mesa-de-tiradas';
 import { hojaDePersonaje } from '../../../core/personaje/hoja-de-personaje';
 import { JuegoStore, type AvisoDeGuardado } from '../../../store/juego.store';
 import { DondeEstas } from '../../componentes/donde-estas/donde-estas';
@@ -23,24 +25,29 @@ import { casillasDeEmbarque } from '../../../core/viaje/embarcar';
 import { MapaDelJuego } from '../../componentes/mapa/mapa';
 import { Navegar } from '../../servicios/navegar';
 
+type Pestana = 'acciones' | 'personaje' | 'registro' | 'pruebas';
+
 const TEXTO_DE_AVISO: Record<AvisoDeGuardado, string> = {
   no_se_pudo_guardar: 'No se ha podido guardar la partida (¿modo incógnito o sin espacio?).',
   partida_no_recuperada: 'No se ha podido recuperar tu partida guardada.',
   cronica_estropeada: 'La crónica estaba estropeada: se ha guardado una copia aparte.',
 };
 
-// PANTALLA DE LA PARTIDA (pantalla de pruebas): junta el "¿dónde estás?", el panel del día, el
+// PANTALLA DE LA PARTIDA (pantalla de pruebas; colocada el 21-nov: barra arriba, mapa a la izquierda y
+// panel con pestañas a la derecha, sin scroll general): junta el "¿dónde estás?", el panel del día, el
 // registro y la hoja del personaje, más los avisos del guardado y el botón Abandonar (con confirmación). Si la partida ha
 // terminado, lo dice y ofrece empezar otra. Todo lo que cambia la partida se pide al store.
 @Component({
   selector: 'app-pantalla-partida',
-  imports: [HojaPersonaje, DondeEstas, PanelDelDia, RegistroDeLaPartida, Trampas, Combate, CombateDePrueba, CombateNaval, Objetos, MapaDelJuego],
+  imports: [HojaPersonaje, DondeEstas, PanelDelDia, RegistroDeLaPartida, Trampas, Combate, CombateDePrueba, CombateNaval, Objetos, MapaDelJuego, DadosEnElMapa],
   templateUrl: './partida.html',
   styleUrl: './partida.css',
 })
 export class PantallaPartida {
   private readonly store = inject(JuegoStore);
   private readonly router = inject(Router);
+  /** La mesa de tiradas: los dados que caen sobre el mapa y su sonido. */
+  protected readonly mesa = inject(MesaDeTiradas);
 
   protected readonly estado = this.store.estado;
   protected readonly hoja = computed(() => {
@@ -68,6 +75,8 @@ export class PantallaPartida {
     const estado = this.store.estado();
     return estado ? mapaActual(estado) : null;
   });
+  /** El retrato del personaje (hombre o mujer): decide el dibujo del monigote. */
+  protected readonly retrato = computed(() => this.store.estado()?.jugador.retrato ?? 'hombre');
   /** El barco y, si vas a pie, el monigote. */
   protected readonly posiciones = computed(() => {
     const estado = this.store.estado();
@@ -100,7 +109,29 @@ export class PantallaPartida {
     return estado ? casillasMarcadas(estado) : { bloqueadas: [], ofendidas: [] };
   });
   /** Barco 3D o 2D (de momento se puede cambiar para probar). */
-  protected readonly tipoDeBarco = signal<'3d' | '2d'>('3d');
+  protected readonly tipoDeBarco = signal<'3d' | '2d'>('2d');
+  /** La cuadrícula de hexágonos del mapa, encendida o apagada (irá al menú de opciones). */
+  protected readonly cuadricula = signal(false);
+
+  // --- Las pestañas del panel de la derecha ---
+  protected readonly pestanas: { id: Pestana; nombre: string }[] = [
+    { id: 'acciones', nombre: 'Acciones' },
+    { id: 'personaje', nombre: 'Personaje' },
+    { id: 'registro', nombre: 'Registro' },
+    { id: 'pruebas', nombre: 'Pruebas' },
+  ];
+  protected readonly pestana = signal<Pestana>('acciones');
+  private readonly hayCombateAhora = computed(() => {
+    const estado = this.store.estado();
+    return !!estado && hayCombate(estado);
+  });
+
+  constructor() {
+    // Al empezar un combate (o al terminar la partida) se vuelve a Acciones, que es donde se ve.
+    effect(() => {
+      if (this.hayCombateAhora() || this.store.estado()?.mundo.finPartida) this.pestana.set('acciones');
+    });
+  }
 
   protected viajarA(casilla: Coordenada): void {
     this.navegar.viajar(casilla);

@@ -1,8 +1,10 @@
 import { afterNextRender, Component, DestroyRef, effect, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
 import type { Coordenada, Mapa } from '../../../core/mapa/mapa';
+import type { Retrato } from '../../../core/personaje/retrato';
 import {
   pintarMapa,
   type ControlDelMapa,
+  type DibujoDelMonigote,
   type InfoDeCasilla,
   type MarcasDelMapa,
   type PosicionesEnElMapa,
@@ -16,6 +18,7 @@ import {
 //   rejilla:        encender o apagar la rejilla de hexágonos (irá al menú de opciones).
 //   marcasDePrueba: enseña las zonas de eventos de barco y la casilla de inicio (solo para probar).
 //   barco:          '3d' (el modelo del HTML) o '2d' (el dibujo plano public/barco/Ship.png).
+//   retrato:        'hombre' o 'mujer': el dibujo del monigote (public/personaje/), que anda con el balanceo.
 // Solo en modo partida:
 //   posiciones:     dónde están el barco y el jugador (jugador null = a bordo; si no, el monigote).
 //   destinos:       las casillas a las que se puede viajar ahora (borde rojo discontinuo).
@@ -24,6 +27,16 @@ import {
 //   casillaElegida: se ha tocado una de las casillas de "destinos".
 //   embarqueElegido: se ha tocado una de las casillas de "embarques".
 // Si "mapa" cambia (una casilla con otro rasgo), se vuelve a pintar el pergamino.
+/**
+ * El dibujo del monigote según el retrato del personaje (en public/personaje/) y el grosor de su borde
+ * blanco (ajustado a ojo por el autor el 21-nov: el de la mujer, un pelín más gordo).
+ */
+export function dibujoDelMonigote(retrato: Retrato): DibujoDelMonigote {
+  return retrato === 'mujer'
+    ? { ruta: 'personaje/tokenMujer.png', bordeBlanco: 11.5 }
+    : { ruta: 'personaje/tokenHombre.png', bordeBlanco: 10.5 };
+}
+
 @Component({
   selector: 'app-mapa',
   templateUrl: './mapa.html',
@@ -35,6 +48,7 @@ export class MapaDelJuego {
   readonly rejilla = input(true);
   readonly marcasDePrueba = input(false);
   readonly barco = input<TipoDeBarco>('3d');
+  readonly retrato = input<Retrato>('hombre');
   readonly posiciones = input<PosicionesEnElMapa | null>(null);
   readonly destinos = input<Coordenada[]>([]);
   readonly embarques = input<Coordenada[]>([]);
@@ -69,6 +83,7 @@ export class MapaDelJuego {
           rutaModeloBarco: 'barco/barco.glb',
           rutaTexturaBarco: 'barco/barco_textura.png',
           rutaBarco2D: 'barco/Ship.png',
+          monigote: dibujoDelMonigote(this.retrato()),
           alInformar: info => this.info.set(info),
           alElegirCasilla: casilla => this.casillaElegida.emit(casilla),
           alElegirEmbarque: casilla => this.embarqueElegido.emit(casilla),
@@ -92,6 +107,10 @@ export class MapaDelJuego {
     effect(() => {
       const barco = this.barco();
       this.control?.cambiarBarco(barco);
+    });
+    effect(() => {
+      const dibujo = dibujoDelMonigote(this.retrato());
+      this.control?.cambiarMonigote(dibujo);
     });
     effect(() => {
       const posiciones = this.posiciones();

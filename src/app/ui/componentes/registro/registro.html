@@ -1,4 +1,8 @@
-<h3>Registro</h3>
+@if (ultimas() === null) {
+  <h3>Registro</h3>
+} @else {
+  <h4>Lo último</h4>
+}
 @if (textos().length === 0) {
   <p>Todavía no ha pasado nada.</p>
 } @else {

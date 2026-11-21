@@ -1,0 +1,110 @@
+/* Los dados sobre el mapa (estilos del documento "Dados del Capitán"). Sin encapsular: todo empieza
+   por "dados-". La capa no captura el ratón: el mapa se sigue pudiendo arrastrar y tocar. */
+app-dados-en-el-mapa {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  --dados-hueso: #eee5cf;
+  --dados-hueso-bajo: #c9bd9f;
+  --dados-tinta: #16100b;
+  --dados-laton: #d4a94e;
+  --dados-laton-bajo: #8f6b22;
+}
+
+.dados-mesa {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.4s;
+}
+.dados-mesa.dados-saliendo {
+  opacity: 0;
+}
+
+.dados-dado {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  perspective: 800px;
+}
+.dados-sombra {
+  position: absolute;
+  inset: 0;
+  border-radius: 16%;
+  background: rgba(0, 0, 0, 0.55);
+  filter: blur(5px);
+  translate: 5px 8px;
+}
+.dados-vuelo,
+.dados-inclinacion,
+.dados-cubo {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.dados-cara {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  padding: 15%;
+  border-radius: 16%;
+  background: radial-gradient(120% 120% at 30% 25%, #fbf5e4, var(--dados-hueso) 45%, var(--dados-hueso-bajo));
+  box-shadow:
+    inset 0 0 0 1.5px rgba(80, 60, 30, 0.35),
+    inset 0 -6px 12px rgba(90, 70, 35, 0.25);
+  backface-visibility: hidden;
+}
+.dados-f1 { transform: translateZ(calc(var(--s) / 2)); }
+.dados-f2 { transform: rotateY(90deg) translateZ(calc(var(--s) / 2)); }
+.dados-f3 { transform: rotateX(90deg) translateZ(calc(var(--s) / 2)); }
+.dados-f4 { transform: rotateX(-90deg) translateZ(calc(var(--s) / 2)); }
+.dados-f5 { transform: rotateY(-90deg) translateZ(calc(var(--s) / 2)); }
+.dados-f6 { transform: rotateY(180deg) translateZ(calc(var(--s) / 2)); }
+.dados-celda {
+  display: grid;
+  place-items: center;
+}
+.dados-punto {
+  display: block;
+  width: 78%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3b2d21, var(--dados-tinta) 70%);
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+.dados-calavera {
+  grid-area: 1 / 1 / -1 / -1;
+  width: 100%;
+  height: 100%;
+  fill: var(--dados-tinta);
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55));
+}
+
+/* El resultado, arriba en el centro del mapa */
+.dados-total {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  translate: -50% 0;
+  font-family: 'Pirata One', Georgia, serif;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--dados-tinta);
+  background: linear-gradient(180deg, #e8c76f, var(--dados-laton) 55%, #a97f2c);
+  padding: 0.3rem 1rem 0.2rem;
+  border-radius: 12px;
+  box-shadow: 0 3px 0 var(--dados-laton-bajo), 0 10px 22px rgba(0, 0, 0, 0.35);
+  animation: dados-aparece 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.4);
+  transition: opacity 0.4s;
+}
+.dados-total.saliendo {
+  opacity: 0;
+}
+@keyframes dados-aparece {
+  from { scale: 0.7; opacity: 0.3; }
+  to { scale: 1; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dados-total { animation: none; }
+}

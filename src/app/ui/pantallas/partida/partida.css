@@ -1,11 +1,76 @@
-/* Pantalla de pruebas: sin estilos a propósito. */
-
-/* El mapa (Sprint 9): una franja alta, con el resto de la pantalla debajo. */
-.mapa-de-la-partida {
-  height: 65vh;
-  min-height: 360px;
+/* Pantalla de pruebas: estilos mínimos, solo para colocar las cosas (decidido por el autor el 21-nov).
+   Sin scroll general: barra arriba, el mapa a la izquierda y el panel con pestañas a la derecha
+   (el panel tiene su propio scroll). Pensado solo para pantalla de PC. */
+:host {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 440px;
+  grid-template-rows: auto minmax(0, 1fr);
+  font-family: sans-serif;
+  font-size: 14px;
 }
 
+.barra {
+  grid-column: 1 / -1;
+  padding: 4px 8px;
+  border-bottom: 1px solid #999;
+}
+.barra .fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  align-items: baseline;
+}
+.barra .derecha {
+  margin-left: auto;
+}
+.avisos {
+  background: #fff3c4;
+  padding: 2px 4px;
+}
+
+.lado-mapa {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.mapa-de-la-partida {
+  flex: 1;
+  min-height: 0;
+  position: relative; /* los dados se colocan encima del mapa */
+}
 .mapa-de-la-partida app-mapa {
   height: 100%;
+}
+.opciones-del-mapa {
+  margin: 2px 8px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid #999;
+}
+.pestanas {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-bottom: 1px solid #999;
+}
+.pestanas button.activa {
+  font-weight: bold;
+  text-decoration: underline;
+}
+.contenido {
+  flex: 1;
+  overflow: auto;
+  padding: 0 8px;
+}
+.ultimas {
+  max-height: 25%;
+  overflow: auto;
+  padding: 0 8px;
+  border-top: 1px solid #999;
 }

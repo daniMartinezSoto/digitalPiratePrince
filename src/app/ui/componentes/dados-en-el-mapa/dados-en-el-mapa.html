@@ -1,0 +1,4 @@
+<div class="dados-mesa" #mesa aria-hidden="true"></div>
+@if (resultado(); as r) {
+  <div class="dados-total" [class.saliendo]="saliendo()" aria-live="polite">{{ r }}</div>
+}

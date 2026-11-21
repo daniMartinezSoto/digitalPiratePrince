@@ -1,73 +1,137 @@
-<h1>Pirate Prince · Partida (pantalla de pruebas)</h1>
-
-@if (avisos().length > 0) {
-  <div class="avisos">
-    @for (aviso of avisos(); track aviso) {
-      <p>⚠ {{ aviso }}</p>
-    }
-    <button type="button" (click)="descartarAvisos()">Entendido</button>
-  </div>
-}
-
 @if (estado(); as estado) {
-  <p>Día {{ estado.mundo.dia }} · fase: {{ nombreDeFase[estado.mundo.fase] }}</p>
-  @if (puertos(); as p) {
-    <p>
-      Puertos {{ p.visitados }}/{{ p.total }}:
-      @for (puerto of p.puertos; track puerto.id) { {{ puerto.nombre }} {{ puerto.visitado ? '✓' : '·' }}@if (!$last) { , } }
-      · Fama {{ estado.jugador.fama }}/{{ famaObjetivo() }}
-    </p>
-  }
-
-  @if (estado.mundo.finPartida; as fin) {
-    <p class="fin">PARTIDA TERMINADA · {{ textoDeFin(fin) }}</p>
-    <button type="button" (click)="nuevaPartida()">Nueva partida</button>
-  } @else if (confirmandoAbandono()) {
-    <p>¿Seguro? Contará como derrota en la crónica.</p>
-    <button type="button" (click)="abandonar()">Sí, abandonar</button>
-    <button type="button" (click)="confirmandoAbandono.set(false)">No</button>
-  } @else {
-    <button type="button" (click)="confirmandoAbandono.set(true)">Abandonar</button>
-  }
-
-  @if (mapa(); as mapa) {
-    <div class="mapa-de-la-partida">
-      <app-mapa
-        modo="partida"
-        [mapa]="mapa"
-        [barco]="tipoDeBarco()"
-        [posiciones]="posiciones()"
-        [destinos]="destinos()"
-        [embarques]="embarques()"
-        [marcasDelMapa]="marcasDelMapa()"
-        (casillaElegida)="viajarA($event)"
-        (embarqueElegido)="embarcarODesembarcar($event)"
-      />
+  <!-- Barra de arriba: lo importante siempre a la vista -->
+  <header class="barra">
+    <div class="fila">
+      <strong>Día {{ estado.mundo.dia }}</strong> · fase: {{ nombreDeFase[estado.mundo.fase] }}
+      @if (hoja(); as h) {
+        <span class="datos">
+          ❤ {{ h.vida }}/{{ h.vidaMax }} · 💰 {{ h.oro }} · 🍖 {{ h.comida }}/{{ h.comidaMaxima }}@if (h.diasSinComer > 0) { (sin comer: {{ h.diasSinComer }}) }
+          · ⚓ {{ h.tripulacion }}/{{ h.tripulacionMax }} · ★ Fama {{ h.fama }}/{{ famaObjetivo() }}
+        </span>
+      }
+      @if (puertos(); as p) {
+        <span title="Puertos principales visitados">
+          · Puertos {{ p.visitados }}/{{ p.total }}:
+          @for (puerto of p.puertos; track puerto.id) { {{ puerto.nombre }} {{ puerto.visitado ? '✓' : '·' }}@if (!$last) { , } }
+        </span>
+      }
     </div>
-    <p>
-      Barco:
-      <label><input type="radio" name="tipo-de-barco" [checked]="tipoDeBarco() === '3d'" (change)="tipoDeBarco.set('3d')" /> 3D</label>
-      <label><input type="radio" name="tipo-de-barco" [checked]="tipoDeBarco() === '2d'" (change)="tipoDeBarco.set('2d')" /> 2D</label>
-    </p>
-  }
-
-  @if (!estado.mundo.finPartida) {
-    @if (estado.mundo.combateNaval) {
-      <app-combate-naval />
-    } @else if (estado.mundo.combate) {
-      <app-combate />
-    } @else {
-      <app-donde-estas />
-      <app-panel-del-dia />
-      <app-objetos />
-      <app-combate-de-prueba />
-      <app-trampas />
+    <div class="fila">
+      @if (hoja(); as h) {
+        <span>
+          Condiciones:
+          @if (h.condiciones.length === 0) { ninguna }
+          @for (condicion of h.condiciones; track condicion.id) {
+            <span [title]="condicion.descripcion">{{ condicion.nombre }}@if (condicion.turnosRestantes !== undefined) { ({{ condicion.turnosRestantes }}) }</span>@if (!$last) { , }
+          }
+        </span>
+      }
+      <span class="derecha">
+        Semilla {{ estado.mundo.semilla }}
+        @if (estado.mundo.finPartida) {
+          <!-- sin botón: la partida ya ha terminado -->
+        } @else if (confirmandoAbandono()) {
+          · ¿Seguro? Contará como derrota en la crónica.
+          <button type="button" (click)="abandonar()">Sí, abandonar</button>
+          <button type="button" (click)="confirmandoAbandono.set(false)">No</button>
+        } @else {
+          <button type="button" (click)="confirmandoAbandono.set(true)">Abandonar</button>
+        }
+      </span>
+    </div>
+    @if (avisos().length > 0) {
+      <div class="avisos">
+        @for (aviso of avisos(); track aviso) {
+          <span>⚠ {{ aviso }}</span>
+        }
+        <button type="button" (click)="descartarAvisos()">Entendido</button>
+      </div>
     }
-  }
+  </header>
 
-  <app-registro />
+  <!-- Izquierda: el mapa -->
+  <section class="lado-mapa">
+    @if (mapa(); as mapa) {
+      <div class="mapa-de-la-partida">
+        <app-mapa
+          modo="partida"
+          [mapa]="mapa"
+          [barco]="tipoDeBarco()"
+          [rejilla]="cuadricula()"
+          [retrato]="retrato()"
+          [posiciones]="posiciones()"
+          [destinos]="destinos()"
+          [embarques]="embarques()"
+          [marcasDelMapa]="marcasDelMapa()"
+          (casillaElegida)="viajarA($event)"
+          (embarqueElegido)="embarcarODesembarcar($event)"
+        />
+        <app-dados-en-el-mapa />
+      </div>
+      <p class="opciones-del-mapa">
+        Barco:
+        <label><input type="radio" name="tipo-de-barco" [checked]="tipoDeBarco() === '3d'" (change)="tipoDeBarco.set('3d')" /> 3D</label>
+        <label><input type="radio" name="tipo-de-barco" [checked]="tipoDeBarco() === '2d'" (change)="tipoDeBarco.set('2d')" /> 2D</label>
+        · Cuadrícula:
+        <label><input type="radio" name="cuadricula" [checked]="cuadricula()" (change)="cuadricula.set(true)" /> Sí</label>
+        <label><input type="radio" name="cuadricula" [checked]="!cuadricula()" (change)="cuadricula.set(false)" /> No</label>
+        · Sonido de los dados:
+        <label><input type="radio" name="sonido-dados" [checked]="mesa.sonido()" (change)="mesa.sonido.set(true)" /> Sí</label>
+        <label><input type="radio" name="sonido-dados" [checked]="!mesa.sonido()" (change)="mesa.sonido.set(false)" /> No</label>
+      </p>
+    }
+  </section>
 
-  @if (hoja(); as hoja) {
-    <app-hoja-personaje [hoja]="hoja" [semilla]="estado.mundo.semilla" />
-  }
+  <!-- Derecha: el panel con pestañas (las que no se ven se ocultan, no se quitan) -->
+  <aside class="panel">
+    <nav class="pestanas">
+      @for (p of pestanas; track p.id) {
+        <button type="button" [class.activa]="pestana() === p.id" (click)="pestana.set(p.id)">{{ p.nombre }}</button>
+      }
+    </nav>
+
+    <div class="contenido">
+      <div [hidden]="pestana() !== 'acciones'">
+        @if (estado.mundo.finPartida; as fin) {
+          <p class="fin">PARTIDA TERMINADA · {{ textoDeFin(fin) }}</p>
+          <button type="button" (click)="nuevaPartida()">Nueva partida</button>
+        } @else if (estado.mundo.combateNaval) {
+          <app-combate-naval />
+        } @else if (estado.mundo.combate) {
+          <app-combate />
+        } @else {
+          <app-donde-estas />
+          <app-panel-del-dia />
+        }
+      </div>
+
+      <div [hidden]="pestana() !== 'personaje'">
+        @if (hoja(); as hoja) {
+          <app-hoja-personaje [hoja]="hoja" [semilla]="estado.mundo.semilla" />
+        }
+        @if (!estado.mundo.finPartida && !estado.mundo.combate && !estado.mundo.combateNaval) {
+          <app-objetos />
+        }
+      </div>
+
+      <div [hidden]="pestana() !== 'registro'">
+        <app-registro />
+      </div>
+
+      <div [hidden]="pestana() !== 'pruebas'">
+        @if (!estado.mundo.finPartida && !estado.mundo.combate && !estado.mundo.combateNaval) {
+          <app-combate-de-prueba />
+          <app-trampas />
+        } @else {
+          <p>Las pruebas vuelven cuando acabe el combate.</p>
+        }
+      </div>
+    </div>
+
+    @if (pestana() !== 'registro') {
+      <div class="ultimas">
+        <app-registro [ultimas]="3" />
+      </div>
+    }
+  </aside>
 }

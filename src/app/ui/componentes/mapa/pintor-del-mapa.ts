@@ -1,5 +1,6 @@
 import type { Coordenada, Mapa } from '../../../core/mapa/mapa';
 import { crearBarco3D, type Barco3D } from './barco-3d';
+import { BALANCEO, POSE_QUIETA, poseDelBalanceo } from './balanceo';
 import { casillaInicialDelBarco } from '../../../core/mapa/donde-estas';
 import {
   casillasParaPintar,
@@ -53,6 +54,8 @@ export interface OpcionesDelPintor {
   rutaTexturaBarco: string;
   /** Dibujo del barco 2D: de perfil, con la proa a la IZQUIERDA (PNG cuadrado). */
   rutaBarco2D: string;
+  /** Dibujo del monigote (el jugador a pie): PNG con fondo transparente, de pie, con los pies abajo. */
+  monigote: DibujoDelMonigote;
   /** Mensajes para el recuadro de información (al tocar una casilla, al cargar...). */
   alInformar: (info: InfoDeCasilla) => void;
   modo: 'prueba' | 'partida';
@@ -62,6 +65,13 @@ export interface OpcionesDelPintor {
   alElegirCasilla?: (casilla: Coordenada) => void;
   /** Modo partida: se ha tocado una de las casillas amarillas (embarcar o desembarcar). */
   alElegirEmbarque?: (casilla: Coordenada) => void;
+}
+
+/** El dibujo del monigote: el PNG (con fondo transparente, de pie) y el grosor de su borde blanco. */
+export interface DibujoDelMonigote {
+  ruta: string;
+  /** Grosor del borde blanco, en píxeles del dibujo reducido (de 512 de alto). Por fuera va la tinta. */
+  bordeBlanco: number;
 }
 
 export interface PosicionesEnElMapa {
@@ -80,6 +90,8 @@ export interface ControlDelMapa {
   cambiarRejilla(encendida: boolean): void;
   cambiarMarcasDePrueba(encendidas: boolean): void;
   cambiarBarco(tipo: TipoDeBarco): void;
+  /** Cambia el dibujo del monigote (el retrato del personaje: hombre o mujer). */
+  cambiarMonigote(dibujo: DibujoDelMonigote): void;
   /** Modo partida: mueve el barco y el monigote (con una pequeña animación). */
   colocar(posiciones: PosicionesEnElMapa): void;
   /** Modo partida: las casillas a las que se puede viajar ahora (borde rojo discontinuo). */
@@ -122,6 +134,85 @@ const ICONO_POR_LUGAR: Record<string, string> = {
 };
 
 const R3 = Math.sqrt(3);
+// El monigote: altura del dibujo en el mapa (en radios de casilla) y altura a la que se reduce al cargarlo.
+const ALTO_DEL_MONIGOTE = 1.4;
+const ALTO_MAXIMO_DEL_DIBUJO = 512;
+// Modo partida: con cuánto zoom empieza el mapa, centrado en el personaje (1 = el mapa entero).
+const ZOOM_INICIAL = 4;
+// Grosor de la línea de tinta que va por fuera del borde blanco del monigote (píxeles del dibujo reducido).
+const TINTA_DEL_CONTORNO = 5.4;
+
+/** El monigote mientras anda (ver "El monigote andando" dentro de pintarMapa). */
+interface Andarin {
+  x: number;
+  z: number;
+  /** Casillas que le quedan por recorrer. */
+  path: CasillaPintable[];
+  /** 1 = mira a la derecha, -1 = a la izquierda. */
+  dir: number;
+  andando: boolean;
+  /** El tramo actual: de dónde sale, a qué casilla va, en cuántos pasos y cuántos lleva. */
+  desdeX: number;
+  desdeZ: number;
+  destino: CasillaPintable | null;
+  pasos: number;
+  hechos: number;
+  /** Progreso dentro del paso actual (0 a 1) y número de paso (para inclinarse a un lado o al otro). */
+  p: number;
+  paso: number;
+}
+
+/**
+ * Rodea el dibujo con un contorno (tinta por fuera, papel por dentro) para que se distinga del mapa.
+ * El resultado es algo más grande que el dibujo: `margen` píxeles más por cada lado.
+ */
+function conContorno(dibujo: HTMLCanvasElement, bordeBlanco: number): HTMLCanvasElement {
+  const margen = Math.ceil(bordeBlanco + TINTA_DEL_CONTORNO);
+  const silueta = (color: string) => {
+    const c = document.createElement('canvas');
+    c.width = dibujo.width;
+    c.height = dibujo.height;
+    const g = c.getContext('2d');
+    if (!g) return c;
+    g.drawImage(dibujo, 0, 0);
+    g.globalCompositeOperation = 'source-in';
+    g.fillStyle = color;
+    g.fillRect(0, 0, c.width, c.height);
+    return c;
+  };
+  const c = document.createElement('canvas');
+  c.width = dibujo.width + margen * 2;
+  c.height = dibujo.height + margen * 2;
+  const g = c.getContext('2d');
+  if (!g) return dibujo;
+  const tinta = silueta('#2b1a0e'), papel = silueta('#fbf1d3');
+  const rodear = (s: HTMLCanvasElement, r: number) => {
+    for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2;
+      g.drawImage(s, margen + Math.cos(a) * r, margen + Math.sin(a) * r);
+    }
+  };
+  rodear(tinta, bordeBlanco + TINTA_DEL_CONTORNO);
+  rodear(papel, bordeBlanco);
+  g.drawImage(dibujo, margen, margen);
+  return c;
+}
+
+/** Reduce un dibujo grande a la mitad las veces que haga falta (así se ve suave, sin dientes de sierra). */
+function reducirDibujo(im: HTMLImageElement, altoMaximo: number): HTMLCanvasElement {
+  let fuente: CanvasImageSource = im, w = im.naturalWidth, h = im.naturalHeight;
+  do {
+    const ancho = h / 2 >= altoMaximo ? Math.round(w / 2) : w, alto = h / 2 >= altoMaximo ? Math.round(h / 2) : h;
+    const c = document.createElement('canvas');
+    c.width = ancho;
+    c.height = alto;
+    c.getContext('2d')?.drawImage(fuente, 0, 0, ancho, alto);
+    fuente = c;
+    if (ancho === w) return c;
+    w = ancho;
+    h = alto;
+  } while (true);
+}
 const INK = '#3a2717', RED = '#9b2a1c', AMARILLO = '#f2c12e';
 const SIMBOLO: Record<string, string> = { playa: 'beach', jungla: 'trees', jungla_profunda: 'dense' };
 
@@ -162,7 +253,7 @@ export function pintarMapa(lienzos: LienzosDelMapa, mapaInicial: Mapa, opciones:
 
   if (!ctxONada) {
     info('Tu navegador no puede dibujar el mapa');
-    return { cambiarRejilla() {}, cambiarMarcasDePrueba() {}, cambiarBarco() {}, colocar() {}, cambiarDestinos() {}, cambiarEmbarques() {}, cambiarMarcasDelMapa() {}, cambiarMapa() {}, acercar() {}, alejar() {}, centrar() {}, destruir() {} };
+    return { cambiarRejilla() {}, cambiarMarcasDePrueba() {}, cambiarBarco() {}, cambiarMonigote() {}, colocar() {}, cambiarDestinos() {}, cambiarEmbarques() {}, cambiarMarcasDelMapa() {}, cambiarMapa() {}, acercar() {}, alejar() {}, centrar() {}, destruir() {} };
   }
   const ctx = ctxONada;
 
@@ -202,13 +293,29 @@ export function pintarMapa(lienzos: LienzosDelMapa, mapaInicial: Mapa, opciones:
   const barco2d = new Image();
   barco2d.onerror = () => console.warn('Falta el dibujo del barco 2D', opciones.rutaBarco2D);
   barco2d.src = opciones.rutaBarco2D;
+  // El monigote: el dibujo del retrato del personaje (public/personaje/), reducido una vez al cargarlo
+  // (los PNG son muy grandes y, encogidos de golpe en cada fotograma, se verían con dientes de sierra).
+  let monigote: HTMLCanvasElement | null = null, margenDelMonigote = 0, cargaDelMonigote = 0;
+  function cargarMonigote({ ruta, bordeBlanco }: DibujoDelMonigote) {
+    const esta = ++cargaDelMonigote;
+    const im = new Image();
+    im.onload = () => {
+      if (esta !== cargaDelMonigote) return;
+      const reducido = reducirDibujo(im, ALTO_MAXIMO_DEL_DIBUJO);
+      monigote = conContorno(reducido, bordeBlanco);
+      margenDelMonigote = (monigote.height - reducido.height) / 2;
+    };
+    im.onerror = () => console.warn('Falta el dibujo del monigote', ruta);
+    im.src = ruta;
+  }
+  cargarMonigote(opciones.monigote);
   let W = 1, H = 1, DPR = 1, Q = 1.25, LW = 1, LH = 1, LS = 1, LOX = 0, LOY = 0; // capa del pergamino y escala mundo→capa
   // (layer, decor, SD, map y ship se rellenan al pintar, antes de usarse: de ahí el "!")
   let layer!: HTMLCanvasElement, decor!: HTMLCanvasElement, SD!: Campo, det: Detalle | null = null, detTimer = 0;
   let view = { z: 1, x: 0, y: 0 };
   let ship!: BarcoEnElMapa, hover: CasillaPintable | null = null, time = 0;
   // Modo partida: el monigote (null = a bordo), las casillas elegibles y las marcas
-  let walker: { x: number; z: number; path: CasillaPintable[]; dir: number } | null = null;
+  let walker: Andarin | null = null;
   let posiciones: PosicionesEnElMapa | null = opciones.posiciones ?? null;
   let destinos: CasillaPintable[] = [];
   let destinosPendientes: Coordenada[] = [];
@@ -253,7 +360,7 @@ export function pintarMapa(lienzos: LienzosDelMapa, mapaInicial: Mapa, opciones:
     ship = { x: st.wx, z: st.wz, path: [], dir: 1, yaw: Math.PI * 0.5, dest: null };
     const j = posiciones?.jugador;
     const tj = j ? tiles[j.fila * mapaDelJuego.columnas + j.col] : null;
-    walker = tj ? { x: tj.wx, z: tj.wz, path: [], dir: 1 } : null;
+    walker = tj ? nuevoAndarin(tj.wx, tj.wz) : null;
   }
 
   /** Modo partida: lleva el barco y el monigote a su sitio, andando o navegando. */
@@ -270,7 +377,7 @@ export function pintarMapa(lienzos: LienzosDelMapa, mapaInicial: Mapa, opciones:
     }
     const tj = at(p.jugador.col, p.jugador.fila);
     if (!tj) return;
-    if (!walker) walker = { x: tj.wx, z: tj.wz, path: [], dir: 1 }; // acaba de bajar del barco
+    if (!walker) walker = nuevoAndarin(tj.wx, tj.wz); // acaba de bajar del barco
     else if (Math.abs(tj.wx - walker.x) > 0.01 || Math.abs(tj.wz - walker.z) > 0.01) walker.path = [tj];
   }
 
@@ -694,19 +801,8 @@ export function pintarMapa(lienzos: LienzosDelMapa, mapaInicial: Mapa, opciones:
         ship.z += (dz / d) * st;
       }
     }
-    // monigote (anda más despacio que el barco)
-    if (walker && walker.path.length) {
-      const tg = walker.path[0], dx = tg.wx - walker.x, dz = tg.wz - walker.z, d = Math.hypot(dx, dz), st = 1.6 * dt;
-      if (Math.abs(dx) > 0.01) walker.dir = dx > 0 ? 1 : -1;
-      if (d <= st) {
-        walker.x = tg.wx;
-        walker.z = tg.wz;
-        walker.path.shift();
-      } else {
-        walker.x += (dx / d) * st;
-        walker.z += (dz / d) * st;
-      }
-    }
+    // monigote: anda a saltitos (el balanceo)
+    if (walker) moverAndarin(walker, dt);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cv.width, cv.height);
     const k = view.z / Q;
@@ -786,7 +882,7 @@ export function pintarMapa(lienzos: LienzosDelMapa, mapaInicial: Mapa, opciones:
       const sx = (LX(ship.x) * k) / DPR + view.x, sy = (LY(ship.z) * k) / DPR + view.y;
       s3.dibujar(sx, sy, (LS * k) / DPR, ship.yaw, time, reduce);
     } else drawShip(ctx, LX(ship.x), LY(ship.z), L * 0.42, ship.dir);
-    if (walker) drawMonigote(LX(walker.x), LY(walker.z), L, walker.dir, walker.path.length > 0);
+    if (walker) drawAndarin(walker, L);
     rafId = requestAnimationFrame(frame);
   }
 
@@ -889,7 +985,79 @@ export function pintarMapa(lienzos: LienzosDelMapa, mapaInicial: Mapa, opciones:
     }
   }
 
-  /* El monigote: un pirata minimalista a tinta (provisional, decidido por el autor el 20-nov).
+  /* ---------- El monigote andando: el balanceo (pedido por el autor el 21-nov; cuentas en balanceo.ts) ----------
+     Cruza de una casilla a otra en BALANCEO.pasosPorCasilla saltitos. Solo avanza en el aire; la
+     dirección (hacia dónde mira) solo cambia al empezar un tramo, es decir, al aterrizar; para pararse
+     termina el paso que está dando y se queda de pie. */
+  function nuevoAndarin(x: number, z: number): Andarin {
+    return { x, z, path: [], dir: 1, andando: false, desdeX: x, desdeZ: z, destino: null, pasos: 1, hechos: 0, p: 0, paso: 0 };
+  }
+  function empezarTramo(w: Andarin) {
+    const tg = w.path[0], dx = tg.wx - w.x, dz = tg.wz - w.z;
+    w.desdeX = w.x;
+    w.desdeZ = w.z;
+    w.destino = tg;
+    w.pasos = Math.max(1, Math.round(Math.hypot(dx, dz) / (R3 / BALANCEO.pasosPorCasilla)));
+    w.hechos = 0;
+    if (Math.abs(dx) > 0.01) w.dir = dx > 0 ? 1 : -1;
+    w.andando = true;
+  }
+  function moverAndarin(w: Andarin, dt: number) {
+    if (!w.andando) {
+      if (!w.path.length) return;
+      empezarTramo(w);
+    }
+    w.p += dt / BALANCEO.periodo;
+    while (w.andando && w.p >= 1) {
+      w.p -= 1;
+      w.hechos++;
+      w.paso++;
+      if (w.hechos < w.pasos) continue;
+      // ha llegado al final del tramo
+      const tg = w.destino!;
+      w.x = tg.wx;
+      w.z = tg.wz;
+      if (w.path[0] === tg) w.path.shift();
+      if (w.path.length) empezarTramo(w); // sigue andando (hacia otra casilla) sin pararse
+      else {
+        w.andando = false;
+        w.p = 0;
+      }
+    }
+    if (!w.andando || !w.destino) return;
+    const k = (w.hechos + poseDelBalanceo(w.p, w.paso).avance) / w.pasos;
+    w.x = w.desdeX + (w.destino.wx - w.desdeX) * k;
+    w.z = w.desdeZ + (w.destino.wz - w.desdeZ) * k;
+  }
+  function drawAndarin(w: Andarin, L: number) {
+    if (!monigote) {
+      // mientras carga el dibujo (o si falta), el pirata a tinta de antes
+      drawMonigote(LX(w.x), LY(w.z), L, w.dir, w.andando);
+      return;
+    }
+    const pose = w.andando && !reduce ? poseDelBalanceo(w.p, w.paso) : POSE_QUIETA;
+    // el dibujo lleva el contorno alrededor: se calcula la escala con la altura sin el contorno
+    const escala = (L * ALTO_DEL_MONIGOTE) / (monigote.height - margenDelMonigote * 2);
+    const alto = monigote.height * escala, ancho = monigote.width * escala, margen = margenDelMonigote * escala;
+    const x = LX(w.x), pie = LY(w.z) + L * 0.45, salto = pose.alto * (alto - margen * 2);
+    ctx.save();
+    const rx = L * 0.5, ry = L * 0.2;
+    // sombra en el suelo (se encoge un poco mientras salta)
+    const sombra = 1 - (pose.alto / BALANCEO.altura) * 0.25;
+    ctx.fillStyle = 'rgba(30,20,10,.35)';
+    ctx.beginPath();
+    ctx.ellipse(x, pie, rx * 0.6 * sombra, ry * 0.55 * sombra, 0, 0, 6.283);
+    ctx.fill();
+    // gira y escala desde los pies (el centro de la base del dibujo, sin contar el contorno)
+    ctx.translate(x, pie - salto);
+    ctx.rotate(((pose.giro * Math.PI) / 180) * w.dir);
+    ctx.scale(pose.escalaX * w.dir, pose.escalaY);
+    ctx.drawImage(monigote, -ancho / 2, -alto + margen, ancho, alto);
+    ctx.restore();
+  }
+
+  /* El monigote de reserva: un pirata minimalista a tinta (provisional, decidido por el autor el 20-nov).
+     Sale mientras carga el dibujo del personaje.
      Sombrero de tres picos, parche, fajín rojo y sable. Mira hacia donde anda y mueve las piernas. */
   function drawMonigote(x: number, y: number, L: number, dir: number, andando: boolean) {
     const s = L * 0.5, t = reduce ? 0 : time, paso = andando ? Math.sin(t * 12) : 0;
@@ -1102,6 +1270,26 @@ export function pintarMapa(lienzos: LienzosDelMapa, mapaInicial: Mapa, opciones:
   /* ---------- Interacción: arrastrar para mover, rueda o pellizco para zoom ---------- */
   const ptrs = new Map<number, { x: number; y: number }>();
   let moved = 0, pinch = 0;
+  /**
+   * Acerca la vista al personaje (a pie, el monigote; a bordo, el barco) con ese zoom, lo más centrado
+   * posible pero sin enseñar nada de fuera del mapa: si está cerca del borde, el borde del mapa se
+   * queda pegado al borde de la pantalla y el personaje sale descentrado (pedido por el autor el 21-nov).
+   */
+  function enfocarAlPersonaje(z: number) {
+    const wx = walker ? walker.x : ship.x, wz = walker ? walker.z : ship.z;
+    const k = z / (Q * DPR); // de píxeles de capa a píxeles de pantalla
+    // centrado, pero sin pasarse del borde (si el mapa cabe entero en ese lado, se centra el mapa)
+    const ajustar = (centrado: number, desde: number, hasta: number, pantalla: number) => {
+      const min = pantalla - hasta * k, max = -desde * k;
+      return min > max ? (min + max) / 2 : Math.max(min, Math.min(max, centrado));
+    };
+    view = {
+      z,
+      x: ajustar(W / 2 - LX(wx) * k, LX(map.minx), LX(map.maxx), W),
+      y: ajustar(H / 2 - LY(wz) * k, LY(map.minz), LY(map.maxz), H),
+    };
+    scheduleDetail();
+  }
   function zoomAt(nz: number, sx: number, sy: number) {
     scheduleDetail();
     nz = Math.max(0.8, Math.min(6, nz));
@@ -1208,6 +1396,7 @@ export function pintarMapa(lienzos: LienzosDelMapa, mapaInicial: Mapa, opciones:
       if (destruido) return;
       buildMap();
       paint();
+      if (opciones.modo === 'partida') enfocarAlPersonaje(ZOOM_INICIAL);
       if (opciones.modo === 'partida') info('', 'Rojo: viajar (pulsa "Viajar…") · amarillo: subir o bajar del barco', 'arrastra para moverte');
       else info('', 'Toca el mar para fijar rumbo', 'arrastra para moverte');
       rafId = requestAnimationFrame(frame);
@@ -1221,6 +1410,7 @@ export function pintarMapa(lienzos: LienzosDelMapa, mapaInicial: Mapa, opciones:
     cambiarRejilla: encendida => (grid = encendida),
     cambiarMarcasDePrueba: encendidas => (marcas = encendidas),
     cambiarBarco: tipo => (tipoBarco = tipo),
+    cambiarMonigote: dibujo => cargarMonigote(dibujo),
     colocar: p => {
       posiciones = p;
       if (map) aplicarPosiciones(p);

@@ -50,6 +50,7 @@ import { Marineros } from '../marineros/marineros';
 import { Mercado } from '../mercado/mercado';
 import { MesaDeDados } from '../mesa-de-dados/mesa-de-dados';
 import { SeguidorEnEspera } from '../seguidor-en-espera/seguidor-en-espera';
+import { ACCIONES_CON_DADOS, MesaDeTiradas } from '../../servicios/mesa-de-tiradas';
 
 type AccionDeUnClic = (estado: Estado, sitio: Sitio, dados: Dados) => ResultadoAccion;
 
@@ -85,6 +86,7 @@ export class PanelDelDia {
   private readonly store = inject(JuegoStore);
   private readonly jugar = inject(Jugar);
   private readonly navegar = inject(Navegar);
+  private readonly mesa = inject(MesaDeTiradas);
 
   constructor() {
     // Si el jugador cambia de casilla (embarca, desembarca...) o de fase, se cierra cualquier elección
@@ -191,7 +193,9 @@ export class PanelDelDia {
     const nombre = NOMBRE_DE_ACCION[id];
     const deUnClic = ACCIONES_DE_UN_CLIC[id];
     if (deUnClic) {
-      this.jugar.hacer((e, d) => deUnClic(e, sitio, d), (r, n) => lineasDeAccion(nombre, r, n));
+      const resultado = this.jugar.hacer((e, d) => deUnClic(e, sitio, d), (r, n) => lineasDeAccion(nombre, r, n));
+      // las tiradas públicas se enseñan con dados encima del mapa
+      if (resultado?.tirada && ACCIONES_CON_DADOS.has(id)) this.mesa.ensenar(resultado.tirada);
       return;
     }
     switch (id) {
