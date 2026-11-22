@@ -202,4 +202,47 @@ describe('aplicarEfectos: se une un seguidor', () => {
       expect(['Ana', 'Blas']).toContain(estado.jugador.seguidores[0].nombre);
     });
   });
+
+  // Sprint 10: el deseo de amistad da un seguidor de un tipo al azar entre TODOS los del catálogo.
+  describe('de un tipo al azar ("al_azar")', () => {
+    const AL_AZAR: Efecto = { tipo: 'ganar_seguidor', seguidor: 'al_azar', inseparable: true };
+    const DOS_TIPOS: TipoSeguidor[] = [
+      { id: 'grumete', nombre: 'Grumete', descripcion: 'x', ataque: 2, resistencia: 10, habilidades: [] },
+      { id: 'cocinera', nombre: 'Cocinera', descripcion: 'x', ataque: 1, resistencia: 8, habilidades: [] },
+    ];
+    const CON_DOS_TIPOS: CatalogosEfectos = { ...CATALOGOS, seguidores: DOS_TIPOS };
+
+    it('entra un seguidor de uno de los tipos del catálogo, inseparable si lo dice el efecto', () => {
+      const { estado } = aplicarEfectos(estadoCon(), [AL_AZAR], new Dados(1), CON_DOS_TIPOS);
+
+      const nuevo = estado.jugador.seguidores[0];
+      expect(['grumete', 'cocinera']).toContain(nuevo.tipo);
+      expect(nuevo.inseparable).toBe(true);
+    });
+
+    it('con dados distintos salen tipos distintos (de verdad es al azar)', () => {
+      const tipos = new Set<string>();
+      for (let semilla = 1; semilla <= 30; semilla++) {
+        const { estado } = aplicarEfectos(estadoCon(), [AL_AZAR], new Dados(semilla), CON_DOS_TIPOS);
+        tipos.add(estado.jugador.seguidores[0].tipo);
+      }
+      expect([...tipos].sort()).toEqual(['cocinera', 'grumete']);
+    });
+
+    it('con el grupo lleno no entra, y el aviso dice qué tipo había salido', () => {
+      const { estado, cambios } = aplicarEfectos(estadoCon({ seguidores: grupoLleno() }), [AL_AZAR], new Dados(1), CON_DOS_TIPOS);
+
+      expect(estado.jugador.seguidores.map(s => s.id)).toEqual(grupoLleno().map(s => s.id));
+      expect(cambios).toHaveLength(1);
+      expect(cambios[0]).toMatchObject({ tipo: 'seguidor_no_se_une', motivo: 'grupo_lleno' });
+      expect(['grumete', 'cocinera']).toContain((cambios[0] as { tipoSeguidor: string }).tipoSeguidor);
+    });
+
+    it('con el catálogo de verdad, el tipo es uno de data/seguidores.json', () => {
+      const { estado } = aplicarEfectos(estadoCon(), [AL_AZAR], new Dados(3));
+
+      expect(estado.jugador.seguidores).toHaveLength(1);
+      expect(estado.jugador.seguidores[0].tipo).not.toBe('al_azar');
+    });
+  });
 });

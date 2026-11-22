@@ -14,7 +14,7 @@ import type { Seguidor } from '../estado/seguidor';
 import { espaciosOcupados } from '../objetos/consultas';
 import { crearSeguidor } from '../seguidores/crear-seguidor';
 import { LISTAS_DE_NOMBRES } from '../seguidores/nombres';
-import { CARACTERISTICAS, type Efecto, type TipoRecurso } from '../tablas/efecto';
+import { CARACTERISTICAS, SEGUIDOR_AL_AZAR, type Efecto, type TipoRecurso } from '../tablas/efecto';
 import type { Cambio, MotivoDeRecurso } from './cambio';
 
 /** Catálogos en los que buscar las fichas. Por defecto, los del juego; los tests pueden pasar otros. */
@@ -521,9 +521,15 @@ type EfectoGanarSeguidor = Extract<Efecto, { tipo: 'ganar_seguidor' }>;
  *   2. Si el grupo está lleno, solo entra si el efecto dice a quién se despide para hacerle sitio
  *      (lo ha elegido el jugador antes). A un inseparable no se le puede despedir.
  *   3. Si entra, crearSeguidor le pone nombre (gasta un número del generador; si no entra, ninguno).
+ * Con "al_azar", antes de todo se sortea el tipo (un número del generador, entre o no).
  */
 function ganarSeguidor(jugador: Jugador, efecto: EfectoGanarSeguidor, dados: Dados, catalogos: CatalogosEfectos, cambios: Cambio[]): void {
   const tipos = catalogos.seguidores ?? TIPOS_SEGUIDOR;
+  // "al_azar": primero se sortea el tipo entre TODOS los del catálogo (gasta un número), y a partir
+  // de aquí es como si el efecto hubiera dicho ese tipo.
+  if (efecto.seguidor === SEGUIDOR_AL_AZAR) {
+    efecto = { ...efecto, seguidor: tipos[dados.entero(0, tipos.length - 1)].id };
+  }
   if (!tipos.some(t => t.id === efecto.seguidor)) {
     throw new Error(`aplicarEfectos: no existe el tipo de seguidor "${efecto.seguidor}" en el catálogo`);
   }

@@ -12,6 +12,7 @@ import {
   OTROS_EFECTOS,
   RECURSOS,
   RECURSOS_CON_MAXIMO,
+  SEGUIDOR_AL_AZAR,
 } from '../efecto';
 import { ESPECIALES_DE_TABLA, type Fila, type Tabla } from './tabla';
 
@@ -274,7 +275,10 @@ function validarPartes(partes: unknown, donde: string): string[] {
 
 function validarIdSeguidor(id: unknown, donde: string): string[] {
   if (typeof id !== 'string') {
-    return [`${donde}: falta el "seguidor" (el id de su tipo en el catálogo, p. ej. "forzudo").`];
+    return [`${donde}: falta el "seguidor" (el id de su tipo en el catálogo, p. ej. "forzudo", o "al_azar").`];
+  }
+  if (id === SEGUIDOR_AL_AZAR) {
+    return [];
   }
   if (!TIPOS_SEGUIDOR.some(t => t.id === id)) {
     return [`${donde}: el seguidor "${id}" no existe en el catálogo de seguidores (data/seguidores.json).`];

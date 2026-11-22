@@ -1,0 +1,36 @@
+{
+  "id": "deseo",
+  "titulo": "Deseo",
+  "libro": "E041",
+  "pasos": {
+    "inicio": {
+      "texto": "Un djinn aparece ante ti y te brinda la posibilidad de pedir un deseo...",
+      "opciones": [
+        { "texto": "Deseo de vitalidad. +4 puntos de vida máximos", "efectos": [{ "tipo": "vidaMax", "cantidad": 4 }] },
+        { "texto": "Deseo de fama. +2 puntos de fama", "efectos": [{ "tipo": "fama", "cantidad": 2 }] },
+        { "texto": "Deseo de riqueza. +200 monedas de oro", "efectos": [{ "tipo": "oro", "cantidad": 200 }] },
+        { "texto": "Deseo de fuerza. +1 a fuerza", "efectos": [{ "tipo": "fuerza", "cantidad": 1 }] },
+        { "texto": "Deseo de ingenio. +1 a ingenio", "efectos": [{ "tipo": "ingenio", "cantidad": 1 }] },
+        { "texto": "Deseo de poder. Consigues un objeto mágico", "evento": "tesoro_magico" },
+        {
+          "texto": "Deseo de conocimiento prohibido. Obtienes el ídolo antediluviano",
+          "requiere": { "sinObjeto": "idolo_antediluviano" },
+          "efectos": [{ "tipo": "ganar_objeto", "objeto": "idolo_antediluviano" }]
+        },
+        {
+          "texto": "Deseo de amistad. Ganas un seguidor que nunca te abandonará",
+          "requiere": { "puedeGanarSeguidor": true },
+          "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "al_azar", "inseparable": true }]
+        },
+        {
+          "texto": "Deseo de protección. Todo tu grupo se cura del todo, tu tripulación vuelve al máximo y consigues 10 reservas de comida",
+          "efectos": [
+            { "tipo": "vida", "operacion": "maximo", "destino": "todos" },
+            { "tipo": "tripulacion", "operacion": "maximo" },
+            { "tipo": "comida", "cantidad": 10 }
+          ]
+        }
+      ]
+    }
+  }
+}

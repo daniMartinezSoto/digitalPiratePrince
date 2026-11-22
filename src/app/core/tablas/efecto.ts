@@ -52,7 +52,12 @@ export type FinDePartida = (typeof FINES_DE_PARTIDA)[number];
 //   { "tipo": "bandera", "bandera": "emporio_bob_derrotado" }              (un hecho general que el juego recuerda)
 //   { "tipo": "ganar_seguidor", "seguidor": "nativo" }                     (se une un seguidor de ese tipo del catálogo)
 //   { "tipo": "ganar_seguidor", "seguidor": "bruja_vudu", "inseparable": true }   (uno que nunca se marchará por su cuenta)
+//   { "tipo": "ganar_seguidor", "seguidor": "al_azar" }                    (de un tipo al azar entre TODOS los del catálogo;
+//                                                                            el deseo de amistad, como el seguidor del hermano)
 // Aquí solo se describen; quien los aplica al estado es aplicarEfectos.
+// Lo que se escribe en "seguidor" para que el tipo salga al azar entre todos los del catálogo.
+export const SEGUIDOR_AL_AZAR = 'al_azar';
+
 export const OTROS_EFECTOS = [
   'ganar_objeto',
   'perder_objeto',
@@ -87,7 +92,7 @@ type EfectoSinDados =
   | { tipo: 'quitar_condicion'; condicion: string }
   | { tipo: 'quitar_condicion'; categoria: CategoriaCondicion }
   | { tipo: 'bandera'; bandera: string }
-  // seguidor = id del TIPO en el catálogo ("forzudo"). El nombre propio se le pone al unirse.
+  // seguidor = id del TIPO en el catálogo ("forzudo"), o "al_azar". El nombre propio se le pone al unirse.
   // despedir NO se escribe en el JSON: lo añade el juego cuando el grupo está lleno y el jugador
   // elige a quién despide para hacer sitio (es el id del seguidor en la partida, p. ej. "forzudo_1").
   // nombre TAMPOCO se escribe en el JSON: es el nombre propio ya elegido al buscar seguidor en un puerto.

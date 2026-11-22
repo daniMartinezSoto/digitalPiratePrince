@@ -3,6 +3,7 @@ import type { CombateEnCurso } from './combate';
 import type { CombateNavalEnCurso } from './combate-naval';
 import type { Fase } from './fase';
 import type { FinPartida } from './fin-partida';
+import type { MarcoEvento } from './pila-eventos';
 
 // ACCIONES A MEDIAS. Algunas acciones tienen varios pasos: primero se tira o se entra, y después
 // el jugador decide (ir al mercado, contratar marineros, buscar un seguidor). Lo que salió se guarda
@@ -120,13 +121,9 @@ export interface Mundo {
   // Por ejemplo, un tesoro que se encuentra en un hexágono.
   marcas: Marca[];
 
-  // Pila de eventos: guarda los eventos que están pendientes de continuar
-  // y el paso concreto en el que se encuentra cada uno.
-  // Nos permitirá retomar eventos que tengan varias partes.
-  pilaEventos: {
-    evento: string;
-    paso: string;
-  }[];
+  // Pila de eventos (Sprint 10): los eventos en marcha, cada uno con el paso en el que va y lo que
+  // espera. El de arriba es el que se juega. Vacía = no hay ningún evento. Ver estado/pila-eventos.ts.
+  pilaEventos: MarcoEvento[];
 
   // IDs de los puertos importantes que el jugador ya ha visitado.
   // Se utilizarán para comprobar una de las condiciones de victoria.

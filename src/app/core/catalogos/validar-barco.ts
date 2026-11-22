@@ -106,28 +106,37 @@ function validarAbordaje(abordaje: unknown, nombre: string): string[] {
     return [`${nombre}: le falta el abordaje (la lista de enemigos contra los que peleas si lo abordas).`];
   }
 
+  return validarPedidosDeEnemigos(abordaje, `${nombre}, abordaje`);
+}
+
+/**
+ * Una lista de enemigos pedidos para un combate (el abordaje de un barco, el combate de un evento):
+ * que existan en el bestiario, con cantidades y números válidos. Cada uno se nombra "<donde> 1", "<donde> 2"...
+ * Se exporta porque los eventos piden combates con el mismo formato.
+ */
+export function validarPedidosDeEnemigos(pedidos: unknown[], donde: string): string[] {
   const errores: string[] = [];
-  abordaje.forEach((pedido, i) => {
+  pedidos.forEach((pedido, i) => {
     const p = pedido as Record<string, unknown>;
-    const donde = `${nombre}, abordaje ${i + 1}`;
+    const nombre = `${donde} ${i + 1}`;
 
     if (typeof p['enemigo'] !== 'string' || !ENEMIGOS.some(e => e.id === p['enemigo'])) {
-      errores.push(`${donde}: el enemigo "${String(p['enemigo'])}" no existe en el bestiario (data/enemigos.json).`);
+      errores.push(`${nombre}: el enemigo "${String(p['enemigo'])}" no existe en el bestiario (data/enemigos.json).`);
     }
     const cantidad = p['cantidad'];
     if (cantidad !== undefined && !esEnteroDesde(cantidad, 1) && !(sonDados(cantidad) && minimoDeLosDados(cantidad as string) >= 1)) {
-      errores.push(`${donde}: la cantidad debe ser un número entero de 1 o más, o dados (p. ej. "1d3+1").`);
+      errores.push(`${nombre}: la cantidad debe ser un número entero de 1 o más, o dados (p. ej. "1d3+1").`);
     }
     if (p['ataque'] !== undefined && !esEnteroDesde(p['ataque'], 1)) {
-      errores.push(`${donde}: el ataque debe ser un número entero de 1 o más.`);
+      errores.push(`${nombre}: el ataque debe ser un número entero de 1 o más.`);
     }
     if (p['resistencia'] !== undefined && !esEnteroDesde(p['resistencia'], 1)) {
-      errores.push(`${donde}: la resistencia debe ser un número entero de 1 o más.`);
+      errores.push(`${nombre}: la resistencia debe ser un número entero de 1 o más.`);
     }
     if (p['recompensa'] !== undefined) {
-      errores.push(...validarListaDeEfectos(p['recompensa'], `${donde}, recompensa`));
+      errores.push(...validarListaDeEfectos(p['recompensa'], `${nombre}, recompensa`));
     }
-    errores.push(...camposQueSobran(p, CAMPOS_PEDIDO, donde));
+    errores.push(...camposQueSobran(p, CAMPOS_PEDIDO, nombre));
   });
   return errores;
 }
