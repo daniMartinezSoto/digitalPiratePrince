@@ -1,6 +1,7 @@
 [
   {
     "id": "maleficio_del_pirata",
+    "imagen": "iconosCondiciones/maleficioPirata.svg",
     "nombre": "Maleficio del pirata",
     "descripcion": "Estás maldito: −1 al daño de tus ataques en combate mientras dure la maldición.",
     "categoria": "maldicion",
@@ -8,6 +9,7 @@
   },
   {
     "id": "el_mal",
+    "imagen": "iconosCondiciones/malABordo.svg",
     "nombre": "El mal está a bordo",
     "descripcion": "Algo maligno se esconde en el barco. Cada turno pierdes tripulación hasta que resuelvas la situación.",
     "categoria": "maldicion",
@@ -25,6 +27,7 @@
   },
   {
     "id": "escorbuto",
+    "imagen": "iconosCondiciones/escorbuto.svg",
     "nombre": "Escorbuto",
     "descripcion": "La falta de alimentos frescos enferma a la tripulación. Cada turno sin tocar tierra pierdes tripulantes.",
     "categoria": "enfermedad",
@@ -33,12 +36,14 @@
   },
   {
     "id": "hambre",
+    "imagen": "iconosCondiciones/hambre.svg",
     "nombre": "Hambre",
     "descripcion": "No has comido lo suficiente. Cada día sin comer pierdes más vida, tus seguidores pueden marcharse y la tripulación puede amotinarse. Se quita al comer.",
     "categoria": "otra"
   },
   {
     "id": "tormenta",
+    "imagen": "iconosCondiciones/tormenta.svg",
     "nombre": "Tormenta",
     "descripcion": "Una tormenta azota el barco. No puedes viajar hasta que amaine.",
     "categoria": "clima",
@@ -47,6 +52,7 @@
   },
   {
     "id": "lluvias",
+    "imagen": "iconosCondiciones/lluvias.svg",
     "nombre": "Lluvias torrenciales",
     "descripcion": "Llueve a cántaros. Si mañana las lluvias persisten, perderás tu fase de acción.",
     "categoria": "clima",
@@ -54,18 +60,21 @@
   },
   {
     "id": "vinculo_nativo",
+    "imagen": "iconosCondiciones/vinculoNativo.svg",
     "nombre": "Vínculo nativo",
     "descripcion": "Las aldeas nativas te tratan como a uno de los suyos: aceptan tu oro a cambio de comida.",
     "categoria": "otra"
   },
   {
     "id": "amuleto_maldito",
+    "imagen": "iconosCondiciones/amuletoMaldito.svg",
     "nombre": "Amuleto maldito",
     "descripcion": "Llevas un amuleto que no puedes quitarte. Te da una bendición y una maldición. Cuenta como una maldición: si te libras de él, pierdes las dos.",
     "categoria": "maldicion"
   },
   {
     "id": "fuerza_letal",
+    "imagen": "iconosCondiciones/fuerza.svg",
     "nombre": "Fuerza letal",
     "descripcion": "+1 de fuerza.",
     "categoria": "bendicion",
@@ -73,6 +82,7 @@
   },
   {
     "id": "super_cerebro",
+    "imagen": "iconosCondiciones/cerebro.svg",
     "nombre": "Súper cerebro",
     "descripcion": "+2 de ingenio.",
     "categoria": "bendicion",
@@ -80,6 +90,7 @@
   },
   {
     "id": "gran_fortaleza",
+    "imagen": "iconosCondiciones/granFortaleza.svg",
     "nombre": "Gran fortaleza",
     "descripcion": "Tu vida máxima aumenta en 4 puntos.",
     "categoria": "bendicion",
@@ -87,6 +98,7 @@
   },
   {
     "id": "piel_de_piedra",
+    "imagen": "iconosCondiciones/pielPiedra.svg",
     "nombre": "Piel de piedra",
     "descripcion": "En combate, cada golpe que te aciertan te hace 1 de daño menos (pero siempre al menos 1).",
     "categoria": "bendicion",
@@ -94,6 +106,7 @@
   },
   {
     "id": "carisma",
+    "imagen": "iconosCondiciones/carisma.svg",
     "nombre": "Carisma",
     "descripcion": "Puedes llevar 1 seguidor más.",
     "categoria": "bendicion",
@@ -101,6 +114,7 @@
   },
   {
     "id": "hambre_insaciable",
+    "imagen": "iconosCondiciones/insaciable.svg",
     "nombre": "Hambre insaciable",
     "descripcion": "Necesitas 1 reserva de comida más al día.",
     "categoria": "maldicion",
@@ -108,12 +122,14 @@
   },
   {
     "id": "muy_mala_suerte",
+    "imagen": "iconosCondiciones/malaSuerte.svg",
     "nombre": "Muy mala suerte",
     "descripcion": "−3 en las tablas de objetos y de objetos mágicos.",
     "categoria": "maldicion"
   },
   {
     "id": "ambicion_desmedida",
+    "imagen": "iconosCondiciones/ambicion.svg",
     "nombre": "Ambición desmedida",
     "descripcion": "Necesitas 2 puntos de fama más para ganar.",
     "categoria": "maldicion",
@@ -121,6 +137,7 @@
   },
   {
     "id": "avaricioso",
+    "imagen": "iconosCondiciones/avaricioso.svg",
     "nombre": "Avaricioso",
     "descripcion": "No soportas desprenderte de tu oro: no puedes enterrar tesoros.",
     "categoria": "maldicion",
@@ -128,6 +145,7 @@
   },
   {
     "id": "hedor_nauseabundo",
+    "imagen": "iconosCondiciones/hedor.svg",
     "nombre": "Hedor nauseabundo",
     "descripcion": "Nadie quiere acercarse a ti: no puedes conseguir más seguidores.",
     "categoria": "maldicion",
@@ -135,6 +153,7 @@
   },
   {
     "id": "manos_torpes",
+    "imagen": "iconosCondiciones/manosTorpes.svg",
     "nombre": "Manos torpes",
     "descripcion": "Todo se te escurre de las manos: −1 al pescar y al cazar.",
     "categoria": "maldicion",
@@ -142,6 +161,7 @@
   },
   {
     "id": "canones_buenos",
+    "imagen": "iconosCondiciones/cannon1.svg",
     "nombre": "Cañones buenos",
     "descripcion": "Mejora del barco: +1 a tu dado en cada duelo de cañones.",
     "categoria": "mejora",
@@ -149,6 +169,7 @@
   },
   {
     "id": "casco_reforzado",
+    "imagen": "iconosCondiciones/cascoReforzado.svg",
     "nombre": "Casco reforzado",
     "descripcion": "Mejora del barco: cada duelo de cañones que pierdes te cuesta 1 marinero menos (pero siempre al menos 1).",
     "categoria": "mejora",
@@ -156,6 +177,7 @@
   },
   {
     "id": "velas_nuevas",
+    "imagen": "iconosCondiciones/velas.svg",
     "nombre": "Velas nuevas",
     "descripcion": "Mejora del barco: +1 al dado cuando intentas huir de un combate naval.",
     "categoria": "mejora",

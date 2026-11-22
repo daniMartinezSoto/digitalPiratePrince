@@ -76,6 +76,10 @@ export interface Objeto {
   // si lo vendiste y llegas a la ciudad perdida, el juego te recordará que lo necesitabas.
   banderaAlVender?: string;
 
+  // Lo que se cuenta cuando se gasta el último uso (solo objetos activos con usos). Sin él, "Se agota: X".
+  // Mano de mono: "Has usado el último deseo de la mano de mono, que se evapora en un humo purpúreo."
+  textoAlAgotarse?: string;
+
   // Condiciones que tienes MIENTRAS lo llevas (ids del catálogo de condiciones).
   // El amuleto kalinago: ["vinculo_nativo"]. No se guardan en la partida: se calculan.
   otorga?: string[];

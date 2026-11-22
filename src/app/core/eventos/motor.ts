@@ -1,7 +1,8 @@
 import { cerrarCombate, iniciarCombate } from '../combate/combate';
 import { cerrarCombateNaval, iniciarCombateNaval } from '../combate-naval/combate-naval';
 import { chequeo } from '../chequeos/chequeo';
-import { estaProhibido } from '../condiciones/consultas';
+import { AJUSTES } from '../ajustes/ajustes';
+import { estaProhibido, fuerzaActual, ingenioActual } from '../condiciones/consultas';
 import type { Dados } from '../dados/dados';
 import { rangoDeTirada } from '../dados/tirada';
 import { aplicarEfectos } from '../efectos/aplicar-efectos';
@@ -13,6 +14,10 @@ import { resolverEfecto } from '../tablas/rangos/resolver-tabla';
 import type { EfectoDefinicion } from '../tablas/efecto';
 import { grupoLleno } from '../seguidores/consultas';
 import { EVENTOS } from './cargar-eventos';
+import { ENCUENTROS } from '../encuentros/cargar-encuentros';
+import type { Encuentro } from '../encuentros/encuentro';
+import type { EnemigoPedido } from '../combate/combate';
+import { banderaDeEventoOcurrido, eventoYaOcurrido } from './una-vez';
 import { PASO_INICIAL, type Evento, type FilaDeEvento, type Opcion, type Paso, type Rama } from './evento';
 
 // EL MOTOR DE EVENTOS (Sprint 10, paso 2). Solo reglas: no sabe nada de la pantalla.
@@ -65,20 +70,14 @@ export interface ResultadoMotor {
 // Consultas
 // ---------------------------------------------------------------------------
 
-/** ¿Hay algún evento en marcha (o esperando su turno)? */
-export function hayEventoEnCurso(estado: Estado): boolean {
-  return estado.mundo.pilaEventos.length > 0;
-}
+// hayEventoEnCurso, banderaDeEventoOcurrido y eventoYaOcurrido viven en una-vez.ts (no dependen del
+// motor y así los pueden usar las acciones sin importar todo esto); se reexportan aquí por comodidad.
+export { banderaDeEventoOcurrido, eventoYaOcurrido, hayEventoEnCurso } from './una-vez';
 
-/** La bandera que recuerda que un evento de una sola vez ya ha salido. */
-export function banderaDeEventoOcurrido(idEvento: string): string {
-  return `evento_ocurrido_${idEvento}`;
-}
-
-/** ¿Es un evento de una sola vez que ya ha salido en esta partida? (Entonces no vuelve a salir.) */
-export function eventoYaOcurrido(estado: Estado, idEvento: string, eventos: readonly Evento[] = EVENTOS): boolean {
-  const evento = eventos.find(e => e.id === idEvento);
-  return evento?.unaVez === true && estado.mundo.banderas[banderaDeEventoOcurrido(idEvento)] === true;
+/** ¿El evento de arriba está esperando a que termine un combate que él lanzó? (Entonces el combate se cierra con cerrarCombateDelEvento.) */
+export function eventoEsperaUnCombate(estado: Estado): boolean {
+  const pila = estado.mundo.pilaEventos;
+  return pila.length > 0 && pila[pila.length - 1].esperando !== undefined;
 }
 
 /** Una opción tal como la enseña la pantalla. */
@@ -87,14 +86,15 @@ export interface OpcionVisible {
   disponible: boolean;
   // Por qué no se puede elegir: ya llevas ese objeto, el grupo está lleno, algo prohíbe nuevos
   // seguidores (hedor nauseabundo) o ese evento (de una sola vez) ya ocurrió.
-  motivo?: 'ya_lo_tienes' | 'grupo_lleno' | 'prohibido' | 'ya_ocurrio';
+  motivo?: 'ya_lo_tienes' | 'grupo_lleno' | 'prohibido' | 'al_maximo' | 'ya_ocurrio';
 }
 
 /**
  * Lo que la ventana de eventos tiene que enseñar ahora. Qué botones salen lo dice "modo":
  *   empezar:          el evento acaba de aparecer y llevas la mano de mono: "Evitar el evento" o "Seguir".
  *   opciones:         los botones de "opciones" (los que no se pueden, desactivados con su motivo).
- *   tirada:           "Tirar dados" (y, con el amuleto del destino, "Elegir el resultado").
+ *   tirada:           "Tirar dados" (y, con el amuleto del destino, "Usar el amuleto del destino").
+ *   elegir_resultado: el amuleto ya se ha gastado: se ven los resultados de la tabla y hay que elegir uno.
  *   chequeo:          "Hacer el chequeo de Fuerza / Ingenio".
  *   combate:          "Luchar" (empieza el combate normal).
  *   combate_naval:    "Luchar" (empieza el combate naval).
@@ -102,7 +102,7 @@ export interface OpcionVisible {
  *   continuar:        hay algo que leer; "Continuar".
  */
 export interface VistaDelEvento {
-  modo: 'empezar' | 'opciones' | 'tirada' | 'chequeo' | 'combate' | 'combate_naval' | 'en_combate' | 'continuar';
+  modo: 'empezar' | 'opciones' | 'tirada' | 'elegir_resultado' | 'chequeo' | 'combate' | 'combate_naval' | 'en_combate' | 'continuar';
   titulo: string;
   imagen?: string;
 
@@ -115,13 +115,33 @@ export interface VistaDelEvento {
   lectura: Lectura | null;
 
   opciones?: OpcionVisible[];
-  tirada?: { dado: string; modificador: number; minimo: number; maximo: number; puedeElegir: boolean };
+
+  // Con el amuleto del destino: los resultados posibles de la tabla, para elegir uno.
+  resultados?: ResultadoPosible[];
+  // paraEncuentro = la tirada es la del encuentro de un combate (para ver contra quién se lucha).
+  tirada?: { dado: string; modificador: number; minimo: number; maximo: number; puedeElegir: boolean; paraEncuentro?: boolean };
   chequeo?: { caracteristica: 'fuerza' | 'ingenio'; modificador: number };
   combate?: { enemigos: { enemigo: string; cantidad?: number | string }[] };
   combateNaval?: { barco: string };
 
   // Usos que le quedan a la mano de mono (solo en el modo "empezar").
   manoDeMono?: number;
+}
+
+/**
+ * Un resultado de la tabla, tal como se enseña al elegir con el amuleto del destino. La pantalla
+ * escribe la etiqueta con lo que haya: el texto de la fila; si no tiene, el evento al que lleva
+ * (su título si ya existe); si no, sus efectos o sus enemigos.
+ */
+export interface ResultadoPosible {
+  // El número que se elige (el primero del rango) y el rango ("2-3").
+  numero: number;
+  min: number;
+  max: number;
+  texto?: string;
+  evento?: { id: string; titulo?: string };
+  efectos?: EfectoDefinicion[];
+  enemigos?: EnemigoPedido[];
 }
 
 /** Qué enseñar ahora; null si no hay ningún evento en marcha. */
@@ -154,6 +174,9 @@ export function vistaDelEvento(estado: Estado, eventos: readonly Evento[] = EVEN
 
   // El paso espera al jugador.
   const texto = paso.texto;
+  if (marco.eligiendoResultado) {
+    return { ...base, modo: 'elegir_resultado', texto, resultados: resultadosPosibles(paso, eventos) };
+  }
   if (paso.opciones) {
     return { ...base, modo: 'opciones', texto, opciones: paso.opciones.map(o => opcionVisible(estado, o, eventos)) };
   }
@@ -176,7 +199,26 @@ export function vistaDelEvento(estado: Estado, eventos: readonly Evento[] = EVEN
     return { ...base, modo: 'chequeo', texto, chequeo: { caracteristica: paso.chequeo.caracteristica, modificador: paso.chequeo.modificador ?? 0 } };
   }
   if (paso.combate) {
-    return { ...base, modo: 'combate', texto, combate: { enemigos: paso.combate.enemigos.map(e => ({ enemigo: e.enemigo, ...(e.cantidad !== undefined ? { cantidad: e.cantidad } : {}) })) } };
+    // Un encuentro: primero hay que tirar para ver contra quién se lucha.
+    if (paso.combate.encuentro !== undefined && !marco.enemigosDelEncuentro) {
+      const encuentro = buscarEncuentro(paso.combate.encuentro);
+      const rango = rangoDeTirada(encuentro.dado);
+      return {
+        ...base,
+        modo: 'tirada',
+        texto,
+        tirada: { dado: encuentro.dado, modificador: 0, minimo: rango.min, maximo: rango.max, puedeElegir: usosDe(estado, OBJETO_ELEGIR_RESULTADO) > 0, paraEncuentro: true },
+      };
+    }
+    // Ya se sabe contra quién: el texto del paso y el de la fila del encuentro, y "Luchar".
+    const enemigos = marco.enemigosDelEncuentro ?? paso.combate.enemigos ?? [];
+    const textoConEncuentro = [texto, marco.enemigosDelEncuentro ? marco.lectura?.texto : undefined].filter(t => t !== undefined).join('\n\n');
+    return {
+      ...base,
+      modo: 'combate',
+      ...(textoConEncuentro !== '' ? { texto: textoConEncuentro } : {}),
+      combate: { enemigos: enemigos.map(e => ({ enemigo: e.enemigo, ...(e.cantidad !== undefined ? { cantidad: e.cantidad } : {}) })) },
+    };
   }
   if (paso.combateNaval) {
     return { ...base, modo: 'combate_naval', texto, combateNaval: { barco: paso.combateNaval.barco } };
@@ -220,27 +262,41 @@ export function elegirOpcion(estado: Estado, indice: number, dados: Dados, event
 }
 
 /**
- * Pulsa "Tirar dados" en el paso actual. Con "resultadoElegido" se usa el amuleto del destino:
- * el dado saca ese número (entre el mínimo y el máximo del dado) y el amuleto gasta un uso.
- * El bonificador de la tirada se suma igual.
+ * Pulsa "Tirar dados" en el paso actual. "resultadoElegido" = el que se elige tras usar el amuleto del
+ * destino (usarAmuletoDelDestino, que ya lo ha gastado): el dado saca ese número (entre el mínimo y el
+ * máximo del dado).
+ * "resultadoTrucado" es lo mismo, pero SOLO para la trampa de prueba "fijar la próxima tirada":
+ * no gasta nada. El bonificador de la tirada se suma igual.
  */
 export function tirarDadosDelEvento(
   estado: Estado,
   dados: Dados,
-  opciones: { resultadoElegido?: number } = {},
+  opciones: { resultadoElegido?: number; resultadoTrucado?: number } = {},
   eventos: readonly Evento[] = EVENTOS,
 ): ResultadoMotor {
   const t = trabajoEsperando(estado, eventos, 'tirarDadosDelEvento');
-  const tirada = pasoActual(t).tirada;
+  const paso = pasoActual(t);
+  const marcoActual = cima(t);
+  if (opciones.resultadoElegido !== undefined && !marcoActual.eligiendoResultado) {
+    throw new Error('tirarDadosDelEvento: para elegir el resultado primero hay que usar el amuleto del destino');
+  }
+  if (opciones.resultadoElegido === undefined && marcoActual.eligiendoResultado) {
+    throw new Error('tirarDadosDelEvento: el amuleto del destino ya está gastado: elige uno de los resultados');
+  }
+  delete marcoActual.eligiendoResultado;
+  if (paso.combate?.encuentro !== undefined && !marcoActual.enemigosDelEncuentro) {
+    tirarEncuentro(t, buscarEncuentro(paso.combate.encuentro), dados, opciones);
+    return terminar(t, dados);
+  }
+  const tirada = paso.tirada;
   if (!tirada) throw new Error('tirarDadosDelEvento: este paso no tiene tirada');
 
-  const elegido = opciones.resultadoElegido;
+  const elegido = opciones.resultadoElegido ?? opciones.resultadoTrucado;
   if (elegido !== undefined) {
     const rango = rangoDeTirada(tirada.dado);
     if (!Number.isInteger(elegido) || elegido < rango.min || elegido > rango.max) {
       throw new Error(`tirarDadosDelEvento: con "${tirada.dado}" solo se puede elegir del ${rango.min} al ${rango.max}`);
     }
-    gastarUso(t, OBJETO_ELEGIR_RESULTADO, dados);
   }
 
   const modificador = tirada.modificador ?? 0;
@@ -252,23 +308,54 @@ export function tirarDadosDelEvento(
   for (let intento = 0; ; intento++) {
     sacados = elegido !== undefined ? [elegido] : dados.tirar(tirada.dado).dados;
     const suma = elegido !== undefined ? elegido : sacados.reduce((a, b) => a + b, 0);
-    total = suma + modificador;
+    // Con el amuleto del destino se elige la FILA: sale esa, sin sumar el bonificador.
+    total = opciones.resultadoElegido !== undefined ? suma : suma + modificador;
     fila = filaDe(tirada.filas, total);
     if (elegido !== undefined || intento >= 20 || !llevaAEventoYaOcurrido(t, fila)) break;
   }
 
-  const tiradaLeida = { dados: sacados, modificador, total, ...(elegido !== undefined ? { elegida: true } : {}) };
+  const marca = opciones.resultadoElegido !== undefined ? { elegida: true } : opciones.resultadoTrucado !== undefined ? { trucada: true } : {};
+  const tiradaLeida = { dados: sacados, modificador: opciones.resultadoElegido !== undefined ? 0 : modificador, total, ...marca };
   llegarARama(t, fila, dados, { tirada: tiradaLeida }, fila.volverATirar ? { tipo: 'repetir' } : undefined);
   return avanzar(t, dados);
 }
 
-/** Pulsa "Hacer el chequeo" en el paso actual. */
-export function hacerChequeo(estado: Estado, dados: Dados, eventos: readonly Evento[] = EVENTOS): ResultadoMotor {
+/**
+ * Pulsa "Usar el amuleto del destino" en una tirada (decidido por el autor el 22-nov): el amuleto SE
+ * GASTA YA y el paso pasa a enseñar los resultados de la tabla para elegir uno (tirarDadosDelEvento con
+ * resultadoElegido). Queda apuntado en el estado: recargar no sirve para verlos y no usarlo.
+ */
+export function usarAmuletoDelDestino(estado: Estado, dados: Dados, eventos: readonly Evento[] = EVENTOS): ResultadoMotor {
+  const t = trabajoEsperando(estado, eventos, 'usarAmuletoDelDestino');
+  const paso = pasoActual(t);
+  const marco = cima(t);
+  const tieneTirada = paso.tirada !== undefined || (paso.combate?.encuentro !== undefined && !marco.enemigosDelEncuentro);
+  if (!tieneTirada) throw new Error('usarAmuletoDelDestino: este paso no tiene ninguna tirada');
+  if (marco.eligiendoResultado) throw new Error('usarAmuletoDelDestino: el amuleto ya está gastado en esta tirada');
+  gastarUso(t, OBJETO_ELEGIR_RESULTADO, dados);
+  marco.eligiendoResultado = true;
+  return terminar(t, dados);
+}
+
+/**
+ * Pulsa "Hacer el chequeo" en el paso actual. "dadoTrucado" (1-6) es SOLO para la trampa de prueba
+ * "fijar la próxima tirada": el dado del chequeo saca ese número.
+ */
+export function hacerChequeo(
+  estado: Estado,
+  dados: Dados,
+  opciones: { dadoTrucado?: number } = {},
+  eventos: readonly Evento[] = EVENTOS,
+): ResultadoMotor {
   const t = trabajoEsperando(estado, eventos, 'hacerChequeo');
   const definicion = pasoActual(t).chequeo;
   if (!definicion) throw new Error('hacerChequeo: este paso no tiene chequeo');
+  const trucado = opciones.dadoTrucado;
+  if (trucado !== undefined && (!Number.isInteger(trucado) || trucado < 1 || trucado > 6)) {
+    throw new Error('hacerChequeo: el dado de un chequeo solo puede sacar del 1 al 6');
+  }
 
-  const resultado = chequeo(t.estado.jugador, definicion.caracteristica, definicion.modificador ?? 0, dados);
+  const resultado = chequeo(t.estado.jugador, definicion.caracteristica, definicion.modificador ?? 0, dados, trucado);
   llegarARama(t, resultado.superado ? definicion.exito : definicion.fallo, dados, { chequeo: resultado });
   return avanzar(t, dados);
 }
@@ -279,7 +366,11 @@ export function empezarCombateDelEvento(estado: Estado, dados: Dados, eventos: r
   const paso = pasoActual(t);
   const marco = cima(t);
   if (paso.combate) {
-    const { enemigos, puedeHuir, noMortal, sorpresa } = paso.combate;
+    const { puedeHuir, noMortal, sorpresa } = paso.combate;
+    if (paso.combate.encuentro !== undefined && !marco.enemigosDelEncuentro) {
+      throw new Error('empezarCombateDelEvento: primero hay que tirar el dado del encuentro');
+    }
+    const enemigos = marco.enemigosDelEncuentro ?? paso.combate.enemigos ?? [];
     t.estado = iniciarCombate(t.estado, enemigos, dados, {
       ...(puedeHuir !== undefined ? { puedeHuir } : {}),
       ...(noMortal !== undefined ? { noMortal } : {}),
@@ -325,6 +416,7 @@ export function cerrarCombateDelEvento(estado: Estado, dados: Dados, eventos: re
     eventosDelCombate = cierre.eventos;
   }
   delete marco.esperando;
+  delete marco.enemigosDelEncuentro;
   // Los cambios del cierre (recompensas) también se enseñan.
   const cambiosDelCierre = [...t.cambios];
 
@@ -352,8 +444,14 @@ export function continuarEvento(estado: Estado, dados: Dados, eventos: readonly 
 /** Mano de mono: evita el evento que acaba de aparecer (gasta un uso). */
 export function evitarEvento(estado: Estado, dados: Dados, eventos: readonly Evento[] = EVENTOS): ResultadoMotor {
   const t = trabajoEmpezando(estado, eventos, 'evitarEvento');
+  const antes = t.cambios.length;
   gastarUso(t, OBJETO_EVITAR_EVENTO, dados);
-  t.pila.pop();
+  // No se cierra de golpe: se enseña que se ha evitado (y, si era el último uso, el texto de la mano
+  // de mono) y, al continuar, el evento termina sin haber ocurrido.
+  const marco = cima(t);
+  delete marco.porEmpezar;
+  marco.lectura = { evitado: true, cambios: t.cambios.slice(antes) };
+  marco.siguiente = { tipo: 'fin' };
   return avanzar(t, dados);
 }
 
@@ -480,6 +578,7 @@ function entrarEnEvento(t: Trabajo, marco: MarcoEvento, dados: Dados): void {
 /** Entra en un paso: aplica sus efectos y deja preparado lo que se lee y por dónde se sigue. */
 function entrarEnPaso(t: Trabajo, marco: MarcoEvento, nombre: string, dados: Dados): void {
   marco.paso = nombre;
+  delete marco.enemigosDelEncuentro;
   const paso = pasoDe(buscarEvento(t.eventos, marco.evento), nombre);
   const cambios = aplicar(t, paso.efectos, dados);
   marco.lectura = { ...(paso.texto !== undefined ? { texto: paso.texto } : {}), cambios };
@@ -530,6 +629,55 @@ function aplicar(t: Trabajo, efectos: readonly EfectoDefinicion[] | undefined, d
   return aplicado.cambios;
 }
 
+/**
+ * Tira el dado de un encuentro: la fila que sale dice contra quién se lucha. Se guardan sus enemigos
+ * en el marco (con la recompensa del encuentro si el pedido no trae otra) y su texto en la lectura.
+ * El paso sigue esperando al jugador: ahora, "Luchar".
+ */
+function tirarEncuentro(t: Trabajo, encuentro: Encuentro, dados: Dados, opciones: { resultadoElegido?: number; resultadoTrucado?: number }): void {
+  const elegido = opciones.resultadoElegido ?? opciones.resultadoTrucado;
+  const rango = rangoDeTirada(encuentro.dado);
+  if (elegido !== undefined && (!Number.isInteger(elegido) || elegido < rango.min || elegido > rango.max)) {
+    throw new Error(`tirarDadosDelEvento: con "${encuentro.dado}" solo se puede elegir del ${rango.min} al ${rango.max}`);
+  }
+
+  const sacados = elegido !== undefined ? [elegido] : dados.tirar(encuentro.dado).dados;
+  const total = sacados.reduce((a, b) => a + b, 0);
+  const fila = filaDe(encuentro.filas, total);
+  const marca = opciones.resultadoElegido !== undefined ? { elegida: true } : opciones.resultadoTrucado !== undefined ? { trucada: true } : {};
+
+  const marco = cima(t);
+  marco.enemigosDelEncuentro = fila.enemigos.map(
+    (pedido): EnemigoPedido => (pedido.recompensa === undefined && encuentro.recompensaPorEnemigo ? { ...pedido, recompensa: encuentro.recompensaPorEnemigo } : { ...pedido }),
+  );
+  marco.lectura = { texto: fila.texto, cambios: [...(marco.lectura?.cambios ?? [])], tirada: { dados: sacados, modificador: 0, total, ...marca } };
+}
+
+/** Los resultados de la tirada del paso (o de su encuentro), para elegir con el amuleto del destino. */
+function resultadosPosibles(paso: Paso, eventos: readonly Evento[]): ResultadoPosible[] {
+  if (paso.combate?.encuentro !== undefined) {
+    return buscarEncuentro(paso.combate.encuentro).filas.map(f => ({ numero: f.min, min: f.min, max: f.max, texto: f.texto, enemigos: f.enemigos }));
+  }
+  return (paso.tirada?.filas ?? []).map(f => {
+    const destino = f.evento ?? f.llamar;
+    const titulo = destino !== undefined ? eventos.find(e => e.id === destino)?.titulo : undefined;
+    return {
+      numero: f.min,
+      min: f.min,
+      max: f.max,
+      ...(f.texto !== undefined ? { texto: f.texto } : {}),
+      ...(destino !== undefined ? { evento: { id: destino, ...(titulo !== undefined ? { titulo } : {}) } } : {}),
+      ...(f.efectos !== undefined ? { efectos: f.efectos } : {}),
+    };
+  });
+}
+
+function buscarEncuentro(id: string): Encuentro {
+  const encuentro = ENCUENTROS.find(e => e.id === id);
+  if (!encuentro) throw new Error(`Motor de eventos: el encuentro "${id}" no existe`);
+  return encuentro;
+}
+
 /** Gasta un uso de un objeto de evento (mano de mono, amuleto del destino). */
 function gastarUso(t: Trabajo, idObjeto: string, dados: Dados): void {
   const posicion = t.estado.jugador.inventario.findIndex(o => o.id === idObjeto && (o.usosRestantes ?? 0) > 0);
@@ -575,13 +723,25 @@ function terminar(t: Trabajo, dados: Dados): ResultadoMotor {
 
 function hayAlgoQueLeer(lectura: Lectura | null): boolean {
   if (!lectura) return false;
-  return lectura.texto !== undefined || lectura.cambios.length > 0 || lectura.tirada !== undefined || lectura.chequeo !== undefined || lectura.combate !== undefined;
+  return (
+    lectura.texto !== undefined ||
+    lectura.cambios.length > 0 ||
+    lectura.tirada !== undefined ||
+    lectura.chequeo !== undefined ||
+    lectura.combate !== undefined ||
+    lectura.evitado === true
+  );
 }
 
 function opcionVisible(estado: Estado, opcion: Opcion, eventos: readonly Evento[]): OpcionVisible {
   const sinObjeto = opcion.requiere?.sinObjeto;
   if (sinObjeto !== undefined && estado.jugador.inventario.some(o => o.id === sinObjeto)) {
     return { texto: opcion.texto, disponible: false, motivo: 'ya_lo_tienes' };
+  }
+  const puedeSubir = opcion.requiere?.puedeSubir;
+  if (puedeSubir !== undefined) {
+    const actual = puedeSubir === 'fuerza' ? fuerzaActual(estado.jugador) : ingenioActual(estado.jugador);
+    if (actual >= AJUSTES.caracteristicaMaxima) return { texto: opcion.texto, disponible: false, motivo: 'al_maximo' };
   }
   if (opcion.requiere?.puedeGanarSeguidor) {
     if (estaProhibido(estado.jugador, 'nuevos_seguidores')) return { texto: opcion.texto, disponible: false, motivo: 'prohibido' };
@@ -600,7 +760,7 @@ function llevaAEventoYaOcurrido(t: Trabajo, fila: FilaDeEvento): boolean {
 }
 
 /** La fila que corresponde a un total; si se sale por arriba o por abajo, la última o la primera. */
-function filaDe(filas: readonly FilaDeEvento[], total: number): FilaDeEvento {
+function filaDe<F extends { min: number; max: number }>(filas: readonly F[], total: number): F {
   const ordenadas = [...filas].sort((a, b) => a.min - b.min);
   if (total < ordenadas[0].min) return ordenadas[0];
   const ultima = ordenadas[ordenadas.length - 1];

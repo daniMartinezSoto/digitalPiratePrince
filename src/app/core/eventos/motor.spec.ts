@@ -18,6 +18,7 @@ import {
   lanzarEventos,
   seguirConElEvento,
   tirarDadosDelEvento,
+  usarAmuletoDelDestino,
   vistaDelEvento,
   type ResultadoMotor,
 } from './motor';
@@ -267,35 +268,97 @@ describe('motor de eventos', () => {
     });
   });
 
-  describe('amuleto del destino', () => {
+  describe('amuleto del destino (se gasta al usarlo y luego se elige viendo los resultados)', () => {
     const conAmuleto = () => estadoCon({ inventario: [{ id: 'amuleto_del_destino', usosRestantes: 1 }] });
+    const usar = (r: ResultadoMotor) => usarAmuletoDelDestino(r.estado, new Dados(1), EVENTOS_DE_PRUEBA);
 
-    it('con el amuleto se puede elegir el resultado; el amuleto se gasta', () => {
+    it('con el amuleto sale la opción de usarlo; al usarlo se gasta YA y se ven los resultados', () => {
       let r = lanzar(conAmuleto(), ['tirada']);
       expect(vista(r)!.tirada!.puedeElegir).toBe(true);
 
-      r = tirar(r, dadosTrucados([]), { resultadoElegido: 3 });
+      r = usar(r);
 
-      expect(vista(r)!.texto).toBe('No pasa nada');
-      expect(vista(r)!.lectura!.tirada).toEqual({ dados: [3], modificador: 0, total: 3, elegida: true });
       expect(r.estado.jugador.inventario).toEqual([]);
+      expect(vista(r)!.modo).toBe('elegir_resultado');
+      expect(vista(r)!.resultados).toEqual([
+        { numero: 1, min: 1, max: 1, texto: 'Un tentáculo', efectos: [{ tipo: 'tripulacion', cantidad: -1 }] },
+        { numero: 2, min: 2, max: 3, texto: 'No pasa nada' },
+        { numero: 4, min: 4, max: 6, texto: 'Te llaman', evento: { id: 'sencillo', titulo: 'Sencillo' } },
+      ]);
     });
 
-    it('solo se puede elegir lo que puede sacar el dado, y hace falta llevar el amuleto', () => {
-      expect(() => tirar(lanzar(conAmuleto(), ['tirada']), dadosTrucados([]), { resultadoElegido: 7 })).toThrow(/del 1 al 6/);
-      expect(() => tirar(lanzar(estadoCon(), ['tirada']), dadosTrucados([]), { resultadoElegido: 3 })).toThrow(/no llevas "amuleto_del_destino"/);
+    it('se elige uno: sale ese resultado, marcado como elegido', () => {
+      const r = tirar(usar(lanzar(conAmuleto(), ['tirada'])), dadosTrucados([]), { resultadoElegido: 2 });
+      expect(vista(r)!.texto).toBe('No pasa nada');
+      expect(vista(r)!.lectura!.tirada).toEqual({ dados: [2], modificador: 0, total: 2, elegida: true });
+    });
+
+    it('no hay vuelta atrás: gastado, hay que elegir (tirar normal da error), también tras guardar y leer', () => {
+      const usado = usar(lanzar(conAmuleto(), ['tirada']));
+      expect(() => tirar(usado, new Dados(1))).toThrow(/ya está gastado/);
+
+      const leido = leerPartida(guardarPartida(usado.estado));
+      if (!leido.ok) throw new Error('no se pudo leer');
+      expect(vistaDelEvento(leido.estado, EVENTOS_DE_PRUEBA)!.modo).toBe('elegir_resultado');
+    });
+
+    it('sin usar el amuleto no se puede elegir; sin llevarlo no se puede usar; y solo números del dado', () => {
+      expect(() => tirar(lanzar(conAmuleto(), ['tirada']), dadosTrucados([]), { resultadoElegido: 3 })).toThrow(/primero hay que usar el amuleto/);
+      expect(() => usar(lanzar(estadoCon(), ['tirada']))).toThrow(/no llevas "amuleto_del_destino"/);
+      expect(() => tirar(usar(lanzar(conAmuleto(), ['tirada'])), dadosTrucados([]), { resultadoElegido: 7 })).toThrow(/del 1 al 6/);
+    });
+
+    it('sale exactamente la fila elegida, sin sumar el bonificador de la tirada', () => {
+      const conBonificador = [
+        {
+          id: 'con_bonificador',
+          titulo: 'Con bonificador',
+          pasos: { inicio: { tirada: { dado: '2d6', modificador: 1, filas: [{ min: 2, max: 2, texto: 'El dos' }, { min: 3, max: 12, texto: 'El resto' }] } } },
+        },
+      ] as unknown as Evento[];
+      const lanzado = lanzarEventos(conAmuleto(), ['con_bonificador'], new Dados(1), conBonificador).estado;
+      const usado = usarAmuletoDelDestino(lanzado, new Dados(1), conBonificador).estado;
+
+      const r = tirarDadosDelEvento(usado, dadosTrucados([]), { resultadoElegido: 2 }, conBonificador);
+
+      expect(vistaDelEvento(r.estado, conBonificador)!.texto).toBe('El dos');
+      expect(vistaDelEvento(r.estado, conBonificador)!.lectura!.tirada).toEqual({ dados: [2], modificador: 0, total: 2, elegida: true });
+    });
+
+    it('en un encuentro se ven los enemigos de cada resultado', () => {
+      const r = usarAmuletoDelDestino(lanzarEventos(conAmuleto(), ['piratas_hostiles'], new Dados(1)).estado, new Dados(1));
+      const resultados = vistaDelEvento(r.estado)!.resultados!;
+      expect(resultados).toHaveLength(4);
+      expect(resultados[3]).toMatchObject({ numero: 6, enemigos: [{ enemigo: 'pirata_anciano_loco' }] });
+    });
+  });
+
+  describe('trampa de prueba: fijar la próxima tirada', () => {
+    it('la tirada saca el número fijado, sin gastar dados ni amuleto, y queda marcada como trucada', () => {
+      const dados = dadosTrucados([]);
+      const r = tirar(lanzar(estadoCon(), ['tirada']), dados, { resultadoTrucado: 2 });
+
+      expect(vista(r)!.texto).toBe('No pasa nada');
+      expect(vista(r)!.lectura!.tirada).toEqual({ dados: [2], modificador: 0, total: 2, trucada: true });
+      expect(() => tirar(lanzar(estadoCon(), ['tirada']), dados, { resultadoTrucado: 9 })).toThrow(/del 1 al 6/);
+    });
+
+    it('el chequeo saca el dado fijado', () => {
+      const r = hacerChequeo(lanzar(estadoCon(), ['chequeo']).estado, dadosTrucados([]), { dadoTrucado: 6 }, EVENTOS_DE_PRUEBA);
+      expect(vista(r)!.lectura!.chequeo).toMatchObject({ dado: 6, superado: false });
+      expect(() => hacerChequeo(lanzar(estadoCon(), ['chequeo']).estado, dadosTrucados([]), { dadoTrucado: 7 }, EVENTOS_DE_PRUEBA)).toThrow(/del 1 al 6/);
     });
   });
 
   describe('chequeos', () => {
     it('superado: su rama de éxito', () => {
-      const r = hacerChequeo(lanzar(estadoCon(), ['chequeo']).estado, dadosTrucados([2]), EVENTOS_DE_PRUEBA);
+      const r = hacerChequeo(lanzar(estadoCon(), ['chequeo']).estado, dadosTrucados([2]), {}, EVENTOS_DE_PRUEBA);
       expect(vista(r)).toMatchObject({ modo: 'continuar', texto: 'Lo consigues' });
       expect(vista(r)!.lectura!.chequeo).toMatchObject({ caracteristica: 'fuerza', dado: 2, superado: true });
     });
 
     it('fallado: su rama de fallo', () => {
-      const r = hacerChequeo(lanzar(estadoCon(), ['chequeo']).estado, dadosTrucados([6]), EVENTOS_DE_PRUEBA);
+      const r = hacerChequeo(lanzar(estadoCon(), ['chequeo']).estado, dadosTrucados([6]), {}, EVENTOS_DE_PRUEBA);
       expect(vista(r)!.lectura!.chequeo!.superado).toBe(false);
       expect(r.estado.jugador.vida).toBe(estadoCon().jugador.vida - 2);
     });
@@ -402,11 +465,22 @@ describe('motor de eventos', () => {
       expect(r.estado.jugador.oro).toBe(50);
     });
 
-    it('evitarlo gasta un uso y el evento no ocurre', () => {
-      const r = evitarEvento(lanzar(conMano(), ['sencillo']).estado, new Dados(1), EVENTOS_DE_PRUEBA);
+    it('evitarlo gasta un uso: se ve que se ha evitado y, al continuar, el evento termina sin ocurrir', () => {
+      let r = evitarEvento(lanzar(conMano(), ['sencillo']).estado, new Dados(1), EVENTOS_DE_PRUEBA);
+      expect(r.estado.jugador.inventario).toEqual([{ id: 'mano_de_mono', usosRestantes: 1 }]);
+      expect(vista(r)).toMatchObject({ modo: 'continuar' });
+      expect(vista(r)!.lectura!.evitado).toBe(true);
+
+      r = continuar(r);
       expect(r.terminado).toBe(true);
       expect(r.estado.jugador.oro).toBe(50);
-      expect(r.estado.jugador.inventario).toEqual([{ id: 'mano_de_mono', usosRestantes: 1 }]);
+    });
+
+    it('con el último uso, la lectura trae que se ha agotado', () => {
+      const conUnUso = estadoCon({ inventario: [{ id: 'mano_de_mono', usosRestantes: 1 }] });
+      const r = evitarEvento(lanzar(conUnUso, ['sencillo']).estado, new Dados(1), EVENTOS_DE_PRUEBA);
+      expect(r.estado.jugador.inventario).toEqual([]);
+      expect(vista(r)!.lectura!.cambios).toContainEqual({ tipo: 'objeto_agotado', objeto: 'mano_de_mono' });
     });
 
     it('si decides seguir, el evento pasa normal', () => {

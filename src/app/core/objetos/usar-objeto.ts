@@ -5,6 +5,7 @@ import type { Estado } from '../estado/estado';
 import type { Efecto } from '../tablas/efecto';
 import { resolverEfecto } from '../tablas/rangos/resolver-tabla';
 import { hayCombate } from '../combate/hay-combate';
+import { hayEventoEnCurso } from '../eventos/una-vez';
 
 /**
  * El jugador usa un objeto en la fase de acción, ANTES de elegir qué hace ese día
@@ -23,6 +24,9 @@ export function usarObjeto(estado: Estado, posicion: number, dados: Dados, catal
   }
   if (hayCombate(estado)) {
     throw new Error('usarObjeto: hay un combate en curso; primero hay que terminarlo');
+  }
+  if (hayEventoEnCurso(estado)) {
+    throw new Error('usarObjeto: hay un evento en curso; primero hay que terminarlo');
   }
   if (estado.mundo.fase !== 'accion') {
     throw new Error(`usarObjeto: los objetos se usan en la fase "accion" (la partida está en "${estado.mundo.fase}")`);

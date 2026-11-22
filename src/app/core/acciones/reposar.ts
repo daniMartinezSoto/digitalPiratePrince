@@ -5,6 +5,7 @@ import type { Estado } from '../estado/estado';
 import { ajusteDeSeguidores } from '../seguidores/consultas';
 import { obtenerListaEventos } from '../tablas/listas-eventos/cargar-listas-eventos';
 import { eventoAleatorio } from '../tablas/listas-eventos/elegir-evento';
+import { sinEventosYaOcurridos } from '../eventos/una-vez';
 import type { ListaEventos } from '../tablas/listas-eventos/lista-eventos';
 import type { Lugar } from '../turno/lugar';
 import { cerrarFaseDeAccion, comprobarQueSePuedeActuar, type ResultadoAccion, type Sitio } from './accion';
@@ -52,7 +53,7 @@ export function reposar(estado: Estado, sitio: Sitio, dados: Dados): ResultadoAc
   const eventos: string[] = [];
   const lista = listaDeEventosAlReposar(sitio.lugar);
   if (lista) {
-    const evento = eventoAleatorio(lista, AJUSTES.probabilidadEventoAlReposar, dados);
+    const evento = eventoAleatorio(sinEventosYaOcurridos(lista, estado), AJUSTES.probabilidadEventoAlReposar, dados);
     if (evento !== null) {
       eventos.push(evento);
     }

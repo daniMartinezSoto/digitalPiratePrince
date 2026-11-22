@@ -1,0 +1,75 @@
+@if (vista(); as v) {
+  @if (v.modo !== 'en_combate') {
+    @if (plegada()) {
+      <button type="button" class="desplegar" (click)="plegada.set(false)">Evento: {{ v.titulo }} (volver a la ventana)</button>
+    } @else {
+      <section class="ventana" role="dialog" [attr.aria-label]="'Evento: ' + v.titulo">
+        <header>
+          @if (v.miga.length > 1) {
+            <p class="miga">{{ v.miga.join(' › ') }}</p>
+          }
+          <h2>{{ v.titulo }}</h2>
+          <button type="button" class="plegar" (click)="plegada.set(true)" title="Esconder un momento para ver el mapa">Plegar</button>
+        </header>
+
+        <div class="cuerpo" [class.imagen-vertical]="imagenVertical()">
+          @if (v.imagen) {
+            <img [src]="v.imagen" [alt]="v.titulo" (load)="alCargarImagen($event)" />
+          }
+          <div class="columna">
+            @if (v.texto) {
+              <p class="texto">{{ v.texto }}</p>
+            }
+            @if (lineas().length > 0) {
+              <ul class="lectura">
+                @for (linea of lineas(); track $index) {
+                  <li>{{ linea }}</li>
+                }
+              </ul>
+            }
+
+            <div class="botones">
+              @switch (v.modo) {
+                @case ('empezar') {
+                  <button type="button" (click)="evitar()">Evitar el evento (mano de mono, quedan {{ v.manoDeMono }})</button>
+                  <button type="button" (click)="seguir()">Seguir</button>
+                }
+                @case ('opciones') {
+                  @for (opcion of v.opciones; track $index) {
+                    <button type="button" [disabled]="!opcion.disponible" (click)="elegir($index, opcion.texto)">
+                      {{ opcion.texto }}@if (opcion.motivo) { ({{ textoDeMotivo[opcion.motivo] }}) }
+                    </button>
+                  }
+                }
+                @case ('tirada') {
+                  <button type="button" (click)="tirar()">{{ v.tirada!.paraEncuentro ? 'Tirar dados para ver contra quién luchas' : 'Tirar dados' }} ({{ v.tirada!.dado }}@if (v.tirada!.modificador !== 0) { {{ v.tirada!.modificador > 0 ? '+' : '' }}{{ v.tirada!.modificador }} })</button>
+                  @if (v.tirada!.puedeElegir) {
+                    <button type="button" (click)="usarAmuleto()">Usar el amuleto del destino (se gasta y eliges el resultado)</button>
+                  }
+                }
+                @case ('elegir_resultado') {
+                  <p><strong>Amuleto del destino:</strong> elige el resultado.</p>
+                  @for (r of v.resultados; track r.min) {
+                    <button type="button" (click)="elegirResultado(r.numero, r)">{{ etiqueta(r) }}</button>
+                  }
+                }
+                @case ('chequeo') {
+                  <button type="button" (click)="chequeo()">Hacer el chequeo de {{ nombreDeCaracteristica[v.chequeo!.caracteristica] }}</button>
+                }
+                @case ('combate') {
+                  <button type="button" (click)="luchar()">Luchar</button>
+                }
+                @case ('combate_naval') {
+                  <button type="button" (click)="luchar()">Luchar</button>
+                }
+                @case ('continuar') {
+                  <button type="button" (click)="continuar()">Continuar</button>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+  }
+}

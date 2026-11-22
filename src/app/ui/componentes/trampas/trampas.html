@@ -28,4 +28,22 @@
     </select>
     <button type="button" (click)="darSeguidor()">Darme el seguidor</button>
   </p>
+  <p><strong>Eventos</strong></p>
+  <p>
+    <select name="trampa-evento" (change)="evento.set($any($event.target).value)">
+      @for (e of eventos; track e.id) { <option [value]="e.id">{{ e.nombre }}</option> }
+    </select>
+    <button type="button" [disabled]="hayEvento()" (click)="lanzarEvento()">Lanzar el evento</button>
+    @if (hayEvento()) { <small>(primero termina el evento en curso)</small> }
+  </p>
+  <p>
+    Próxima tirada de un evento:
+    <input name="trampa-tirada" type="number" min="1" size="4" [value]="numeroATrucar()" (input)="numeroATrucar.set($any($event.target).value)" />
+    <button type="button" (click)="fijarProximaTirada()">Fijar</button>
+    @if (trampasDeEventos.proximaTirada(); as numero) {
+      · fijada: <strong>{{ numero }}</strong>
+      <button type="button" (click)="trampasDeEventos.proximaTirada.set(null)">Quitar</button>
+    }
+    <br /><small>Vale para el próximo "Tirar dados" o "Hacer el chequeo" de un evento (en un chequeo, del 1 al 6). Es el total de los dados, sin el bonificador.</small>
+  </p>
 </details>

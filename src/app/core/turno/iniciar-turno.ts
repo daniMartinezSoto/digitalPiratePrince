@@ -13,6 +13,7 @@ import { TABLAS } from '../tablas/rangos/cargar-tablas';
 import { resolverEfecto, resolverTabla } from '../tablas/rangos/resolver-tabla';
 import type { Tabla } from '../tablas/rangos/tabla';
 import { hayCombate } from '../combate/hay-combate';
+import { hayEventoEnCurso } from '../eventos/una-vez';
 
 /** Catálogos en los que buscar las fichas. Por defecto, los del juego; los tests pueden pasar otros. */
 export interface CatalogosTurno {
@@ -73,6 +74,9 @@ export function iniciarTurno(
   }
   if (hayCombate(estado)) {
     throw new Error('iniciarTurno: hay un combate en curso; primero hay que terminarlo');
+  }
+  if (hayEventoEnCurso(estado)) {
+    throw new Error('iniciarTurno: hay un evento en curso; primero hay que terminarlo');
   }
   if (estado.mundo.fase !== 'inicio') {
     throw new Error(`iniciarTurno: solo se puede empezar el turno en la fase "inicio" (la partida está en "${estado.mundo.fase}")`);

@@ -12,12 +12,14 @@ import type { Estado } from '../estado/estado';
 import type { Efecto } from '../tablas/efecto';
 import { obtenerListaEventos } from '../tablas/listas-eventos/cargar-listas-eventos';
 import { eventoAleatorio } from '../tablas/listas-eventos/elegir-evento';
+import { sinEventosYaOcurridos } from '../eventos/una-vez';
 import type { ListaEventos } from '../tablas/listas-eventos/lista-eventos';
 import { chequeo, type ResultadoChequeo } from '../chequeos/chequeo';
 import { conMarca, hayMarca } from '../estado/marcas';
 import { tieneVinculoNativo } from '../personaje/vinculo-nativo';
 import { esPuerto, TERRENO_POR_DEFECTO, type Lugar, type TerrenoAlRaso } from './lugar';
 import { hayCombate } from '../combate/hay-combate';
+import { hayEventoEnCurso } from '../eventos/una-vez';
 
 /** Catálogos y listas que usa el descanso. Por defecto, los del juego; los tests pueden pasar otros. */
 export interface CatalogosDescanso {
@@ -154,6 +156,9 @@ export function descansar(
   if (hayCombate(estado)) {
     throw new Error('descansar: hay un combate en curso; primero hay que terminarlo');
   }
+  if (hayEventoEnCurso(estado)) {
+    throw new Error('descansar: hay un evento en curso; primero hay que terminarlo');
+  }
   if (estado.mundo.fase !== 'descanso') {
     throw new Error(`descansar: solo se puede descansar en la fase "descanso" (la partida está en "${estado.mundo.fase}")`);
   }
@@ -210,7 +215,7 @@ export function descansar(
   if ((duermeAlRaso || eleccion === 'tienda') && !esPuerto(lugar)) {
     const reduccion = eleccion === 'tienda' ? AJUSTES.reduccionEventoNocturnoTienda : 0;
     const probabilidad = Math.max(0, AJUSTES.probabilidadEventoNocturno[terreno] - reduccion);
-    const evento = eventoAleatorio(catalogos.eventosNocturnos, probabilidad, dados);
+    const evento = eventoAleatorio(sinEventosYaOcurridos(catalogos.eventosNocturnos, estado), probabilidad, dados);
     if (evento !== null) {
       eventos.push(evento);
     }

@@ -1,6 +1,7 @@
 import { BARCOS } from '../catalogos/cargar-barcos';
 import { OBJETOS } from '../catalogos/cargar-objetos';
 import { validarPedidosDeEnemigos } from '../catalogos/validar-barco';
+import { ENCUENTROS } from '../encuentros/cargar-encuentros';
 import { rangoDeTirada } from '../dados/tirada';
 import { validarEfecto } from '../tablas/rangos/validar-tabla';
 import { PASO_INICIAL, REQUISITOS, type Evento } from './evento';
@@ -29,7 +30,7 @@ const CAMPOS_OPCION = ['texto', 'requiere', 'efectos', 'paso', 'evento', 'llamar
 const CAMPOS_TIRADA = ['dado', 'modificador', 'filas'];
 const CAMPOS_FILA = ['min', 'max', 'volverATirar', ...CAMPOS_RAMA];
 const CAMPOS_CHEQUEO = ['caracteristica', 'modificador', 'exito', 'fallo'];
-const CAMPOS_COMBATE = ['enemigos', 'puedeHuir', 'noMortal', 'sorpresa', 'victoria', 'huida', 'derrota'];
+const CAMPOS_COMBATE = ['enemigos', 'encuentro', 'puedeHuir', 'noMortal', 'sorpresa', 'victoria', 'huida', 'derrota'];
 const CAMPOS_COMBATE_NAVAL = ['barco', 'victoria', 'huida'];
 const SORPRESAS = ['nuestra', 'suya'];
 const CARACTERISTICAS = ['fuerza', 'ingenio'];
@@ -256,6 +257,8 @@ function validarRequisitos(requiere: unknown, donde: string): string[] {
       errores.push(`${donde}: el requisito "${clave}" no existe (válidos: ${REQUISITOS.join(', ')}).`);
     } else if (clave === 'sinObjeto' && (typeof valor !== 'string' || !OBJETOS.some(o => o.id === valor))) {
       errores.push(`${donde}: el objeto "${String(valor)}" de "sinObjeto" no existe en el catálogo de objetos (data/objetos.json).`);
+    } else if (clave === 'puedeSubir' && valor !== 'fuerza' && valor !== 'ingenio') {
+      errores.push(`${donde}: "puedeSubir" debe ser "fuerza" o "ingenio".`);
     } else if (clave === 'puedeGanarSeguidor' && valor !== true) {
       errores.push(`${donde}: "puedeGanarSeguidor" solo puede ser true (si no hace falta, no lo pongas).`);
     }
@@ -363,8 +366,15 @@ function validarCombate(combate: unknown, donde: string, contexto: Contexto): st
   const errores: string[] = [...camposQueSobran(combate, CAMPOS_COMBATE, donde)];
 
   const enemigos = combate['enemigos'];
-  if (!Array.isArray(enemigos) || enemigos.length === 0) {
-    errores.push(`${donde}: le faltan los enemigos.`);
+  const encuentro = combate['encuentro'];
+  if (enemigos !== undefined && encuentro !== undefined) {
+    errores.push(`${donde}: tiene "enemigos" y "encuentro"; pon solo uno (enemigos fijos o un encuentro al azar).`);
+  } else if (encuentro !== undefined) {
+    if (typeof encuentro !== 'string' || !ENCUENTROS.some(e => e.id === encuentro)) {
+      errores.push(`${donde}: el encuentro "${String(encuentro)}" no existe (data/encuentros.json).`);
+    }
+  } else if (!Array.isArray(enemigos) || enemigos.length === 0) {
+    errores.push(`${donde}: le faltan los enemigos (o un "encuentro").`);
   } else {
     errores.push(...validarPedidosDeEnemigos(enemigos, `${donde}, enemigo`));
   }

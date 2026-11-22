@@ -1,0 +1,14 @@
+[
+  {
+    "id": "piratas_hostiles",
+    "dado": "1d6",
+    "recompensaPorEnemigo": [{ "tipo": "oro", "cantidad": "1d6x2" }],
+    "libro": "E003",
+    "filas": [
+      { "min": 1, "max": 2, "texto": "Dos piratas con cuchillos cargan hacia ti.", "enemigos": [{ "enemigo": "pirata", "cantidad": 2 }] },
+      { "min": 3, "max": 4, "texto": "Un pirata fornido y de gran tamaño intenta dañarte con su espada.", "enemigos": [{ "enemigo": "pirata_fornido" }] },
+      { "min": 5, "max": 5, "texto": "Un pirata fornido, pero sin arma, intenta atacarte.", "enemigos": [{ "enemigo": "pirata_desarmado" }] },
+      { "min": 6, "max": 6, "texto": "Un pirata anciano y loco, armado con una cuchara, se dirige hacia ti.", "enemigos": [{ "enemigo": "pirata_anciano_loco" }] }
+    ]
+  }
+]

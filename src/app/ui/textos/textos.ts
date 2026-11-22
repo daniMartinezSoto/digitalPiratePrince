@@ -100,7 +100,7 @@ export const NOMBRE_DE_DESCANSO: Record<EleccionDeDescanso, string> = {
   convencer_nativos: 'Convencer a los nativos para dormir en la aldea',
 };
 
-const NOMBRE_DE_RECURSO: Record<TipoRecurso, string> = {
+export const NOMBRE_DE_RECURSO: Record<TipoRecurso, string> = {
   oro: 'oro',
   comida: 'comida',
   tripulacion: 'tripulación',
@@ -135,6 +135,7 @@ const TEXTO_DE_MOTIVO: Record<MotivoNoDisponible, string> = {
   sin_artista: 'Necesitas un artista en el grupo',
   no_es_momento: 'No es el momento',
   combate_en_curso: 'Hay un combate en curso',
+  evento_en_curso: 'Hay un evento en curso',
   accion_a_medias: 'Termina antes lo que has empezado',
   debes_salir: 'Aquí no te quieren: tienes que irte (viaja a otra casilla)',
 };
@@ -253,7 +254,7 @@ export function describirCambio(cambio: Cambio, nombres: NombresDeSeguidores = {
     case 'objeto_usado':
       return `Usas: ${nombreDeObjeto(cambio.objeto)} (quedan ${cambio.usosRestantes} usos)`;
     case 'objeto_agotado':
-      return `Se agota: ${nombreDeObjeto(cambio.objeto)}`;
+      return OBJETOS.find(o => o.id === cambio.objeto)?.textoAlAgotarse ?? `Se agota: ${nombreDeObjeto(cambio.objeto)}`;
     case 'objeto_vendido':
       return `Vendes: ${nombreDeObjeto(cambio.objeto)}`;
     case 'condicion_puesta': {

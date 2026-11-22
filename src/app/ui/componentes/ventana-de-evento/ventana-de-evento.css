@@ -1,0 +1,76 @@
+/* Pantalla de pruebas: estilos mínimos, solo para colocar la ventana encima del mapa (decidido por el
+   autor el 22-nov). Su tamaño va con el del mapa: si se pliega el panel de la derecha, crece. */
+.ventana {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  min-width: 320px;
+  max-height: 85%;
+  overflow: auto;
+  z-index: 4; /* los dados (z-index 5) caen por encima */
+  background: #fff;
+  border: 2px solid #333;
+  padding: 8px 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+.ventana header {
+  position: relative;
+}
+.ventana h2 {
+  margin: 0 0 6px;
+}
+.miga {
+  margin: 0;
+  font-size: 12px;
+  color: #555;
+}
+.plegar {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.ventana img {
+  max-width: 100%;
+  max-height: 240px;
+  display: block;
+  margin: 0 auto 6px;
+}
+/* Imagen vertical (más alta que ancha, tipo carta): a la izquierda y más grande, el texto y los
+   botones a la derecha. Si es apaisada, va encima del texto (lo de arriba). */
+.cuerpo.imagen-vertical {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.cuerpo.imagen-vertical img {
+  max-height: 55vh;
+  max-width: 45%;
+  margin: 0;
+  flex-shrink: 0;
+}
+.cuerpo.imagen-vertical .columna {
+  flex: 1;
+  min-width: 0;
+}
+.cuerpo.imagen-vertical .texto {
+  margin-top: 0;
+}
+.texto {
+  white-space: pre-line;
+}
+.botones {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 8px;
+}
+.desplegar {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+}

@@ -24,6 +24,8 @@ import { condicionesQueImpidenViajar, destinosDeViaje } from '../../../core/viaj
 import { casillasDeEmbarque } from '../../../core/viaje/embarcar';
 import { MapaDelJuego } from '../../componentes/mapa/mapa';
 import { Navegar } from '../../servicios/navegar';
+import { VentanaDeEvento } from '../../componentes/ventana-de-evento/ventana-de-evento';
+import { hayEventoEnCurso } from '../../../core/eventos/motor';
 
 type Pestana = 'acciones' | 'personaje' | 'registro' | 'pruebas';
 
@@ -39,7 +41,8 @@ const TEXTO_DE_AVISO: Record<AvisoDeGuardado, string> = {
 // terminado, lo dice y ofrece empezar otra. Todo lo que cambia la partida se pide al store.
 @Component({
   selector: 'app-pantalla-partida',
-  imports: [HojaPersonaje, DondeEstas, PanelDelDia, RegistroDeLaPartida, Trampas, Combate, CombateDePrueba, CombateNaval, Objetos, MapaDelJuego, DadosEnElMapa],
+  imports: [HojaPersonaje, DondeEstas, PanelDelDia, RegistroDeLaPartida, Trampas, Combate, CombateDePrueba, CombateNaval, Objetos, MapaDelJuego, DadosEnElMapa, VentanaDeEvento],
+  host: { '[class.panel-plegado]': 'panelPlegado()' },
   templateUrl: './partida.html',
   styleUrl: './partida.css',
 })
@@ -96,6 +99,7 @@ export class PantallaPartida {
       estado.mundo.fase === 'accion' &&
       !estado.mundo.accionEnCurso &&
       !hayCombate(estado) &&
+      !hayEventoEnCurso(estado) &&
       condicionesQueImpidenViajar(estado).length === 0;
     return sePuede ? destinosDeViaje(estado) : [];
   });
@@ -121,6 +125,13 @@ export class PantallaPartida {
     { id: 'pruebas', nombre: 'Pruebas' },
   ];
   protected readonly pestana = signal<Pestana>('acciones');
+  /** El panel de la derecha plegado: el mapa ocupa todo el ancho (pedido por el autor el 22-nov). */
+  protected readonly panelPlegado = signal(false);
+  /** ¿Hay un evento en marcha? (Entonces la ventana de eventos manda y lo demás espera.) */
+  protected readonly hayEvento = computed(() => {
+    const estado = this.store.estado();
+    return !!estado && hayEventoEnCurso(estado);
+  });
   private readonly hayCombateAhora = computed(() => {
     const estado = this.store.estado();
     return !!estado && hayCombate(estado);
@@ -129,7 +140,11 @@ export class PantallaPartida {
   constructor() {
     // Al empezar un combate (o al terminar la partida) se vuelve a Acciones, que es donde se ve.
     effect(() => {
-      if (this.hayCombateAhora() || this.store.estado()?.mundo.finPartida) this.pestana.set('acciones');
+      // Y el panel se despliega solo, porque el combate y el final se ven en él.
+      if (this.hayCombateAhora() || this.store.estado()?.mundo.finPartida) {
+        this.pestana.set('acciones');
+        this.panelPlegado.set(false);
+      }
     });
   }
 
@@ -152,5 +167,15 @@ export class PantallaPartida {
 
   protected descartarAvisos(): void {
     this.store.descartarAvisos();
+  }
+
+  /** Las condiciones de la barra: todas menos las que solo llevan otras dentro (el amuleto: salen sus partes). */
+  protected condicionesDeLaBarra<C extends { tienePartes: boolean }>(condiciones: C[]): C[] {
+    return condiciones.filter(c => !c.tienePartes);
+  }
+
+  /** Lo que sale al pasar el ratón: "Hedor nauseabundo: No puedes tener más seguidores (Amuleto maldito)". */
+  protected tituloDeCondicion(c: { nombre: string; descripcion: string; dentroDe?: string }): string {
+    return `${c.nombre}: ${c.descripcion}${c.dentroDe ? ` (${c.dentroDe})` : ''}`;
   }
 }

@@ -11,9 +11,10 @@ export function elegirEvento(lista: ListaEventos, dados: Dados): string {
  * Devuelve el id del evento, o null si no pasa nada.
  * Ejemplo: al viajar, eventoAleatorio(listaDelTerrenoDestino, 50, dados).
  * Gasta 1 número si no pasa nada y 2 si pasa algo.
+ * Con la lista vacía (todos sus eventos eran de una sola vez y ya salieron) no pasa nada: 1 número.
  */
 export function eventoAleatorio(lista: ListaEventos, porcentaje: number, dados: Dados): string | null {
-  if (!dados.probabilidad(porcentaje / 100)) {
+  if (!dados.probabilidad(porcentaje / 100) || lista.eventos.length === 0) {
     return null;
   }
   return elegirEvento(lista, dados);

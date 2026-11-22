@@ -13,6 +13,7 @@ import { motivoParaNoMendigar } from './mendigar';
 import { esPuerto } from '../turno/lugar';
 import type { IdAccion, Sitio } from './accion';
 import { hayCombate } from '../combate/hay-combate';
+import { hayEventoEnCurso } from '../eventos/una-vez';
 
 // REGLA DE LA INTERFAZ (decidida por el autor): una acción que no se puede hacer SIEMPRE se ve,
 // desactivada (más clara) y con el motivo. Nunca se esconde.
@@ -65,6 +66,7 @@ export type MotivoNoDisponible =
   | 'sin_artista'
   | 'no_es_momento'
   | 'combate_en_curso'
+  | 'evento_en_curso'
   | 'accion_a_medias'
   | 'debes_salir';
 
@@ -106,11 +108,13 @@ export function accionesDisponibles(estado: Estado, sitio: Sitio): AccionDisponi
       ? 'no_es_momento'
       : hayCombate(estado)
         ? 'combate_en_curso'
-        : estado.mundo.accionEnCurso
-          ? 'accion_a_medias'
-          : sitio.hex && aldeaOfendida(estado, sitio.hex)
-            ? 'debes_salir'
-            : undefined;
+        : hayEventoEnCurso(estado)
+          ? 'evento_en_curso'
+          : estado.mundo.accionEnCurso
+            ? 'accion_a_medias'
+            : sitio.hex && aldeaOfendida(estado, sitio.hex)
+              ? 'debes_salir'
+              : undefined;
   return bloqueo ? todas.map(a => ({ accion: a.accion, disponible: false, motivo: bloqueo })) : todas;
 }
 

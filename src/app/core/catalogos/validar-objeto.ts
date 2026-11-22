@@ -93,6 +93,13 @@ function validarObjeto(objeto: Objeto): string[] {
     errores.push(`${nombre}: "magico" debe ser true o false.`);
   }
 
+  if (o['textoAlAgotarse'] !== undefined) {
+    if (typeof o['textoAlAgotarse'] !== 'string' || o['textoAlAgotarse'].trim() === '') {
+      errores.push(`${nombre}: "textoAlAgotarse" debe ser un texto con algo escrito.`);
+    } else if (o['tipo'] !== 'activo' || o['usosMaximos'] === undefined) {
+      errores.push(`${nombre}: "textoAlAgotarse" solo vale en objetos activos con usos (los demás no se agotan).`);
+    }
+  }
   if (o['banderaAlVender'] !== undefined && (typeof o['banderaAlVender'] !== 'string' || !FORMATO_ID.test(o['banderaAlVender']))) {
     errores.push(`${nombre}: "banderaAlVender" debe ir en minúsculas y con guiones bajos.`);
   }

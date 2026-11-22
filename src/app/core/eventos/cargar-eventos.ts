@@ -1,6 +1,7 @@
 import type { Evento } from './evento';
 
 import deseo from '../../data/eventos/deseo.json';
+import piratasHostiles from '../../data/eventos/piratas_hostiles.json';
 
 // Los JSON llegan sin tipos. Aquí, y solo aquí, le decimos que son eventos.
 // El test del cargador comprueba con el revisor que de verdad lo sean.
@@ -13,7 +14,7 @@ import deseo from '../../data/eventos/deseo.json';
  * Nada más: el test del cargador lo revisa automáticamente. Mientras un evento no esté aquí,
  * el juego lo enseña como "pendiente".
  */
-export const EVENTOS: readonly Evento[] = [deseo as Evento];
+export const EVENTOS: readonly Evento[] = [deseo as Evento, piratasHostiles as Evento];
 
 /** ¿Está programado este evento? (Si no, el juego lo enseña como pendiente.) */
 export function existeEvento(id: string): boolean {

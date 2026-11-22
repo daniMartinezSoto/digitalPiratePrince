@@ -11,6 +11,7 @@ import { casillaEn, type Coordenada } from '../mapa/mapa';
 import { casillaBloqueada, sitioEn } from '../mapa/sitio-actual';
 import { obtenerListaEventos } from '../tablas/listas-eventos/cargar-listas-eventos';
 import { eventoAleatorio } from '../tablas/listas-eventos/elegir-evento';
+import { sinEventosYaOcurridos } from '../eventos/una-vez';
 import { esAgua } from '../turno/lugar';
 import { llegar } from './llegar';
 
@@ -119,7 +120,7 @@ export function viajar(estado: Estado, destino: Coordenada, dados: Dados): Resul
     } else if (zonaDeBarcos) {
       if (dados.probabilidad(AJUSTES.probabilidadEventoAlViajar / 100)) eventos.push('barco');
     } else {
-      const evento = eventoAleatorio(obtenerListaEventos(sitio.terreno), AJUSTES.probabilidadEventoAlViajar, dados);
+      const evento = eventoAleatorio(sinEventosYaOcurridos(obtenerListaEventos(sitio.terreno), estado), AJUSTES.probabilidadEventoAlViajar, dados);
       if (evento) eventos.push(evento);
     }
   }

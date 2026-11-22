@@ -38,7 +38,7 @@ export interface HojaDePersonaje {
   }[];
   // dentroDe: el nombre de la condición que la lleva dentro ("Amuleto maldito"), solo en las partes.
   // descripcion: lo que implica ("Pierdes 1 PV por día sin comer..."), de la ficha del catálogo.
-  condiciones: { id: string; nombre: string; descripcion: string; categoria: string; turnosRestantes?: number; origen: string; dentroDe?: string }[];
+  condiciones: { id: string; nombre: string; descripcion: string; categoria: string; imagen?: string; turnosRestantes?: number; origen: string; dentroDe?: string; tienePartes: boolean }[];
 }
 
 // nombreFemenino: "La maldita", "La hermana"... (se usa con el retrato de mujer).
@@ -96,9 +96,12 @@ export function hojaDePersonaje(jugador: Jugador): HojaDePersonaje {
         nombre: ficha?.nombre ?? c.id,
         descripcion: ficha?.descripcion ?? '',
         categoria: ficha?.categoria ?? 'otra',
+        ...(ficha?.imagen === undefined ? {} : { imagen: ficha.imagen }),
         ...(c.turnosRestantes === undefined ? {} : { turnosRestantes: c.turnosRestantes }),
         origen: c.origen,
         ...(c.dentroDe === undefined ? {} : { dentroDe: CONDICIONES.find(f => f.id === c.dentroDe)?.nombre ?? c.dentroDe }),
+        // Lleva otras dentro (el amuleto maldito): la barra enseña sus partes, no a ella.
+        tienePartes: (jugador.condiciones.find(a => a.id === c.id)?.partes?.length ?? 0) > 0,
       };
     }),
   };

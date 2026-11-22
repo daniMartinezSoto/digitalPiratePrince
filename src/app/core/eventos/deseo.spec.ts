@@ -74,6 +74,18 @@ describe('el deseo (E041)', () => {
     expect(pedirDeseo(3).estado.jugador.fuerza).toBe(4);
   });
 
+  it('4 y 5. fuerza o ingenio ya al máximo (5): salen desactivadas (decidido por el autor)', () => {
+    const r = lanzarEventos(estadoCon({ fuerza: 5, ingenio: 5 }), ['deseo'], new Dados(1));
+    expect(vistaDelEvento(r.estado)!.opciones![3]).toMatchObject({ disponible: false, motivo: 'al_maximo' });
+    expect(vistaDelEvento(r.estado)!.opciones![4]).toMatchObject({ disponible: false, motivo: 'al_maximo' });
+  });
+
+  it('5. con ingenio 4 y súper cerebro (+2) ya estás al máximo: desactivada', () => {
+    const conAmuleto = estadoCon({ ingenio: 4, condiciones: [{ id: 'amuleto_maldito', partes: ['super_cerebro', 'hedor_nauseabundo'] }] });
+    const r = lanzarEventos(conAmuleto, ['deseo'], new Dados(1));
+    expect(vistaDelEvento(r.estado)!.opciones![4]).toMatchObject({ disponible: false, motivo: 'al_maximo' });
+  });
+
   it('5. ingenio: +1', () => {
     expect(pedirDeseo(4).estado.jugador.ingenio).toBe(4);
   });

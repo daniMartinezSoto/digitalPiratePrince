@@ -22,5 +22,6 @@
   "marinerosDisponibles": "1d6x3+4",
   "precioMarinero": 2,
   "bonificadorPorFama": { "audiencia_guarida": 2, "buscar_info_guarida": 2 },
-  "castigoHambreMaximo": 3
+  "castigoHambreMaximo": 3,
+  "caracteristicaMaxima": 5
 }

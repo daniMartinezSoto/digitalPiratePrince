@@ -88,9 +88,13 @@ export interface Requisitos {
   // Poder ganar un seguidor: que el grupo no esté lleno y que nada lo prohíba (hedor nauseabundo).
   // Decidido por el autor (22-nov) para el deseo de amistad: si no puede entrar, la opción sale desactivada.
   puedeGanarSeguidor?: true;
+
+  // Que esa característica no esté ya al máximo (5, con el amuleto incluido): "+1 a fuerza" no se
+  // puede elegir con fuerza 5 (decidido por el autor el 22-nov).
+  puedeSubir?: 'fuerza' | 'ingenio';
 }
 
-export const REQUISITOS = ['sinObjeto', 'puedeGanarSeguidor'] as const;
+export const REQUISITOS = ['sinObjeto', 'puedeGanarSeguidor', 'puedeSubir'] as const;
 
 /** Una tirada del evento: se tira "dado" (más el bonificador) y manda la fila que sale. */
 export interface TiradaDeEvento {
@@ -125,12 +129,16 @@ export interface ChequeoDeEvento {
 }
 
 /**
- * Un combate normal con enemigos del bestiario. Se puede ajustar cada enemigo (ataque, resistencia,
+ * Un combate normal con enemigos del bestiario (o un encuentro). Se puede ajustar cada enemigo (ataque, resistencia,
  * cuántos, recompensa por cada uno) y el combate (si se puede huir, si es no mortal, sorpresa).
  * Si una salida no se escribe, el evento termina por ahí.
  */
 export interface CombateDeEvento extends OpcionesDeCombate {
-  enemigos: EnemigoPedido[];
+  // Contra quién se lucha: una lista fija de enemigos o un ENCUENTRO (una tablita de enemigos posibles,
+  // data/encuentros.json: se tira el dado y sale con quién). Uno de los dos, nunca ambos.
+  enemigos?: EnemigoPedido[];
+  encuentro?: string;
+
   victoria?: Rama;
   huida?: Rama;
 

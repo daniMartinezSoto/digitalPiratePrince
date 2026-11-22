@@ -1365,10 +1365,20 @@ export function pintarMapa(lienzos: LienzosDelMapa, mapaInicial: Mapa, opciones:
       if (destruido || !map) return;
       resize();
       paint();
+      // Con el hueco nuevo (p. ej. al plegar el panel), el pergamino se ha vuelto a pintar a otra
+      // escala: se encuadra otra vez al personaje (después de pintar, que es cuando cambia la escala)
+      // con el mismo zoom, sin enseñar nada de fuera del mapa.
+      enfocarAlPersonaje(view.z);
     }, 250);
   };
   window.addEventListener('resize', alRedimensionar);
   limpiezas.push(() => window.removeEventListener('resize', alRedimensionar));
+  // También cuando cambia el hueco del mapa sin cambiar la ventana (al plegar o desplegar el panel, 22-nov).
+  if (typeof ResizeObserver !== 'undefined') {
+    const observador = new ResizeObserver(alRedimensionar);
+    observador.observe(cv);
+    limpiezas.push(() => observador.disconnect());
+  }
 
   /* ---------- Arranque ---------- */
   info('', 'Desplegando el pergamino…');

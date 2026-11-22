@@ -1,4 +1,5 @@
 import { hayCombate } from '../combate/hay-combate';
+import { hayEventoEnCurso } from '../eventos/una-vez';
 import type { Dados } from '../dados/dados';
 import type { Cambio } from '../efectos/cambio';
 import type { Estado } from '../estado/estado';
@@ -56,7 +57,7 @@ export function sePuedeAtracar(estado: Estado, c: Coordenada): boolean {
 }
 
 function esMomento(estado: Estado): boolean {
-  return !estado.mundo.finPartida && estado.mundo.fase === 'accion' && !estado.mundo.accionEnCurso && !hayCombate(estado);
+  return !estado.mundo.finPartida && estado.mundo.fase === 'accion' && !estado.mundo.accionEnCurso && !hayCombate(estado) && !hayEventoEnCurso(estado);
 }
 
 /** Solo consulta: qué se puede hacer ahora con el barco. */

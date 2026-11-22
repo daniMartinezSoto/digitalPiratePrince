@@ -71,5 +71,6 @@ describe('ajustes', () => {
   it('el castigo máximo por hambre en combate es un número entero de 1 o más', () => {
     expect(Number.isInteger(AJUSTES.castigoHambreMaximo)).toBe(true);
     expect(AJUSTES.castigoHambreMaximo).toBeGreaterThanOrEqual(1);
+    expect(AJUSTES.caracteristicaMaxima).toBe(5);
   });
 });

@@ -96,6 +96,9 @@ export interface Ajustes {
    * hasta este tope. Afecta al jugador y a sus seguidores.
    */
   castigoHambreMaximo: number;
+  // Máximo de fuerza e ingenio (decidido por el autor el 22-nov: 5), también con lo que den las
+  // condiciones (el amuleto): así un chequeo siempre se puede fallar. Ver también chequeo.ts (un 6 falla).
+  caracteristicaMaxima: number;
 }
 
 export const AJUSTES: Ajustes = ajustesJson;

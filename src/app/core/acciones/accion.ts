@@ -3,6 +3,7 @@ import type { Cambio } from '../efectos/cambio';
 import type { Estado } from '../estado/estado';
 import type { Lugar, Rasgo } from '../turno/lugar';
 import { hayCombate } from '../combate/hay-combate';
+import { hayEventoEnCurso } from '../eventos/una-vez';
 
 // LA FASE DE ACCIÓN. Cada día el jugador hace UNA acción (pescar, cazar, reposar...).
 // Todas las acciones siguen el mismo molde:
@@ -71,6 +72,9 @@ export function comprobarQueSePuedeActuar(estado: Estado, accion: string): void 
   }
   if (hayCombate(estado)) {
     throw new Error(`${accion}: hay un combate en curso; primero hay que terminarlo`);
+  }
+  if (hayEventoEnCurso(estado)) {
+    throw new Error(`${accion}: hay un evento en curso; primero hay que terminarlo`);
   }
   if (estado.mundo.fase !== 'accion') {
     throw new Error(`${accion}: solo se puede hacer en la fase "accion" (la partida está en "${estado.mundo.fase}")`);

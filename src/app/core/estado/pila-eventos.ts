@@ -1,4 +1,5 @@
 import type { ResultadoChequeo } from '../chequeos/chequeo';
+import type { EnemigoPedido } from '../combate/combate';
 import type { Cambio } from '../efectos/cambio';
 import type { ResultadoCombate } from './combate';
 
@@ -21,14 +22,18 @@ export interface Lectura {
   // Los cambios reales (el "chivato" de aplicarEfectos), para enseñarlos: "+200 de oro".
   cambios: Cambio[];
 
-  // Si ha habido tirada: los dados, el bonificador y el total. elegida = la eligió el amuleto del destino.
-  tirada?: { dados: number[]; modificador: number; total: number; elegida?: boolean };
+  // Si ha habido tirada: los dados, el bonificador y el total. elegida = la eligió el amuleto del destino;
+  // trucada = la fijó una trampa de la pantalla de pruebas.
+  tirada?: { dados: number[]; modificador: number; total: number; elegida?: boolean; trucada?: boolean };
 
   // Si ha habido chequeo de Fuerza o Ingenio.
   chequeo?: ResultadoChequeo;
 
   // Si se viene de un combate (normal o naval): cómo acabó.
   combate?: ResultadoCombate;
+
+  // true = el evento se ha evitado con la mano de mono (no llega a ocurrir).
+  evitado?: boolean;
 }
 
 /**
@@ -66,4 +71,12 @@ export interface MarcoEvento {
 
   // Hay un combate lanzado por este paso: la partida enseña el combate y, al terminar, se sigue aquí.
   esperando?: 'combate' | 'combate_naval';
+
+  // Si el combate del paso es un ENCUENTRO: los enemigos que han salido al tirar (falta pulsar "Luchar").
+  // Sin esto, el paso espera a que se tire el dado del encuentro.
+  enemigosDelEncuentro?: EnemigoPedido[];
+
+  // Se ha usado el amuleto del destino en la tirada de este paso (ya gastado): el jugador ve los
+  // resultados de la tabla y tiene que elegir uno. Va en el estado para que recargar no sirva de escape.
+  eligiendoResultado?: boolean;
 }

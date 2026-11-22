@@ -48,9 +48,12 @@ export class DadosEnElMapa {
   private audio: AudioContext | null = null;
 
   constructor() {
+    // La mesa se acuerda de la última tirada (también de la partida anterior): al abrir la pantalla
+    // no se vuelve a enseñar; solo las tiradas que lleguen a partir de ahora (fallo visto el 22-nov).
+    const yaEnsenada = this.mesa.tirada()?.numero;
     effect(() => {
       const tirada = this.mesa.tirada();
-      if (tirada) untracked(() => this.tirar(tirada));
+      if (tirada && tirada.numero !== yaEnsenada) untracked(() => this.tirar(tirada));
     });
     inject(DestroyRef).onDestroy(() => {
       this.limpiarRelojes();

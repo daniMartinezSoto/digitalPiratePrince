@@ -125,6 +125,12 @@ describe('aplicarEfectos', () => {
       expect(j.vidaMax).toBe(1);
     });
 
+    it('fuerza e ingenio no pasan de 5 (AJUSTES.caracteristicaMaxima, decidido por el autor el 22-nov)', () => {
+      const j = aplicar(estadoCon({ fuerza: 5, ingenio: 4 }), { tipo: 'fuerza', cantidad: 1 }, { tipo: 'ingenio', cantidad: 3 });
+      expect(j.fuerza).toBe(5);
+      expect(j.ingenio).toBe(5);
+    });
+
     it('subir la vida máxima no cura (Gran fortaleza: +4 de vida máxima)', () => {
       const j = aplicar(estadoCon({ vida: 10, vidaMax: 15 }), { tipo: 'vidaMax', cantidad: 4 });
       expect(j.vidaMax).toBe(19);

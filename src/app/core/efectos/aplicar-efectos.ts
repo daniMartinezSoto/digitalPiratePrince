@@ -321,6 +321,10 @@ function limitesDe(jugador: Jugador, tipo: TipoRecurso, condiciones: readonly Co
       return { minimo, maximo: jugador.tripulacionMax };
     case 'comida':
       return { minimo, maximo: AJUSTES.comidaMaxima };
+    case 'fuerza':
+    case 'ingenio':
+      // Máximo 5 (AJUSTES.caracteristicaMaxima), decidido por el autor el 22-nov.
+      return { minimo, maximo: AJUSTES.caracteristicaMaxima };
     default:
       return { minimo, maximo: Infinity };
   }

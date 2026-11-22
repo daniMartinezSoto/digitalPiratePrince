@@ -82,7 +82,7 @@ describe('pantalla Partida: el día con botones', () => {
     expect(boton(pantalla, 'Enterrar tesoro').disabled).toBe(false);
   });
 
-  it('el registro apunta el inicio de la partida y sus eventos pendientes (el deseo)', async () => {
+  it('el registro apunta el inicio de la partida y su evento (el deseo), que abre la ventana', async () => {
     prepararJuego();
     const harness = await abrir('/nueva-partida');
     escribir(harness.routeNativeElement!, 'input[name=nombre]', 'Marta');
@@ -91,6 +91,7 @@ describe('pantalla Partida: el día con botones', () => {
     await harness.fixture.whenStable();
     const texto = harness.routeNativeElement!.textContent!;
     expect(texto).toContain('Empieza la partida (semilla 7)');
-    expect(texto).toContain('Evento pendiente: deseo');
+    expect(texto).toContain('Evento: Deseo');
+    expect(harness.routeNativeElement!.querySelector('app-ventana-de-evento')!.textContent).toContain('djinn');
   });
 });

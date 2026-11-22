@@ -1,6 +1,7 @@
 {
   "id": "deseo",
   "titulo": "Deseo",
+  "imagen": "eventos/deseo.jpg",
   "libro": "E041",
   "pasos": {
     "inicio": {
@@ -9,8 +10,8 @@
         { "texto": "Deseo de vitalidad. +4 puntos de vida máximos", "efectos": [{ "tipo": "vidaMax", "cantidad": 4 }] },
         { "texto": "Deseo de fama. +2 puntos de fama", "efectos": [{ "tipo": "fama", "cantidad": 2 }] },
         { "texto": "Deseo de riqueza. +200 monedas de oro", "efectos": [{ "tipo": "oro", "cantidad": 200 }] },
-        { "texto": "Deseo de fuerza. +1 a fuerza", "efectos": [{ "tipo": "fuerza", "cantidad": 1 }] },
-        { "texto": "Deseo de ingenio. +1 a ingenio", "efectos": [{ "tipo": "ingenio", "cantidad": 1 }] },
+        { "texto": "Deseo de fuerza. +1 a fuerza", "requiere": { "puedeSubir": "fuerza" }, "efectos": [{ "tipo": "fuerza", "cantidad": 1 }] },
+        { "texto": "Deseo de ingenio. +1 a ingenio", "requiere": { "puedeSubir": "ingenio" }, "efectos": [{ "tipo": "ingenio", "cantidad": 1 }] },
         { "texto": "Deseo de poder. Consigues un objeto mágico", "evento": "tesoro_magico" },
         {
           "texto": "Deseo de conocimiento prohibido. Obtienes el ídolo antediluviano",

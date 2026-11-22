@@ -1,3 +1,5 @@
+import type { Estado } from '../../../core/estado/estado';
+import { vistaDelEvento } from '../../../core/eventos/motor';
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { esSemillaValida, SEMILLA_MAXIMA } from '../../../core/partida/semilla';
@@ -44,7 +46,14 @@ export class PantallaNuevaPartida {
     this.registro.apuntar(1, [
       `Empieza la partida (semilla ${this.store.estado()?.mundo.semilla}).`,
       ...eventos.map(e => `  Evento pendiente: ${nombreDeEvento(e)}`),
+      ...eventoAbierto(this.store.estado()),
     ]);
     void this.router.navigate(['/partida']);
   }
+}
+
+/** Si la partida empieza con un evento (el deseo de "el maldito"), lo apunta: "Evento: Deseo". */
+function eventoAbierto(estado: Estado | null): string[] {
+  const vista = estado ? vistaDelEvento(estado) : null;
+  return vista ? [`  Evento: ${vista.titulo}`] : [];
 }

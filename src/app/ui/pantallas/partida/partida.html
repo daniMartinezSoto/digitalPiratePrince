@@ -2,7 +2,8 @@
   <!-- Barra de arriba: lo importante siempre a la vista -->
   <header class="barra">
     <div class="fila">
-      <strong>Día {{ estado.mundo.dia }}</strong> · fase: {{ nombreDeFase[estado.mundo.fase] }}
+      <strong>Día {{ estado.mundo.dia }}</strong> ·
+      @if (hayEvento()) { <strong>Evento en curso</strong> } @else { fase: {{ nombreDeFase[estado.mundo.fase] }} }
       @if (hoja(); as h) {
         <span class="datos">
           ❤ {{ h.vida }}/{{ h.vidaMax }} · 💰 {{ h.oro }} · 🍖 {{ h.comida }}/{{ h.comidaMaxima }}@if (h.diasSinComer > 0) { (sin comer: {{ h.diasSinComer }}) }
@@ -20,14 +21,23 @@
       @if (hoja(); as h) {
         <span>
           Condiciones:
-          @if (h.condiciones.length === 0) { ninguna }
-          @for (condicion of h.condiciones; track condicion.id) {
-            <span [title]="condicion.descripcion">{{ condicion.nombre }}@if (condicion.turnosRestantes !== undefined) { ({{ condicion.turnosRestantes }}) }</span>@if (!$last) { , }
+          @if (condicionesDeLaBarra(h.condiciones).length === 0) { ninguna }
+          <!-- Con icono (imagen de su ficha), solo el icono; sin icono, su nombre. Al pasar el ratón: nombre y
+               descripción (y "(Amuleto maldito)" si es una parte). El amuleto en sí no sale: salen sus dos efectos. -->
+          @for (condicion of condicionesDeLaBarra(h.condiciones); track condicion.id) {
+            @if (condicion.imagen) {
+              <span class="condicion" [title]="tituloDeCondicion(condicion)"
+                ><img class="icono-condicion" [src]="condicion.imagen" [alt]="condicion.nombre" />@if (condicion.turnosRestantes !== undefined) {<small>{{ condicion.turnosRestantes }}</small>}</span
+              >
+            } @else {
+              <span class="condicion" [title]="tituloDeCondicion(condicion)">{{ condicion.nombre }}@if (condicion.turnosRestantes !== undefined) { ({{ condicion.turnosRestantes }}) }</span>@if (!$last) { , }
+            }
           }
         </span>
       }
       <span class="derecha">
-        Semilla {{ estado.mundo.semilla }}
+        <button type="button" (click)="panelPlegado.set(!panelPlegado())">{{ panelPlegado() ? '◀ Desplegar el panel' : 'Plegar el panel ▶' }}</button>
+        · Semilla {{ estado.mundo.semilla }}
         @if (estado.mundo.finPartida) {
           <!-- sin botón: la partida ya ha terminado -->
         } @else if (confirmandoAbandono()) {
@@ -66,6 +76,7 @@
           (casillaElegida)="viajarA($event)"
           (embarqueElegido)="embarcarODesembarcar($event)"
         />
+        <app-ventana-de-evento />
         <app-dados-en-el-mapa />
       </div>
       <p class="opciones-del-mapa">
@@ -83,7 +94,7 @@
   </section>
 
   <!-- Derecha: el panel con pestañas (las que no se ven se ocultan, no se quitan) -->
-  <aside class="panel">
+  <aside class="panel" [hidden]="panelPlegado()">
     <nav class="pestanas">
       @for (p of pestanas; track p.id) {
         <button type="button" [class.activa]="pestana() === p.id" (click)="pestana.set(p.id)">{{ p.nombre }}</button>
@@ -99,6 +110,8 @@
           <app-combate-naval />
         } @else if (estado.mundo.combate) {
           <app-combate />
+        } @else if (hayEvento()) {
+          <p class="fin">Hay un evento en curso: resuélvelo en la ventana del mapa.</p>
         } @else {
           <app-donde-estas />
           <app-panel-del-dia />
@@ -109,7 +122,7 @@
         @if (hoja(); as hoja) {
           <app-hoja-personaje [hoja]="hoja" [semilla]="estado.mundo.semilla" />
         }
-        @if (!estado.mundo.finPartida && !estado.mundo.combate && !estado.mundo.combateNaval) {
+        @if (!estado.mundo.finPartida && !estado.mundo.combate && !estado.mundo.combateNaval && !hayEvento()) {
           <app-objetos />
         }
       </div>
@@ -120,7 +133,9 @@
 
       <div [hidden]="pestana() !== 'pruebas'">
         @if (!estado.mundo.finPartida && !estado.mundo.combate && !estado.mundo.combateNaval) {
-          <app-combate-de-prueba />
+          @if (!hayEvento()) {
+            <app-combate-de-prueba />
+          }
           <app-trampas />
         } @else {
           <p>Las pruebas vuelven cuando acabe el combate.</p>

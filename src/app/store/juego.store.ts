@@ -7,6 +7,7 @@ import { anadirACronica, crearEntradaCronica, guardarCronica, leerCronica, type 
 import { guardarPartida } from '../core/guardado/guardar-partida';
 import { dadosDePartida, leerPartida } from '../core/guardado/leer-partida';
 import { abandonarPartida } from '../core/partida/abandonar-partida';
+import { conSusEventos } from '../core/eventos/con-sus-eventos';
 import { crearPartida } from '../core/partida/crear-partida';
 import { esSemillaValida, SEMILLA_MAXIMA } from '../core/partida/semilla';
 import type { Retrato } from '../core/personaje/retrato';
@@ -88,7 +89,8 @@ export class JuegoStore {
   /**
    * Empieza una partida nueva. Sin semilla, se saca una al azar de 6 cifras.
    * Da error si hay una partida en curso (hay que abandonarla antes) o si la semilla no vale.
-   * Devuelve los eventos que hay que lanzar al empezar (el "deseo" del amuleto de "el maldito").
+   * Los eventos del principio (el "deseo" del amuleto de "el maldito") entran en la pila del motor;
+   * devuelve los que aún no están programados (para apuntarlos como pendientes).
    */
   nuevaPartida(nombre: string, retrato: Retrato = 'hombre', semilla?: number): string[] {
     if (this.hayPartidaEnCurso()) {
@@ -99,9 +101,11 @@ export class JuegoStore {
       throw new Error(`nuevaPartida: la semilla debe ser un número entero de 0 a ${SEMILLA_MAXIMA}`);
     }
     const partida = crearPartida(semillaElegida, nombre, retrato);
+    // Los eventos del principio (el deseo del amuleto maldito) entran ya en la pila del motor.
+    const conEventos = conSusEventos(partida, partida.dados);
     this.dados = partida.dados;
-    this.cambiarEstado(partida.estado);
-    return partida.eventos;
+    this.cambiarEstado({ ...conEventos.estado, mundo: { ...conEventos.estado.mundo, estadoDados: partida.dados.obtenerEstado() } });
+    return conEventos.pendientes;
   }
 
   /**

@@ -15,12 +15,13 @@
     "usosMaximos": 2,
     "cuandoSeUsa": "evento",
     "precioVenta": 80,
-    "magico": true
+    "magico": true,
+    "textoAlAgotarse": "Has usado el último deseo de la mano de mono, que se evapora en un humo purpúreo."
   },
   {
     "id": "amuleto_del_destino",
     "nombre": "Amuleto del destino",
-    "descripcion": "Te permite elegir el resultado del dado en un evento. Se descarta después.",
+    "descripcion": "Cuando un evento te pida tirar, puedes usarlo en su lugar: ves todos los resultados posibles y eliges el que quieras. Se descarta después.",
     "tipo": "activo",
     "usosMaximos": 1,
     "cuandoSeUsa": "evento",

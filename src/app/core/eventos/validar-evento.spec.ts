@@ -178,7 +178,13 @@ describe('validarEvento', () => {
       const errores = erroresDe(evento({ inicio: { combate: { enemigos: [{ enemigo: 'dragon' }, { enemigo: 'jaguar', cantidad: 0 }] } } }));
       expect(errores).toContain('enemigo 1: el enemigo "dragon" no existe en el bestiario');
       expect(errores).toContain('enemigo 2: la cantidad debe ser');
-      expect(erroresDe(evento({ inicio: { combate: { enemigos: [] } } }))).toContain('le faltan los enemigos');
+      expect(erroresDe(evento({ inicio: { combate: { enemigos: [] } } }))).toContain('le faltan los enemigos (o un "encuentro")');
+    });
+
+    it('un encuentro en vez de enemigos fijos: que exista, y nunca los dos a la vez', () => {
+      expect(erroresDe(evento({ inicio: { combate: { encuentro: 'piratas_hostiles' } } }))).toBe('');
+      expect(erroresDe(evento({ inicio: { combate: { encuentro: 'dragones' } } }))).toContain('el encuentro "dragones" no existe');
+      expect(erroresDe(evento({ inicio: { combate: { encuentro: 'piratas_hostiles', enemigos: [{ enemigo: 'pirata' }] } } }))).toContain('pon solo uno');
     });
 
     it('"derrota" solo en combates no mortales; "huida" no si no se puede huir', () => {

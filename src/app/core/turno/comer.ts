@@ -11,6 +11,7 @@ import { tieneVinculoNativo } from '../personaje/vinculo-nativo';
 import type { Jugador } from '../estado/jugador';
 import { esPuerto, type Lugar, type TerrenoAlRaso } from './lugar';
 import { hayCombate } from '../combate/hay-combate';
+import { hayEventoEnCurso } from '../eventos/una-vez';
 
 const CATALOGOS_DEL_JUEGO: CatalogosEfectos = { objetos: OBJETOS, condiciones: CONDICIONES };
 
@@ -128,6 +129,9 @@ export function comer(
   }
   if (hayCombate(estado)) {
     throw new Error('comer: hay un combate en curso; primero hay que terminarlo');
+  }
+  if (hayEventoEnCurso(estado)) {
+    throw new Error('comer: hay un evento en curso; primero hay que terminarlo');
   }
   if (estado.mundo.fase !== 'comida') {
     throw new Error(`comer: solo se puede comer en la fase "comida" (la partida está en "${estado.mundo.fase}")`);

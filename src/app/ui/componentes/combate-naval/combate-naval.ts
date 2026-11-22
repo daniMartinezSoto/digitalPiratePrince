@@ -17,6 +17,8 @@ import {
   TEXTO_NO_HUIR_NAVAL,
 } from '../../textos/textos-de-combate';
 import { Combate } from '../combate/combate';
+import { cerrarCombateDelEvento, eventoEsperaUnCombate, vistaDelEvento } from '../../../core/eventos/motor';
+import { lineasDeEvento } from '../../textos/textos-de-eventos';
 
 // EL COMBATE NAVAL (pantalla de pruebas): el barco enemigo, tu tripulación y los botones Disparar,
 // Huir y Abordar. Durante el abordaje aparece el combate normal. Al terminar, "Cerrar el combate
@@ -63,6 +65,17 @@ export class CombateNaval {
   }
 
   protected cerrar(): void {
-    this.jugar.hacer((e, d) => cerrarCombateNaval(e, d), r => lineasDeResumenNaval(r.resumen));
+    const estado = this.store.estado();
+    // Un combate naval que lanzó un evento lo cierra el motor: así el evento sigue por donde toque.
+    if (estado && eventoEsperaUnCombate(estado)) {
+      const evento = vistaDelEvento(estado)?.titulo ?? '';
+      this.jugar.hacer(
+        (e, d) => cerrarCombateDelEvento(e, d),
+        (r, n) => lineasDeEvento(`${evento}: se cierra el combate naval`, vistaDelEvento(r.estado)?.lectura ?? null, r.pendientes, n),
+      );
+      return;
+    }
+    // r.eventos ya trae solo los pendientes (los programados abren la ventana de eventos).
+    this.jugar.hacer((e, d) => cerrarCombateNaval(e, d), r => lineasDeResumenNaval({ ...r.resumen, eventos: r.eventos }));
   }
 }

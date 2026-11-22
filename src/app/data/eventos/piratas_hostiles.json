@@ -1,0 +1,12 @@
+{
+  "id": "piratas_hostiles",
+  "titulo": "Piratas hostiles",
+  "imagen": "eventos/piratashostiles.jpg",
+  "libro": "E003",
+  "pasos": {
+    "inicio": {
+      "texto": "Unos piratas hostiles te salen al paso con malas intenciones. Tendrás que luchar.",
+      "combate": { "encuentro": "piratas_hostiles" }
+    }
+  }
+}
