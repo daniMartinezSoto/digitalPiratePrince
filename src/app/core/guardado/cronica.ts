@@ -1,5 +1,5 @@
 import type { Estado } from '../estado/estado';
-import { MOTIVOS_DE_FIN, RESULTADOS_DE_PARTIDA, type MotivoDeFin, type ResultadoDePartida } from '../estado/fin-partida';
+import { MOTIVOS_DE_FIN, RESULTADOS_DE_PARTIDA, TIPOS_DE_CAUSA_DE_MUERTE, type CausaDeMuerte, type MotivoDeFin, type ResultadoDePartida } from '../estado/fin-partida';
 import { RETRATOS, type Retrato } from '../personaje/retrato';
 import { esEnteroPositivo, esObjeto } from './comprobar-partida';
 import type { MotivoDeLecturaFallida } from './leer-partida';
@@ -24,6 +24,7 @@ export interface EntradaCronica {
   oro: number;
   resultado: ResultadoDePartida;
   motivo: MotivoDeFin;
+  causa?: CausaDeMuerte; // por qué murió (si se sabe)
   fecha: string; // ISO ("2026-11-19T12:30:00.000Z"). La pone el store: core/ no usa fechas.
 }
 
@@ -47,6 +48,7 @@ export function crearEntradaCronica(estado: Estado, fecha: string): EntradaCroni
     oro: jugador.oro,
     resultado: fin.resultado,
     motivo: fin.motivo,
+    ...(fin.causa ? { causa: fin.causa } : {}),
     fecha,
   };
 }
@@ -116,6 +118,7 @@ function esEntradaValida(valor: unknown): valor is EntradaCronica {
     esNumero(valor['oro']) &&
     (RESULTADOS_DE_PARTIDA as readonly unknown[]).includes(valor['resultado']) &&
     (MOTIVOS_DE_FIN as readonly unknown[]).includes(valor['motivo']) &&
+    (valor['causa'] === undefined || (esObjeto(valor['causa']) && (TIPOS_DE_CAUSA_DE_MUERTE as readonly unknown[]).includes(valor['causa']['tipo']))) &&
     typeof valor['fecha'] === 'string'
   );
 }

@@ -1,4 +1,5 @@
 import { CONDICIONES } from '../catalogos/cargar-condiciones';
+import { conCausaDeMuerte } from '../efectos/causa-de-muerte';
 import { OBJETOS } from '../catalogos/cargar-objetos';
 import type { Condicion } from '../catalogos/condicion';
 import type { Objeto } from '../catalogos/objeto';
@@ -159,7 +160,7 @@ export function iniciarTurno(
 function aplicar(estado: Estado, efectos: readonly Efecto[], dados: Dados, catalogos: CatalogosTurno, entrada: ParteDeCondicion): Estado {
   const resultado = aplicarEfectos(estado, efectos, dados, catalogos);
   entrada.cambios.push(...resultado.cambios);
-  return resultado.estado;
+  return conCausaDeMuerte(resultado.estado, { tipo: 'condicion', condicion: entrada.condicion });
 }
 
 /**

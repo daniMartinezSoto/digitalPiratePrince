@@ -38,14 +38,15 @@ export interface Lectura {
 
 /**
  * Por dónde se sigue al pulsar "Continuar" (o solo, si no hay nada que leer):
- *   paso:    a otro paso del mismo evento.
+ *   paso:    a otro paso del mismo evento. Sin "pausa", sin pulsar "Continuar": lo leído se queda arriba
+ *            (en "anteriores") y debajo sale el paso siguiente (decidido por el autor el 22-nov).
  *   evento:  este evento termina y en su lugar empieza otro (sin volver).
  *   llamar:  se juegan estos eventos, uno detrás de otro, y al acabar se sigue por "despues".
  *   repetir: "vuelve a tirar": otra vez la misma tirada del mismo paso.
  *   fin:     el evento termina.
  */
 export type Siguiente =
-  | { tipo: 'paso'; paso: string }
+  | { tipo: 'paso'; paso: string; pausa?: boolean }
   | { tipo: 'evento'; evento: string }
   | { tipo: 'llamar'; eventos: string[]; despues: Siguiente }
   | { tipo: 'repetir' }
@@ -79,4 +80,11 @@ export interface MarcoEvento {
   // Se ha usado el amuleto del destino en la tirada de este paso (ya gastado): el jugador ve los
   // resultados de la tabla y tiene que elegir uno. Va en el estado para que recargar no sirva de escape.
   eligiendoResultado?: boolean;
+
+  // La cantidad del evento (el soborno del guardia), si algún paso la ha tirado. Dura lo que dure el evento.
+  cantidad?: number;
+
+  // Lo leído en pasos anteriores que todavía se enseña encima del actual (al pasar de un paso a otro del
+  // mismo evento no hace falta "Continuar"). Se borra en cuanto el jugador pulsa un botón.
+  anteriores?: Lectura[];
 }

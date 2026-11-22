@@ -1,4 +1,5 @@
 import type { Barco } from '../catalogos/barco';
+import { conCausaDeMuerte } from '../efectos/causa-de-muerte';
 import { BARCOS } from '../catalogos/cargar-barcos';
 import { cerrarCombate, iniciarCombate } from '../combate/combate';
 import { hayCombate } from '../combate/hay-combate';
@@ -204,6 +205,7 @@ export function disparar(estado: Estado, dados: Dados, catalogos?: CatalogosModi
   const reduccionCasco = combate.dano - dano;
   const antes = estado.jugador.tripulacion;
   const aplicado = dano > 0 ? aplicarEfectos(estado, [{ tipo: 'tripulacion', cantidad: -dano }], dados) : { estado, cambios: [] };
+  aplicado.estado = conCausaDeMuerte(aplicado.estado, { tipo: 'combate_naval', barco: combate.barco });
   const perdida = antes - aplicado.estado.jugador.tripulacion;
   const nuevo: CombateNavalEnCurso = {
     ...base,

@@ -5,6 +5,7 @@ import type { Efecto } from '../../../core/tablas/efecto';
 import type { JuegoStore } from '../../../store/juego.store';
 import { abrir, boton, prepararJuego, pulsar } from '../../probar-pantallas';
 import { Jugar } from '../../servicios/jugar';
+import { TrampasDeEventos } from '../../servicios/trampas-de-eventos';
 
 // La ventana de eventos de la pantalla de pruebas (Sprint 10, paso 5), con el deseo de verdad.
 
@@ -127,5 +128,45 @@ describe('panel de la derecha plegable', () => {
 
     await pulsarYEsperar(harness, '◀ Desplegar el panel');
     expect((raiz.querySelector('aside.panel') as HTMLElement).hidden).toBe(false);
+  });
+});
+
+describe('ventana de eventos: botones con sabor, sin tanto "Continuar" y la muerte (22-nov)', () => {
+  /** Partida nueva con el borracho abierto, con esta vida. */
+  async function conElBorracho(store: JuegoStore, vida: number): Promise<Harness> {
+    store.nuevaPartida('Marta', 'mujer', 555);
+    store.ejecutar((e, d) => aplicarEfectos(e, [{ tipo: 'vida', operacion: 'fijar', cantidad: vida }], d));
+    store.ejecutar((e, d) => lanzarEventos({ ...e, mundo: { ...e.mundo, fase: 'accion' } }, ['borracho'], d));
+    return abrir('/partida');
+  }
+
+  it('el chequeo pone "Chequeo de Fuerza"; el resultado se queda arriba y el siguiente sale debajo', async () => {
+    const store = prepararJuego();
+    const harness = await conElBorracho(store, 10);
+    TestBed.inject(TrampasDeEventos).proximaTirada.set(6);
+
+    await pulsarYEsperar(harness, 'Chequeo de Fuerza');
+    const texto = ventana(harness)!.textContent!;
+    expect(texto).toContain('Pierdes 1 punto de vida por tropiezos y caídas.');
+    expect(texto).toContain('Otro traspié');
+    expect(boton(harness.routeNativeElement!, 'Chequeo de Fuerza')).toBeTruthy();
+    expect(texto).not.toContain('Continuar');
+  });
+
+  it('al morir, la ventana se queda con lo que ha pasado y por qué; "Ver el final" la quita', async () => {
+    const store = prepararJuego();
+    const harness = await conElBorracho(store, 1);
+    TestBed.inject(TrampasDeEventos).proximaTirada.set(6);
+
+    await pulsarYEsperar(harness, 'Chequeo de Fuerza');
+    expect(store.estado()!.mundo.finPartida).toMatchObject({ resultado: 'derrota' });
+    const texto = ventana(harness)!.textContent!;
+    expect(texto).toContain('Pierdes 1 punto de vida por tropiezos y caídas.');
+    expect(texto).toContain('te abres la cabeza contra un barril');
+
+    await pulsarYEsperar(harness, 'Ver el final');
+    expect(ventana(harness)).toBeNull();
+    expect(harness.routeNativeElement!.textContent).toContain('PARTIDA TERMINADA');
+    expect(harness.routeNativeElement!.textContent).toContain('te abres la cabeza contra un barril');
   });
 });

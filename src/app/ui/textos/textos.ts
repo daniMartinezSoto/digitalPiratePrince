@@ -16,6 +16,9 @@ import type { EleccionDeComida } from '../../core/turno/comer';
 import type { EleccionDeDescanso } from '../../core/turno/descansar';
 import type { Lugar, Rasgo, Terreno } from '../../core/turno/lugar';
 import type { FinPartida, MotivoDeFin } from '../../core/estado/fin-partida';
+import { ENEMIGOS } from '../../core/catalogos/cargar-enemigos';
+import { BARCOS } from '../../core/catalogos/cargar-barcos';
+import { EVENTOS } from '../../core/eventos/cargar-eventos';
 
 // TEXTOS DE LA PANTALLA (pantalla de pruebas): traducen los datos que devuelven las reglas
 // (cambios, motivos, ids...) a frases para el jugador. Son textos de pantalla, por eso van en ui/
@@ -77,6 +80,46 @@ const TEXTO_DE_FIN: Record<MotivoDeFin, string> = {
 /** "VICTORIA: ¡fama y los cuatro puertos...!", "DERROTA: te has quedado sin vida". */
 export function textoDeFin(fin: FinPartida): string {
   return `${fin.resultado === 'victoria' ? 'VICTORIA' : 'DERROTA'}: ${TEXTO_DE_FIN[fin.motivo]}`;
+}
+
+/**
+ * POR QUÉ has muerto (22-nov, pedido por el autor), o null si no se sabe. Los eventos pueden traer su
+ * propio mensaje escrito; si no, se escribe aquí según la causa.
+ */
+export function textoDeMuerte(fin: FinPartida): string | null {
+  const causa = fin.causa;
+  if (!causa) return null;
+  const sinTripulacion = fin.motivo === 'tripulacion';
+  switch (causa.tipo) {
+    case 'evento': {
+      if (causa.texto) return causa.texto;
+      const titulo = EVENTOS.find(e => e.id === causa.evento)?.titulo ?? causa.evento;
+      return sinTripulacion ? `Pierdes a tu última tripulación durante «${titulo}».` : `Tu aventura termina durante «${titulo}».`;
+    }
+    case 'combate': {
+      const nombres = causa.enemigos.map(id => ENEMIGOS.find(e => e.id === id)?.nombre ?? id);
+      return `Caes en combate contra ${unirConY(nombres.map(n => n.toLowerCase()))}. Tu aventura termina aquí.`;
+    }
+    case 'combate_naval': {
+      const barco = BARCOS.find(b => b.id === causa.barco)?.nombre ?? causa.barco;
+      return `Los cañones de ${barco.toLowerCase()} barren tu cubierta hasta que no queda nadie en pie.`;
+    }
+    case 'hambre':
+      return sinTripulacion ? 'Tu tripulación muere de hambre.' : 'El hambre puede contigo: mueres de inanición.';
+    case 'condicion': {
+      const nombre = CONDICIONES.find(c => c.id === causa.condicion)?.nombre ?? causa.condicion;
+      return sinTripulacion ? `«${nombre}» acaba con tu tripulación: no queda nadie a bordo.` : `«${nombre}» acaba contigo.`;
+    }
+    case 'accion': {
+      const accion = (NOMBRE_DE_ACCION as Record<string, string>)[causa.accion] ?? causa.accion;
+      return `Mueres al ${accion.charAt(0).toLowerCase()}${accion.slice(1)}.`;
+    }
+  }
+}
+
+function unirConY(nombres: readonly string[]): string {
+  if (nombres.length <= 1) return nombres.join('');
+  return `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`;
 }
 
 export const NOMBRE_DE_RASGO: Record<Rasgo, string> = {

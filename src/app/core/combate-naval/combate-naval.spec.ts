@@ -150,7 +150,7 @@ describe('disparar (duelo de cañones)', () => {
     expect(duelo.tripulacionPerdida).toBe(3);
     expect(estado.jugador.tripulacion).toBe(0);
     expect(estado.mundo.combateNaval!.resultado).toBe('derrota');
-    expect(estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'tripulacion' });
+    expect(estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'tripulacion', causa: { tipo: 'combate_naval', barco: 'fragata_de_la_marina' } });
   });
 
   it('sin combate naval, avisa', () => {

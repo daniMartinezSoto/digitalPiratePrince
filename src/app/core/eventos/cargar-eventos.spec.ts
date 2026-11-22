@@ -24,7 +24,7 @@ describe('cargar eventos', () => {
 
   // No es un error (salen como "pendiente"), pero así se ve qué falta por escribir.
   it('los eventos a los que se salta y aún no existen son los esperados', () => {
-    expect(eventosQueFaltan(EVENTOS)).toEqual(['tesoro_magico']);
+    expect(eventosQueFaltan(EVENTOS)).toEqual(['arrestado', 'tesoro_magico']);
   });
 
   describe('el deseo (E041)', () => {

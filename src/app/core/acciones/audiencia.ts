@@ -1,4 +1,5 @@
 import type { Dados } from '../dados/dados';
+import { conCausaDeMuerte } from '../efectos/causa-de-muerte';
 import { aplicarEfectos } from '../efectos/aplicar-efectos';
 import type { Estado } from '../estado/estado';
 import { buscarMarca, conMarca, hayMarca, sinMarca } from '../estado/marcas';
@@ -76,7 +77,8 @@ export function solicitarAudiencia(estado: Estado, sitio: Sitio, dados: Dados): 
   let actual = sinMarca(estado, 'audiencia_aplazada', sitio.hex);
 
   const tirada = resolverTabla(obtenerTabla(quien.tabla), calcularModificador(estado.jugador, quien.tirada) + (bonoDeAyer ? 1 : 0), dados);
-  const resultado = aplicarEfectos(actual, tirada.efectos, dados);
+  const aplicado = aplicarEfectos(actual, tirada.efectos, dados);
+  const resultado = { ...aplicado, estado: conCausaDeMuerte(aplicado.estado, { tipo: 'accion', accion: 'solicitar_audiencia' }) };
   actual = resultado.estado;
 
   if (tirada.especial === 'audiencia_concedida' || tirada.especial === 'audiencia_vetada') {

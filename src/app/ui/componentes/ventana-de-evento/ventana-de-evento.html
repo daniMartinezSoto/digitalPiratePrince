@@ -17,6 +17,20 @@
             <img [src]="v.imagen" [alt]="v.titulo" (load)="alCargarImagen($event)" />
           }
           <div class="columna">
+            @for (anterior of anteriores(); track $index) {
+              <div class="anterior">
+                @if (anterior.texto) {
+                  <p class="texto">{{ anterior.texto }}</p>
+                }
+                @if (anterior.lineas.length > 0) {
+                  <ul class="lectura">
+                    @for (linea of anterior.lineas; track $index) {
+                      <li>{{ linea }}</li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
             @if (v.texto) {
               <p class="texto">{{ v.texto }}</p>
             }
@@ -42,7 +56,7 @@
                   }
                 }
                 @case ('tirada') {
-                  <button type="button" (click)="tirar()">{{ v.tirada!.paraEncuentro ? 'Tirar dados para ver contra quién luchas' : 'Tirar dados' }} ({{ v.tirada!.dado }}@if (v.tirada!.modificador !== 0) { {{ v.tirada!.modificador > 0 ? '+' : '' }}{{ v.tirada!.modificador }} })</button>
+                  <button type="button" (click)="tirar()">{{ v.tirada!.boton ?? (v.tirada!.paraEncuentro ? '¿Contra quién luchas?' : 'Tirar') }} ({{ v.tirada!.dado }}@if (v.tirada!.modificador !== 0) { {{ v.tirada!.modificador > 0 ? '+' : '' }}{{ v.tirada!.modificador }} })</button>
                   @if (v.tirada!.puedeElegir) {
                     <button type="button" (click)="usarAmuleto()">Usar el amuleto del destino (se gasta y eliges el resultado)</button>
                   }
@@ -54,13 +68,17 @@
                   }
                 }
                 @case ('chequeo') {
-                  <button type="button" (click)="chequeo()">Hacer el chequeo de {{ nombreDeCaracteristica[v.chequeo!.caracteristica] }}</button>
+                  <button type="button" (click)="chequeo()">{{ v.chequeo!.boton ?? 'Chequeo de ' + nombreDeCaracteristica[v.chequeo!.caracteristica] }}</button>
                 }
                 @case ('combate') {
-                  <button type="button" (click)="luchar()">Luchar</button>
+                  <button type="button" (click)="luchar()">{{ v.combate!.boton ?? 'Luchar' }}</button>
                 }
                 @case ('combate_naval') {
-                  <button type="button" (click)="luchar()">Luchar</button>
+                  <button type="button" (click)="luchar()">{{ v.combateNaval!.boton ?? 'Luchar' }}</button>
+                }
+                @case ('muerte') {
+                  <p class="muerte">{{ textoDeMuerte() }}</p>
+                  <button type="button" (click)="verElFinal()">Ver el final</button>
                 }
                 @case ('continuar') {
                   <button type="button" (click)="continuar()">Continuar</button>

@@ -1,0 +1,77 @@
+{
+  "id": "borracho",
+  "titulo": "Borracho",
+  "imagen": "eventos/borracho.png",
+  "libro": "E077",
+  "muerte": "Das un último traspié, te abres la cabeza contra un barril y ya no te levantas. Te encontrarán por la mañana, oliendo a ron.",
+  "pasos": {
+    "inicio": {
+      "texto": "Tras consumir una considerable cantidad de ron o algún otro licor fuerte, comienzas a sentir los efectos del alcohol. El suelo se mueve más que la cubierta en plena tormenta...",
+      "chequeo": {
+        "caracteristica": "fuerza",
+        "exito": { "texto": "Consigues mantener el equilibrio y no te partes la crisma.", "paso": "segundo_traspie" },
+        "fallo": { "texto": "Pierdes 1 punto de vida por tropiezos y caídas.", "efectos": [{ "tipo": "vida", "cantidad": -1 }], "paso": "segundo_traspie" }
+      }
+    },
+    "segundo_traspie": {
+      "texto": "Sigues dando tumbos de un lado a otro. Otro traspié...",
+      "chequeo": {
+        "caracteristica": "fuerza",
+        "exito": { "texto": "Consigues mantener el equilibrio y no te partes la crisma.", "paso": "la_bolsa" },
+        "fallo": { "texto": "Pierdes 1 punto de vida por tropiezos y caídas.", "efectos": [{ "tipo": "vida", "cantidad": -1 }], "paso": "la_bolsa" }
+      }
+    },
+    "la_bolsa": {
+      "texto": "Entre trago y trago, intentas no perder de vista tu bolsa de monedas.",
+      "chequeo": {
+        "caracteristica": "ingenio",
+        "exito": { "texto": "Mantienes la cabeza lo bastante clara: tu bolsa sigue en su sitio.", "paso": "el_jaleo" },
+        "fallo": { "texto": "Cuando te das cuenta, te faltan 10 monedas de oro.", "efectos": [{ "tipo": "oro", "cantidad": -10 }], "paso": "el_jaleo" }
+      }
+    },
+    "el_jaleo": {
+      "texto": "La noche sigue y el ron no deja de correr...",
+      "tirada": {
+        "dado": "1d6",
+        "boton": "¿Aquel mentecato te está mirando mal?",
+        "filas": [
+          { "min": 1, "max": 2, "texto": "Le das un empujón a quien no debías. Te metes en una pelea.", "paso": "pelea" },
+          { "min": 3, "max": 6, "texto": "La noche termina sin más incidentes que un buen dolor de cabeza." }
+        ]
+      }
+    },
+    "pelea": {
+      "combate": {
+        "encuentro": "piratas_hostiles",
+        "botonDelEncuentro": "¿Con quién te has metido?",
+        "boton": "¡Repartir mamporros!",
+        "noMortal": true,
+        "victoria": { "texto": "Ganas la pelea.", "paso": "tras_ganar" },
+        "huida": { "texto": "Sales de allí como puedes.", "paso": "tras_la_pelea" },
+        "derrota": { "texto": "Acabas en el suelo, molido a golpes, pero vivo.", "paso": "tras_la_pelea" }
+      }
+    },
+    "tras_ganar": {
+      "segun": {
+        "barco": { "texto": "La pelea ha sido en tu barco: uno de tus tripulantes no lo cuenta.", "efectos": [{ "tipo": "tripulacion", "cantidad": -1 }] },
+        "puerto": { "paso": "los_guardias" }
+      }
+    },
+    "tras_la_pelea": {
+      "segun": {
+        "puerto": { "paso": "los_guardias" }
+      }
+    },
+    "los_guardias": {
+      "texto": "Tanto jaleo en pleno puerto podría llamar la atención de los guardias...",
+      "tirada": {
+        "dado": "1d6",
+        "boton": "¿Te ha visto la guardia?",
+        "filas": [
+          { "min": 1, "max": 1, "texto": "Los guardias te han visto. Te arrestan.", "evento": "arrestado" },
+          { "min": 2, "max": 6, "texto": "Te escabulles antes de que nadie haga preguntas." }
+        ]
+      }
+    }
+  }
+}

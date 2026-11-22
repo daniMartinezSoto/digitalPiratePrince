@@ -4,7 +4,7 @@ import { validarPedidosDeEnemigos } from '../catalogos/validar-barco';
 import { ENCUENTROS } from '../encuentros/cargar-encuentros';
 import { rangoDeTirada } from '../dados/tirada';
 import { validarEfecto } from '../tablas/rangos/validar-tabla';
-import { PASO_INICIAL, REQUISITOS, type Evento } from './evento';
+import { CANTIDAD_DEL_EVENTO, PASO_INICIAL, REQUISITOS, type Evento } from './evento';
 
 // REVISOR DE EVENTOS (Sprint 10, paso 1). Revisa lo que se escribe en data/eventos/ y devuelve
 // los errores en castellano, todos a la vez. Lista vacía = está bien. No lanza errores.
@@ -15,23 +15,30 @@ import { PASO_INICIAL, REQUISITOS, type Evento } from './evento';
 //   - cada paso: que no esté vacío, que tenga UNA sola forma de seguir, que los pasos a los que
 //     salta existan y que se pueda llegar a él desde "inicio";
 //   - opciones, tiradas (sin huecos ni solapes, como las tablas), chequeos y combates;
-//   - los efectos, con el revisor de siempre (objetos, condiciones y seguidores del catálogo).
+//   - los efectos, con el revisor de siempre (objetos, condiciones y seguidores del catálogo);
+//   - la cantidad del evento: que su dado sea válido y que nadie use {cantidad} / "cantidad" sin que
+//     ningún paso la tire;
+//   - los pasos "segun" (barco, puerto, otro).
 // Lo que NO puede comprobar todavía: que los eventos a los que se salta existan. Mientras falten,
 // el juego los enseña como "pendientes". La lista de los que faltan la da eventosQueFaltan.
 
 const FORMATO_ID = /^[a-z][a-z0-9_]*$/;
 const FORMATO_LIBRO = /^E\d{3}$/;
 
-const CAMPOS_EVENTO = ['id', 'titulo', 'imagen', 'unaVez', 'pasos', 'libro'];
-const CAMPOS_RAMA = ['texto', 'efectos', 'paso', 'evento', 'llamar'];
-const SALIDAS_CON_ELECCION = ['opciones', 'tirada', 'chequeo', 'combate', 'combateNaval'];
-const CAMPOS_PASO = [...CAMPOS_RAMA, ...SALIDAS_CON_ELECCION];
-const CAMPOS_OPCION = ['texto', 'requiere', 'efectos', 'paso', 'evento', 'llamar'];
-const CAMPOS_TIRADA = ['dado', 'modificador', 'filas'];
+const CAMPOS_EVENTO = ['id', 'titulo', 'imagen', 'unaVez', 'pasos', 'libro', 'muerte'];
+const CAMPOS_RAMA = ['texto', 'efectos', 'paso', 'evento', 'llamar', 'muerte', 'pausa'];
+// Las formas de seguir que llevan dentro sus propias salidas ("segun" no espera al jugador, pero
+// también lleva dentro por dónde se sigue).
+const SALIDAS_CON_ELECCION = ['opciones', 'tirada', 'chequeo', 'combate', 'combateNaval', 'segun'];
+const CAMPOS_PASO = [...CAMPOS_RAMA, ...SALIDAS_CON_ELECCION, 'cantidad'];
+const LUGARES_DE_SEGUN = ['barco', 'puerto', 'otro'];
+const MARCA_DE_CANTIDAD = `{${CANTIDAD_DEL_EVENTO}}`;
+const CAMPOS_OPCION = ['texto', 'requiere', 'efectos', 'paso', 'evento', 'llamar', 'muerte', 'pausa'];
+const CAMPOS_TIRADA = ['dado', 'boton', 'modificador', 'filas'];
 const CAMPOS_FILA = ['min', 'max', 'volverATirar', ...CAMPOS_RAMA];
-const CAMPOS_CHEQUEO = ['caracteristica', 'modificador', 'exito', 'fallo'];
-const CAMPOS_COMBATE = ['enemigos', 'encuentro', 'puedeHuir', 'noMortal', 'sorpresa', 'victoria', 'huida', 'derrota'];
-const CAMPOS_COMBATE_NAVAL = ['barco', 'victoria', 'huida'];
+const CAMPOS_CHEQUEO = ['caracteristica', 'boton', 'modificador', 'exito', 'fallo'];
+const CAMPOS_COMBATE = ['enemigos', 'encuentro', 'boton', 'botonDelEncuentro', 'puedeHuir', 'noMortal', 'sorpresa', 'victoria', 'huida', 'derrota'];
+const CAMPOS_COMBATE_NAVAL = ['barco', 'boton', 'victoria', 'huida'];
 const SORPRESAS = ['nuestra', 'suya'];
 const CARACTERISTICAS = ['fuerza', 'ingenio'];
 
@@ -74,6 +81,9 @@ export function validarEvento(evento: Evento): string[] {
   if (e['libro'] !== undefined && (typeof e['libro'] !== 'string' || !FORMATO_LIBRO.test(e['libro']))) {
     errores.push(`${nombre}: "libro" debe ser el código del libro de papel (p. ej. "E041").`);
   }
+  if (e['muerte'] !== undefined && !esTexto(e['muerte'])) {
+    errores.push(`${nombre}: "muerte" debe ser el mensaje si mueres en el evento (un texto con algo escrito).`);
+  }
   errores.push(...camposQueSobran(e, CAMPOS_EVENTO, nombre));
 
   const pasos = e['pasos'];
@@ -85,7 +95,11 @@ export function validarEvento(evento: Evento): string[] {
     errores.push(`${nombre}: no tiene el paso "${PASO_INICIAL}" (todo evento empieza por ahí).`);
   }
 
-  const contexto: Contexto = { idEvento: String(e['id']), nombresDePasos: new Set(Object.keys(pasos)) };
+  const tieneCantidad = Object.values(pasos).some(p => esObjeto(p) && p['cantidad'] !== undefined);
+  const contexto: Contexto = { idEvento: String(e['id']), nombresDePasos: new Set(Object.keys(pasos)), tieneCantidad };
+  if (!tieneCantidad && JSON.stringify(pasos).includes(MARCA_DE_CANTIDAD)) {
+    errores.push(`${nombre}: algún texto usa ${MARCA_DE_CANTIDAD}, pero ningún paso tira la cantidad (falta "cantidad" en algún paso).`);
+  }
   for (const [nombreDelPaso, paso] of Object.entries(pasos)) {
     const donde = `${nombre}, paso "${nombreDelPaso}"`;
     if (!FORMATO_ID.test(nombreDelPaso)) {
@@ -142,6 +156,8 @@ export function eventosALosQueSalta(evento: Evento): string[] {
 interface Contexto {
   idEvento: string;
   nombresDePasos: Set<string>;
+  // Algún paso tira la cantidad del evento: entonces se puede usar en efectos y requisitos.
+  tieneCantidad: boolean;
 }
 
 function validarPaso(paso: unknown, donde: string, contexto: Contexto): string[] {
@@ -174,7 +190,27 @@ function validarPaso(paso: unknown, donde: string, contexto: Contexto): string[]
   if (paso['chequeo'] !== undefined) errores.push(...validarChequeo(paso['chequeo'], `${donde}, chequeo`, contexto));
   if (paso['combate'] !== undefined) errores.push(...validarCombate(paso['combate'], `${donde}, combate`, contexto));
   if (paso['combateNaval'] !== undefined) errores.push(...validarCombateNaval(paso['combateNaval'], `${donde}, combate naval`, contexto));
+  if (paso['segun'] !== undefined) errores.push(...validarSegun(paso['segun'], `${donde}, según dónde estés`, contexto));
 
+  if (paso['cantidad'] !== undefined) {
+    try {
+      rangoDeTirada(String(paso['cantidad']));
+    } catch {
+      errores.push(`${donde}: la cantidad "${String(paso['cantidad'])}" no es un dado válido (ejemplos: "1d6x5", "2d6", "1d6+1").`);
+    }
+  }
+
+  return errores;
+}
+
+function validarSegun(segun: unknown, donde: string, contexto: Contexto): string[] {
+  if (!esObjeto(segun) || Object.keys(segun).length === 0) {
+    return [`${donde}: debe ser un objeto con al menos una de estas ramas: ${LUGARES_DE_SEGUN.join(', ')}.`];
+  }
+  const errores: string[] = [...camposQueSobran(segun, LUGARES_DE_SEGUN, donde)];
+  for (const lugar of LUGARES_DE_SEGUN) {
+    errores.push(...validarSalida(segun[lugar], `${donde}, ${lugar}`, contexto, false));
+  }
   return errores;
 }
 
@@ -185,6 +221,12 @@ function validarPaso(paso: unknown, donde: string, contexto: Contexto): string[]
 function validarRama(rama: Objeto, donde: string, contexto: Contexto, conCampos: boolean): string[] {
   const errores: string[] = conCampos ? camposQueSobran(rama, CAMPOS_RAMA, donde) : [];
 
+  if (rama['pausa'] !== undefined && (rama['pausa'] !== true || rama['paso'] === undefined)) {
+    errores.push(`${donde}: "pausa" solo puede ser true y solo sirve con "paso" (para parar en "Continuar" antes del paso siguiente).`);
+  }
+  if (rama['muerte'] !== undefined && !esTexto(rama['muerte'])) {
+    errores.push(`${donde}: "muerte" debe ser el mensaje si mueres aquí (un texto con algo escrito).`);
+  }
   if (rama['texto'] !== undefined && !esTexto(rama['texto'])) {
     errores.push(`${donde}: el texto debe ser un texto con algo escrito (si no tiene, no lo pongas).`);
   }
@@ -194,7 +236,16 @@ function validarRama(rama: Objeto, donde: string, contexto: Contexto, conCampos:
     if (!Array.isArray(efectos) || efectos.length === 0) {
       errores.push(`${donde}: "efectos" debe ser una lista de efectos (si no tiene ninguno, no la pongas).`);
     } else {
-      efectos.forEach((efecto, i) => errores.push(...validarEfecto(efecto, `${donde}, efecto ${i + 1}`)));
+      efectos.forEach((efecto, i) => {
+        const dondeEfecto = `${donde}, efecto ${i + 1}`;
+        const usaCantidad = esObjeto(efecto) && (efecto['cantidad'] === CANTIDAD_DEL_EVENTO || efecto['cantidad'] === `-${CANTIDAD_DEL_EVENTO}`);
+        if (usaCantidad && !contexto.tieneCantidad) {
+          errores.push(`${dondeEfecto}: usa la cantidad del evento, pero ningún paso la tira (falta "cantidad" en algún paso).`);
+          return;
+        }
+        // Con la cantidad del evento, el resto del efecto se revisa como si fuera un número.
+        errores.push(...validarEfecto(usaCantidad ? { ...efecto, cantidad: 1 } : efecto, dondeEfecto));
+      });
     }
   }
 
@@ -241,13 +292,13 @@ function validarOpciones(opciones: unknown, donde: string, contexto: Contexto): 
     // El texto de una opción es el del botón; el resto se revisa como una rama.
     errores.push(...validarRama({ ...opcion, texto: undefined }, dondeOpcion, contexto, false));
     if (opcion['requiere'] !== undefined) {
-      errores.push(...validarRequisitos(opcion['requiere'], dondeOpcion));
+      errores.push(...validarRequisitos(opcion['requiere'], dondeOpcion, contexto));
     }
   });
   return errores;
 }
 
-function validarRequisitos(requiere: unknown, donde: string): string[] {
+function validarRequisitos(requiere: unknown, donde: string, contexto: Contexto): string[] {
   if (!esObjeto(requiere) || Object.keys(requiere).length === 0) {
     return [`${donde}: "requiere" debe tener al menos un requisito (si no tiene, no lo pongas).`];
   }
@@ -261,6 +312,12 @@ function validarRequisitos(requiere: unknown, donde: string): string[] {
       errores.push(`${donde}: "puedeSubir" debe ser "fuerza" o "ingenio".`);
     } else if (clave === 'puedeGanarSeguidor' && valor !== true) {
       errores.push(`${donde}: "puedeGanarSeguidor" solo puede ser true (si no hace falta, no lo pongas).`);
+    } else if (clave === 'oro') {
+      if (valor === CANTIDAD_DEL_EVENTO) {
+        if (!contexto.tieneCantidad) errores.push(`${donde}: "oro": "cantidad" usa la cantidad del evento, pero ningún paso la tira.`);
+      } else if (!Number.isInteger(valor) || (valor as number) < 1) {
+        errores.push(`${donde}: "oro" debe ser un número entero mayor que 0 o "cantidad".`);
+      }
     }
   }
   return errores;
@@ -277,6 +334,9 @@ function validarTirada(tirada: unknown, donde: string, contexto: Contexto): stri
     rango = rangoDeTirada(String(tirada['dado']));
   } catch {
     errores.push(`${donde}: el dado "${String(tirada['dado'])}" no es válido (ejemplos: "1d6", "2d6", "1d6+1").`);
+  }
+  if (!esTexto(tirada['boton'])) {
+    errores.push(`${donde}: le falta "boton", lo que pone el botón de tirar ("¿Aquel mentecato te está mirando mal?"; el dado se añade solo).`);
   }
   if (tirada['modificador'] !== undefined && !Number.isInteger(tirada['modificador'])) {
     errores.push(`${donde}: el modificador debe ser un número entero.`);
@@ -342,11 +402,18 @@ function validarTirada(tirada: unknown, donde: string, contexto: Contexto): stri
   return errores;
 }
 
+/** Los botones opcionales (chequeo, luchar, tirada del encuentro): si están, un texto con algo escrito. */
+function validarBotones(objeto: Objeto, campos: string[], donde: string): string[] {
+  return campos
+    .filter(campo => objeto[campo] !== undefined && !esTexto(objeto[campo]))
+    .map(campo => `${donde}: "${campo}" debe ser el texto del botón (si no lo quieres, no lo pongas).`);
+}
+
 function validarChequeo(chequeo: unknown, donde: string, contexto: Contexto): string[] {
   if (!esObjeto(chequeo)) {
     return [`${donde}: debe ser un objeto con "caracteristica", "exito" y "fallo".`];
   }
-  const errores: string[] = [...camposQueSobran(chequeo, CAMPOS_CHEQUEO, donde)];
+  const errores: string[] = [...camposQueSobran(chequeo, CAMPOS_CHEQUEO, donde), ...validarBotones(chequeo, ['boton'], donde)];
   if (typeof chequeo['caracteristica'] !== 'string' || !CARACTERISTICAS.includes(chequeo['caracteristica'])) {
     errores.push(`${donde}: la característica debe ser "fuerza" o "ingenio".`);
   }
@@ -363,7 +430,7 @@ function validarCombate(combate: unknown, donde: string, contexto: Contexto): st
   if (!esObjeto(combate)) {
     return [`${donde}: debe ser un objeto con sus "enemigos".`];
   }
-  const errores: string[] = [...camposQueSobran(combate, CAMPOS_COMBATE, donde)];
+  const errores: string[] = [...camposQueSobran(combate, CAMPOS_COMBATE, donde), ...validarBotones(combate, ['boton', 'botonDelEncuentro'], donde)];
 
   const enemigos = combate['enemigos'];
   const encuentro = combate['encuentro'];
@@ -402,7 +469,7 @@ function validarCombateNaval(combate: unknown, donde: string, contexto: Contexto
   if (!esObjeto(combate)) {
     return [`${donde}: debe ser un objeto con su "barco".`];
   }
-  const errores: string[] = [...camposQueSobran(combate, CAMPOS_COMBATE_NAVAL, donde)];
+  const errores: string[] = [...camposQueSobran(combate, CAMPOS_COMBATE_NAVAL, donde), ...validarBotones(combate, ['boton'], donde)];
   if (typeof combate['barco'] !== 'string' || !BARCOS.some(b => b.id === combate['barco'])) {
     errores.push(`${donde}: el barco "${String(combate['barco'])}" no existe en el catálogo de barcos (data/barcos.json).`);
   }

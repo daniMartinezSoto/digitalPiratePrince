@@ -1,4 +1,5 @@
 import { AJUSTES } from '../ajustes/ajustes';
+import { conCausaDeMuerte } from '../efectos/causa-de-muerte';
 import { CONDICIONES } from '../catalogos/cargar-condiciones';
 import { OBJETOS } from '../catalogos/cargar-objetos';
 import { comidaPorDia } from '../condiciones/consultas';
@@ -195,7 +196,7 @@ export function comer(
   }
 
   const resultado = aplicarEfectos(conDiasSinComer(estado, dias), efectos, dados, catalogos);
-  let actual = resultado.estado;
+  let actual = conCausaDeMuerte(resultado.estado, { tipo: 'hambre' });
   const cambios = resultado.cambios;
   const eventos: string[] = [];
 

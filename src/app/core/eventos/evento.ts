@@ -18,6 +18,15 @@ import type { EfectoDefinicion } from '../tablas/efecto';
 //   "chequeo"       → chequeo de Fuerza o Ingenio, con una salida si lo superas y otra si no.
 //   "combate"       → combate normal; según cómo acabe (victoria, huida, derrota) se sigue por un lado u otro.
 //   "combateNaval"  → combate naval contra un barco del catálogo.
+//   "segun"         → según DÓNDE estés (a bordo, en un puerto o en otro sitio) se sigue por una rama u
+//                     otra. Lo decide el juego solo: no hay botón.
+//
+// CANTIDAD DEL EVENTO (paso 7b): un paso puede llevar "cantidad": "1d6x5". Al entrar en él se tira y
+// el número se guarda mientras dure el evento (cada vez que sale el evento, se vuelve a tirar). Se usa:
+//   - en los textos (del paso, de las ramas y de los botones), escribiendo {cantidad};
+//   - en los efectos, con "cantidad": "cantidad" (ganar esa cantidad) o "-cantidad" (perderla);
+//   - en el requisito "oro": "cantidad" (tener al menos ese oro).
+// Ejemplo (el guardia, E057): "Aceptará un soborno de {cantidad} monedas de oro".
 //
 // "opciones", "tirada", "chequeo", "combate" y "combateNaval" ya llevan dentro por dónde se sigue, así
 // que no se pueden mezclar entre sí ni con "paso", "evento" o "llamar". El revisor lo comprueba.
@@ -52,6 +61,14 @@ export interface Rama {
 
   // Resolver otro evento y volver: al volver se sigue en "paso" o, sin "paso", se termina.
   llamar?: string;
+
+  // El mensaje si los efectos de aquí te matan ("Das un último traspié..."). Si no lo tiene, se usa el
+  // del evento; si tampoco, uno general según la causa.
+  muerte?: string;
+
+  // true = al ir a otro paso, se para en "Continuar" antes de enseñarlo. Sin esto, lo leído se queda
+  // arriba y el paso siguiente sale debajo, en la misma pantalla (decidido por el autor el 22-nov).
+  pausa?: boolean;
 }
 
 /** Un paso del evento: una rama que, además, puede pedir algo al jugador. */
@@ -61,7 +78,24 @@ export interface Paso extends Rama {
   chequeo?: ChequeoDeEvento;
   combate?: CombateDeEvento;
   combateNaval?: CombateNavalDeEvento;
+  segun?: SegunDondeEstes;
+
+  // Se tira al entrar en el paso y se guarda mientras dure el evento (ver arriba).
+  cantidad?: string;
 }
+
+/**
+ * Según dónde estés: a bordo de tu barco, en un puerto (la guarida cuenta como puerto) o en cualquier
+ * otro sitio. La rama que no se escriba es "no pasa nada": el evento termina.
+ */
+export interface SegunDondeEstes {
+  barco?: Rama;
+  puerto?: Rama;
+  otro?: Rama;
+}
+
+/** Lo que se escribe en efectos y requisitos para usar la cantidad del evento. */
+export const CANTIDAD_DEL_EVENTO = 'cantidad';
 
 /** Un botón de una elección. Al pulsarlo se aplican sus efectos y se sigue por donde diga. */
 export interface Opcion {
@@ -75,6 +109,8 @@ export interface Opcion {
   paso?: string;
   evento?: string;
   llamar?: string;
+  muerte?: string;
+  pausa?: boolean;
 }
 
 /**
@@ -92,13 +128,20 @@ export interface Requisitos {
   // Que esa característica no esté ya al máximo (5, con el amuleto incluido): "+1 a fuerza" no se
   // puede elegir con fuerza 5 (decidido por el autor el 22-nov).
   puedeSubir?: 'fuerza' | 'ingenio';
+
+  // Tener al menos este oro: un número fijo o "cantidad" (la cantidad del evento: el soborno del guardia).
+  oro?: number | typeof CANTIDAD_DEL_EVENTO;
 }
 
-export const REQUISITOS = ['sinObjeto', 'puedeGanarSeguidor', 'puedeSubir'] as const;
+export const REQUISITOS = ['sinObjeto', 'puedeGanarSeguidor', 'puedeSubir', 'oro'] as const;
 
 /** Una tirada del evento: se tira "dado" (más el bonificador) y manda la fila que sale. */
 export interface TiradaDeEvento {
   dado: string;
+
+  // Lo que pone el botón, con sabor (pedido por el autor el 22-nov: nunca "Tirar dados"):
+  // "¿Aquel mentecato te está mirando mal?". La pantalla añade el dado: "(1d6)". Obligatorio.
+  boton: string;
 
   // Número fijo que se suma ("+1 si vienes de la visión de la isla" se escribirá en su rama).
   modificador?: number;
@@ -121,6 +164,9 @@ export interface FilaDeEvento extends Rama {
 export interface ChequeoDeEvento {
   caracteristica: Caracteristica;
 
+  // Lo que pone el botón. Sin él: "Chequeo de Fuerza" / "Chequeo de Ingenio".
+  boton?: string;
+
   // Se suma AL DADO: −1 lo hace más fácil, +1 más difícil (como en el pulso).
   modificador?: number;
 
@@ -139,6 +185,11 @@ export interface CombateDeEvento extends OpcionesDeCombate {
   enemigos?: EnemigoPedido[];
   encuentro?: string;
 
+  // Lo que pone el botón de luchar (sin él: "Luchar") y el de la tirada del encuentro (sin él:
+  // "¿Contra quién luchas?"; la pantalla añade el dado).
+  boton?: string;
+  botonDelEncuentro?: string;
+
   victoria?: Rama;
   huida?: Rama;
 
@@ -150,6 +201,8 @@ export interface CombateDeEvento extends OpcionesDeCombate {
 /** Un combate naval contra un barco del catálogo (data/barcos.json). */
 export interface CombateNavalDeEvento {
   barco: string;
+  // Lo que pone el botón de luchar (sin él: "Luchar").
+  boton?: string;
   victoria?: Rama;
 
   // Huir de un combate naval ya lanza el daño en la bodega (E006) él solo; aquí, lo que pase después.
@@ -175,6 +228,9 @@ export interface Evento {
 
   // Solo para cotejar con el libro de papel ("E041").
   libro?: string;
+
+  // El mensaje si mueres en este evento y la rama no trae el suyo.
+  muerte?: string;
 }
 
 /** El paso por el que empieza todo evento. */

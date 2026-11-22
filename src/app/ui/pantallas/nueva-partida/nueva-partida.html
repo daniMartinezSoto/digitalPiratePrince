@@ -27,6 +27,9 @@
         {{ entrada.nombre }}, {{ textoDeSobrenombre(entrada.sobrenombre, entrada.retrato) }} · {{ entrada.resultado }} ({{ entrada.motivo }}) · fama
         {{ entrada.fama }} · oro {{ entrada.oro }} · {{ entrada.dias }} días · semilla {{ entrada.semilla }} ·
         {{ entrada.fecha }}
+        @if (porQueMurio(entrada); as porque) {
+          <br /><small>{{ porque }}</small>
+        }
       </li>
     }
   </ol>

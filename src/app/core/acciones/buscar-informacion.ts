@@ -1,4 +1,5 @@
 import { AJUSTES } from '../ajustes/ajustes';
+import { conCausaDeMuerte } from '../efectos/causa-de-muerte';
 import type { Dados } from '../dados/dados';
 import { aplicarEfectos } from '../efectos/aplicar-efectos';
 import type { Cambio } from '../efectos/cambio';
@@ -108,7 +109,8 @@ export function buscarInformacion(estado: Estado, sitio: Sitio, sobornos: number
   const cubilVacio = tirada.especial === 'cubil' && hayMarca(actual, 'cubil_saqueado', sitio.hex);
   const efectos: Efecto[] = [...(precioSobornos > 0 ? [{ tipo: 'oro', cantidad: -precioSobornos } as Efecto] : []), ...(cubilVacio ? [] : tirada.efectos)];
 
-  const resultado = aplicarEfectos(actual, efectos, dados);
+  const aplicado = aplicarEfectos(actual, efectos, dados);
+  const resultado = { ...aplicado, estado: conCausaDeMuerte(aplicado.estado, { tipo: 'accion', accion: 'buscar_informacion' }) };
   actual = resultado.estado;
   const cambios: Cambio[] = [...resultado.cambios];
 

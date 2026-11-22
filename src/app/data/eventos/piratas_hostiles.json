@@ -1,12 +1,12 @@
 {
   "id": "piratas_hostiles",
   "titulo": "Piratas hostiles",
-  "imagen": "eventos/piratashostiles.jpg",
+  "imagen": "eventos/piratashostiles.png",
   "libro": "E003",
   "pasos": {
     "inicio": {
       "texto": "Unos piratas hostiles te salen al paso con malas intenciones. Tendrás que luchar.",
-      "combate": { "encuentro": "piratas_hostiles" }
+      "combate": { "encuentro": "piratas_hostiles", "botonDelEncuentro": "¿Quién viene a por ti?", "boton": "¡A por ellos!" }
     }
   }
 }

@@ -18,7 +18,10 @@ import { ENCUENTROS } from '../encuentros/cargar-encuentros';
 import type { Encuentro } from '../encuentros/encuentro';
 import type { EnemigoPedido } from '../combate/combate';
 import { banderaDeEventoOcurrido, eventoYaOcurrido } from './una-vez';
-import { PASO_INICIAL, type Evento, type FilaDeEvento, type Opcion, type Paso, type Rama } from './evento';
+import { sitioActual } from '../mapa/sitio-actual';
+import { esPuerto } from '../turno/lugar';
+import { conCausaDeMuerte } from '../efectos/causa-de-muerte';
+import { CANTIDAD_DEL_EVENTO, PASO_INICIAL, type Evento, type FilaDeEvento, type Opcion, type Paso, type Rama } from './evento';
 
 // EL MOTOR DE EVENTOS (Sprint 10, paso 2). Solo reglas: no sabe nada de la pantalla.
 //
@@ -85,8 +88,9 @@ export interface OpcionVisible {
   texto: string;
   disponible: boolean;
   // Por qué no se puede elegir: ya llevas ese objeto, el grupo está lleno, algo prohíbe nuevos
-  // seguidores (hedor nauseabundo) o ese evento (de una sola vez) ya ocurrió.
-  motivo?: 'ya_lo_tienes' | 'grupo_lleno' | 'prohibido' | 'al_maximo' | 'ya_ocurrio';
+  // seguidores (hedor nauseabundo), ya estás al máximo, ese evento (de una sola vez) ya ocurrió o no
+  // tienes oro suficiente.
+  motivo?: 'ya_lo_tienes' | 'grupo_lleno' | 'prohibido' | 'al_maximo' | 'ya_ocurrio' | 'sin_oro';
 }
 
 /**
@@ -100,9 +104,11 @@ export interface OpcionVisible {
  *   combate_naval:    "Luchar" (empieza el combate naval).
  *   en_combate:       la ventana se aparta: se está jugando el combate que lanzó el evento.
  *   continuar:        hay algo que leer; "Continuar".
+ *   muerte:           la partida ha terminado en mitad del evento (has muerto): se lee lo que ha pasado
+ *                     y por qué has muerto; la pantalla pone "Ver el final".
  */
 export interface VistaDelEvento {
-  modo: 'empezar' | 'opciones' | 'tirada' | 'elegir_resultado' | 'chequeo' | 'combate' | 'combate_naval' | 'en_combate' | 'continuar';
+  modo: 'muerte' | 'empezar' | 'opciones' | 'tirada' | 'elegir_resultado' | 'chequeo' | 'combate' | 'combate_naval' | 'en_combate' | 'continuar';
   titulo: string;
   imagen?: string;
 
@@ -114,15 +120,20 @@ export interface VistaDelEvento {
   texto?: string;
   lectura: Lectura | null;
 
+  // Lo leído en los pasos anteriores, que se enseña encima (del más antiguo al más nuevo). Va antes que
+  // el texto y la lectura de ahora.
+  anteriores: Lectura[];
+
   opciones?: OpcionVisible[];
 
   // Con el amuleto del destino: los resultados posibles de la tabla, para elegir uno.
   resultados?: ResultadoPosible[];
   // paraEncuentro = la tirada es la del encuentro de un combate (para ver contra quién se lucha).
-  tirada?: { dado: string; modificador: number; minimo: number; maximo: number; puedeElegir: boolean; paraEncuentro?: boolean };
-  chequeo?: { caracteristica: 'fuerza' | 'ingenio'; modificador: number };
-  combate?: { enemigos: { enemigo: string; cantidad?: number | string }[] };
-  combateNaval?: { barco: string };
+  // boton = el texto del botón escrito en el evento (sin él, la pantalla pone el suyo).
+  tirada?: { dado: string; modificador: number; minimo: number; maximo: number; puedeElegir: boolean; paraEncuentro?: boolean; boton?: string };
+  chequeo?: { caracteristica: 'fuerza' | 'ingenio'; modificador: number; boton?: string };
+  combate?: { enemigos: { enemigo: string; cantidad?: number | string }[]; boton?: string };
+  combateNaval?: { barco: string; boton?: string };
 
   // Usos que le quedan a la mano de mono (solo en el modo "empezar").
   manoDeMono?: number;
@@ -156,29 +167,36 @@ export function vistaDelEvento(estado: Estado, eventos: readonly Evento[] = EVEN
     ...(evento.imagen !== undefined ? { imagen: evento.imagen } : {}),
     miga: pila.filter((m, i) => !m.porEmpezar || i === pila.length - 1).map(m => buscarEvento(eventos, m.evento).titulo),
     lectura: marco.lectura,
+    anteriores: marco.anteriores ?? [],
   };
 
   if (marco.porEmpezar) {
     // Solo se para aquí un evento lanzado por el juego cuando llevas la mano de mono.
+    // La cantidad todavía no se ha tirado (se tira al empezar de verdad).
     const inicio = evento.pasos[PASO_INICIAL];
-    return { ...base, modo: 'empezar', texto: inicio.texto, manoDeMono: usosDe(estado, OBJETO_EVITAR_EVENTO) };
+    return { ...base, modo: 'empezar', texto: conCantidad(inicio.texto, undefined), manoDeMono: usosDe(estado, OBJETO_EVITAR_EVENTO) };
+  }
+
+  if (estado.mundo.finPartida) {
+    // Has muerto (o ganado) en mitad del evento: se lee lo que ha pasado y "Ver el final".
+    return { ...base, modo: 'muerte', texto: marco.lectura?.texto };
   }
 
   const paso = pasoDe(evento, marco.paso);
+  const texto = conCantidad(paso.texto, marco.cantidad);
   if (marco.esperando) {
-    return { ...base, modo: 'en_combate', texto: paso.texto };
+    return { ...base, modo: 'en_combate', texto };
   }
   if (marco.siguiente !== null) {
     return { ...base, modo: 'continuar', texto: marco.lectura?.texto };
   }
 
   // El paso espera al jugador.
-  const texto = paso.texto;
   if (marco.eligiendoResultado) {
     return { ...base, modo: 'elegir_resultado', texto, resultados: resultadosPosibles(paso, eventos) };
   }
   if (paso.opciones) {
-    return { ...base, modo: 'opciones', texto, opciones: paso.opciones.map(o => opcionVisible(estado, o, eventos)) };
+    return { ...base, modo: 'opciones', texto, opciones: paso.opciones.map(o => opcionVisible(estado, o, eventos, marco.cantidad)) };
   }
   if (paso.tirada) {
     const rango = rangoDeTirada(paso.tirada.dado);
@@ -192,11 +210,13 @@ export function vistaDelEvento(estado: Estado, eventos: readonly Evento[] = EVEN
         minimo: rango.min,
         maximo: rango.max,
         puedeElegir: usosDe(estado, OBJETO_ELEGIR_RESULTADO) > 0,
+        boton: paso.tirada.boton,
       },
     };
   }
   if (paso.chequeo) {
-    return { ...base, modo: 'chequeo', texto, chequeo: { caracteristica: paso.chequeo.caracteristica, modificador: paso.chequeo.modificador ?? 0 } };
+    const { caracteristica, modificador, boton } = paso.chequeo;
+    return { ...base, modo: 'chequeo', texto, chequeo: { caracteristica, modificador: modificador ?? 0, ...(boton !== undefined ? { boton } : {}) } };
   }
   if (paso.combate) {
     // Un encuentro: primero hay que tirar para ver contra quién se lucha.
@@ -207,7 +227,7 @@ export function vistaDelEvento(estado: Estado, eventos: readonly Evento[] = EVEN
         ...base,
         modo: 'tirada',
         texto,
-        tirada: { dado: encuentro.dado, modificador: 0, minimo: rango.min, maximo: rango.max, puedeElegir: usosDe(estado, OBJETO_ELEGIR_RESULTADO) > 0, paraEncuentro: true },
+        tirada: { dado: encuentro.dado, modificador: 0, minimo: rango.min, maximo: rango.max, puedeElegir: usosDe(estado, OBJETO_ELEGIR_RESULTADO) > 0, paraEncuentro: true, ...(paso.combate.botonDelEncuentro !== undefined ? { boton: paso.combate.botonDelEncuentro } : {}) },
       };
     }
     // Ya se sabe contra quién: el texto del paso y el de la fila del encuentro, y "Luchar".
@@ -217,11 +237,14 @@ export function vistaDelEvento(estado: Estado, eventos: readonly Evento[] = EVEN
       ...base,
       modo: 'combate',
       ...(textoConEncuentro !== '' ? { texto: textoConEncuentro } : {}),
-      combate: { enemigos: enemigos.map(e => ({ enemigo: e.enemigo, ...(e.cantidad !== undefined ? { cantidad: e.cantidad } : {}) })) },
+      combate: {
+        enemigos: enemigos.map(e => ({ enemigo: e.enemigo, ...(e.cantidad !== undefined ? { cantidad: e.cantidad } : {}) })),
+        ...(paso.combate.boton !== undefined ? { boton: paso.combate.boton } : {}),
+      },
     };
   }
   if (paso.combateNaval) {
-    return { ...base, modo: 'combate_naval', texto, combateNaval: { barco: paso.combateNaval.barco } };
+    return { ...base, modo: 'combate_naval', texto, combateNaval: { barco: paso.combateNaval.barco, ...(paso.combateNaval.boton !== undefined ? { boton: paso.combateNaval.boton } : {}) } };
   }
   // No debería pasar: un paso sin elección siempre tiene "siguiente".
   throw new Error(`vistaDelEvento: el paso "${marco.paso}" de "${marco.evento}" no espera nada`);
@@ -254,7 +277,7 @@ export function elegirOpcion(estado: Estado, indice: number, dados: Dados, event
   const opcion = paso.opciones?.[indice];
   if (!paso.opciones) throw new Error('elegirOpcion: este paso no tiene opciones');
   if (!opcion) throw new Error(`elegirOpcion: no hay opción ${indice}`);
-  const visible = opcionVisible(t.estado, opcion, eventos);
+  const visible = opcionVisible(t.estado, opcion, eventos, cima(t).cantidad);
   if (!visible.disponible) throw new Error(`elegirOpcion: la opción "${opcion.texto}" no se puede elegir (${visible.motivo})`);
 
   llegarARama(t, { ...opcion, texto: undefined }, dados);
@@ -420,7 +443,10 @@ export function cerrarCombateDelEvento(estado: Estado, dados: Dados, eventos: re
   // Los cambios del cierre (recompensas) también se enseñan.
   const cambiosDelCierre = [...t.cambios];
 
-  if (t.estado.mundo.finPartida) return terminar(t, dados);
+  if (t.estado.mundo.finPartida) {
+    marco.lectura = { combate: resultado, cambios: cambiosDelCierre };
+    return terminar(t, dados);
+  }
 
   // La salida que toca según cómo acabó (en un combate naval no hay "derrota": perderlo es perder la partida).
   const salidas: { victoria?: Rama; huida?: Rama; derrota?: Rama } = paso.combate ?? paso.combateNaval ?? {};
@@ -438,6 +464,7 @@ export function continuarEvento(estado: Estado, dados: Dados, eventos: readonly 
     throw new Error('continuarEvento: ahora no hay nada que continuar');
   }
   marco.lectura = null;
+  delete marco.anteriores;
   return avanzar(t, dados);
 }
 
@@ -488,6 +515,8 @@ function trabajoEsperando(estado: Estado, eventos: readonly Evento[], quien: str
   if (!marco || marco.porEmpezar || marco.esperando || marco.siguiente !== null) {
     throw new Error(`${quien}: ahora el evento no espera eso`);
   }
+  // El jugador ya ha leído lo de antes: al pulsar se borra.
+  delete marco.anteriores;
   return t;
 }
 
@@ -522,13 +551,23 @@ function avanzar(t: Trabajo, dados: Dados): ResultadoMotor {
       continue;
     }
     if (marco.esperando || marco.siguiente === null) break;
-    if (hayAlgoQueLeer(marco.lectura)) break;
+    if (hayAlgoQueLeer(marco.lectura) || (marco.anteriores?.length ?? 0) > 0) {
+      // Al pasar a otro paso del mismo evento no hace falta "Continuar": lo leído se queda arriba.
+      // A otro evento, al final o con "pausa", sí (la regla de oro: siempre se ve qué ha pasado).
+      if (!seSigueSinParar(marco.siguiente)) break;
+      if (hayAlgoQueLeer(marco.lectura)) marco.anteriores = [...(marco.anteriores ?? []), marco.lectura!];
+    }
 
     const siguiente = marco.siguiente;
     marco.lectura = null;
     seguir(t, marco, siguiente, dados);
   }
   return terminar(t, dados);
+}
+
+/** ¿Se sigue sin pulsar "Continuar"? Sí al ir a otro paso del mismo evento (sin "pausa") o al volver a tirar. */
+function seSigueSinParar(siguiente: Siguiente): boolean {
+  return (siguiente.tipo === 'paso' && !siguiente.pausa) || siguiente.tipo === 'repetir';
 }
 
 /** Ejecuta un "siguiente" sobre el marco de arriba. */
@@ -580,9 +619,37 @@ function entrarEnPaso(t: Trabajo, marco: MarcoEvento, nombre: string, dados: Dad
   marco.paso = nombre;
   delete marco.enemigosDelEncuentro;
   const paso = pasoDe(buscarEvento(t.eventos, marco.evento), nombre);
-  const cambios = aplicar(t, paso.efectos, dados);
-  marco.lectura = { ...(paso.texto !== undefined ? { texto: paso.texto } : {}), cambios };
+  // La cantidad del evento se tira al entrar en el paso que la define (antes de sus efectos y su texto).
+  if (paso.cantidad !== undefined) marco.cantidad = dados.tirar(paso.cantidad).total;
+  const cambios = aplicar(t, paso.efectos, dados, paso.muerte);
+  const texto = conCantidad(paso.texto, marco.cantidad);
+
+  if (paso.segun) {
+    // Según dónde estés: se sigue solo por la rama que toque (la que no está escrita = termina).
+    // Se lee el texto del paso y el de la rama, juntos.
+    const rama: Rama = paso.segun[dondeEstas(t.estado)] ?? {};
+    const cambiosDeLaRama = aplicar(t, rama.efectos, dados, rama.muerte ?? paso.muerte);
+    const textos = [texto, conCantidad(rama.texto, marco.cantidad)].filter((x): x is string => x !== undefined);
+    marco.lectura = { ...(textos.length > 0 ? { texto: textos.join('\n\n') } : {}), cambios: [...cambios, ...cambiosDeLaRama] };
+    marco.siguiente = siguienteDe(rama);
+    return;
+  }
+
+  marco.lectura = { ...(texto !== undefined ? { texto } : {}), cambios };
   marco.siguiente = esperaAlJugador(paso) ? null : siguienteDe(paso);
+}
+
+/** Para los pasos "segun": a bordo de tu barco, en un puerto (o la guarida) o en otro sitio. */
+function dondeEstas(estado: Estado): 'barco' | 'puerto' | 'otro' {
+  const lugar = sitioActual(estado).lugar;
+  if (lugar === 'barco') return 'barco';
+  return esPuerto(lugar) ? 'puerto' : 'otro';
+}
+
+/** Cambia {cantidad} por la cantidad del evento (o por "unas cuantas" si todavía no se ha tirado). */
+function conCantidad(texto: string | undefined, cantidad: number | undefined): string | undefined {
+  if (texto === undefined) return undefined;
+  return texto.split(`{${CANTIDAD_DEL_EVENTO}}`).join(cantidad !== undefined ? String(cantidad) : 'unas cuantas');
 }
 
 /**
@@ -601,8 +668,9 @@ function llegarARama(
   antes: string[] = [],
 ): void {
   const marco = cima(t);
-  const cambios = [...(extra.cambios ?? []), ...aplicar(t, rama.efectos, dados)];
-  marco.lectura = { ...extra, ...(rama.texto !== undefined ? { texto: rama.texto } : {}), cambios };
+  const cambios = [...(extra.cambios ?? []), ...aplicar(t, rama.efectos, dados, rama.muerte)];
+  const texto = conCantidad(rama.texto, marco.cantidad);
+  marco.lectura = { ...extra, ...(texto !== undefined ? { texto } : {}), cambios };
   const despues = forzado ?? siguienteDe(rama);
   marco.siguiente = antes.length > 0 ? { tipo: 'llamar', eventos: antes, despues } : despues;
 }
@@ -610,7 +678,7 @@ function llegarARama(
 /** Por dónde se sigue después de una rama (o de un paso que no espera al jugador). */
 function siguienteDe(rama: Rama): Siguiente {
   if (rama.evento !== undefined) return { tipo: 'evento', evento: rama.evento };
-  const despues: Siguiente = rama.paso !== undefined ? { tipo: 'paso', paso: rama.paso } : { tipo: 'fin' };
+  const despues: Siguiente = rama.paso !== undefined ? { tipo: 'paso', paso: rama.paso, ...(rama.pausa ? { pausa: true } : {}) } : { tipo: 'fin' };
   if (rama.llamar !== undefined) return { tipo: 'llamar', eventos: [rama.llamar], despues };
   return despues;
 }
@@ -619,14 +687,32 @@ function esperaAlJugador(paso: Paso): boolean {
   return paso.opciones !== undefined || paso.tirada !== undefined || paso.chequeo !== undefined || paso.combate !== undefined || paso.combateNaval !== undefined;
 }
 
-/** Resuelve los dados de los efectos y los aplica. Devuelve los cambios reales. */
-function aplicar(t: Trabajo, efectos: readonly EfectoDefinicion[] | undefined, dados: Dados): Cambio[] {
+/**
+ * Resuelve los dados de los efectos y los aplica. Devuelve los cambios reales.
+ * muerte = el mensaje si estos efectos te matan (el de la rama; si no tiene, se usa el del evento).
+ */
+function aplicar(t: Trabajo, efectos: readonly EfectoDefinicion[] | undefined, dados: Dados, muerte?: string): Cambio[] {
   if (!efectos || efectos.length === 0) return [];
-  const resueltos = efectos.map(e => resolverEfecto(e, dados));
+  const marco = cima(t);
+  const cantidad = marco?.cantidad;
+  const resueltos = efectos.map(e => resolverEfecto(conCantidadEnEfecto(e, cantidad), dados));
   const aplicado = aplicarEfectos(t.estado, resueltos, dados);
   t.estado = aplicado.estado;
+  if (t.estado.mundo.finPartida && marco) {
+    const texto = muerte ?? buscarEvento(t.eventos, marco.evento).muerte;
+    t.estado = conCausaDeMuerte(t.estado, { tipo: 'evento', evento: marco.evento, ...(texto !== undefined ? { texto } : {}) });
+  }
   t.cambios.push(...aplicado.cambios);
   return aplicado.cambios;
+}
+
+/** "cantidad": "cantidad" / "-cantidad" → el número de la cantidad del evento (en positivo o en negativo). */
+function conCantidadEnEfecto(efecto: EfectoDefinicion, cantidad: number | undefined): EfectoDefinicion {
+  if (!('cantidad' in efecto) || typeof efecto.cantidad !== 'string') return efecto;
+  const signo = efecto.cantidad === CANTIDAD_DEL_EVENTO ? 1 : efecto.cantidad === `-${CANTIDAD_DEL_EVENTO}` ? -1 : 0;
+  if (signo === 0) return efecto;
+  if (cantidad === undefined) throw new Error('Motor de eventos: un efecto usa la cantidad del evento, pero ningún paso la ha tirado');
+  return { ...efecto, cantidad: signo * cantidad } as EfectoDefinicion;
 }
 
 /**
@@ -715,10 +801,11 @@ function apilar(t: Trabajo, marco: MarcoEvento): void {
 
 /** Mete la pila en el estado, apunta los dados y monta el resultado. */
 function terminar(t: Trabajo, dados: Dados): ResultadoMotor {
-  // Si la partida ha terminado (has muerto, has ganado), ya no queda ningún evento que jugar.
-  const pila = t.estado.mundo.finPartida ? [] : t.pila;
+  // Si la partida ha terminado (has muerto, has ganado), la pila se queda como estaba: la ventana
+  // enseña lo que ha pasado y por qué has muerto (modo "muerte") hasta que el jugador pulsa "Ver el final".
+  const pila = t.pila;
   const estado: Estado = { ...t.estado, mundo: { ...t.estado.mundo, pilaEventos: pila, estadoDados: dados.obtenerEstado() } };
-  return { estado, cambios: t.cambios, pendientes: t.pendientes, terminado: pila.length === 0 };
+  return { estado, cambios: t.cambios, pendientes: t.pendientes, terminado: pila.length === 0 || t.estado.mundo.finPartida !== null };
 }
 
 function hayAlgoQueLeer(lectura: Lectura | null): boolean {
@@ -733,10 +820,16 @@ function hayAlgoQueLeer(lectura: Lectura | null): boolean {
   );
 }
 
-function opcionVisible(estado: Estado, opcion: Opcion, eventos: readonly Evento[]): OpcionVisible {
+function opcionVisible(estado: Estado, opcionOriginal: Opcion, eventos: readonly Evento[], cantidad: number | undefined): OpcionVisible {
+  const opcion = { ...opcionOriginal, texto: conCantidad(opcionOriginal.texto, cantidad) ?? opcionOriginal.texto };
   const sinObjeto = opcion.requiere?.sinObjeto;
   if (sinObjeto !== undefined && estado.jugador.inventario.some(o => o.id === sinObjeto)) {
     return { texto: opcion.texto, disponible: false, motivo: 'ya_lo_tienes' };
+  }
+  const oro = opcion.requiere?.oro;
+  if (oro !== undefined) {
+    const necesario = oro === CANTIDAD_DEL_EVENTO ? (cantidad ?? 0) : oro;
+    if (estado.jugador.oro < necesario) return { texto: opcion.texto, disponible: false, motivo: 'sin_oro' };
   }
   const puedeSubir = opcion.requiere?.puedeSubir;
   if (puedeSubir !== undefined) {

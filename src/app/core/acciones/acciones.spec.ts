@@ -274,7 +274,7 @@ describe('cazar', () => {
   it('cazar con 1 PV puede costar la partida', () => {
     const r = cazar(estadoCon({ vida: 1 }), EN_LA_JUNGLA, new Dados(semillaQueSaca(2)));
 
-    expect(r.estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'vida' });
+    expect(r.estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'vida', causa: { tipo: 'accion', accion: 'cazar' } });
   });
 
   it('el pescador no ayuda a cazar', () => {

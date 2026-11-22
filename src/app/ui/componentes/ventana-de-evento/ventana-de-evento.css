@@ -74,3 +74,19 @@
   transform: translateX(-50%);
   z-index: 4;
 }
+
+/* Lo de los pasos anteriores (se queda arriba, sin "Continuar"): un poco apagado y separado. */
+.anterior {
+  opacity: 0.75;
+  border-bottom: 1px dashed #bbb;
+  margin-bottom: 0.5em;
+}
+
+/* Al morir: el porqué, bien visible. */
+.muerte {
+  color: #8b0000;
+  font-weight: bold;
+  border: 2px solid #8b0000;
+  padding: 0.5em;
+  width: 100%;
+}

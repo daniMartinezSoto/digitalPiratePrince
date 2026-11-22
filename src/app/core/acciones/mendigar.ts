@@ -1,4 +1,5 @@
 import type { Dados } from '../dados/dados';
+import { conCausaDeMuerte } from '../efectos/causa-de-muerte';
 import { aplicarEfectos } from '../efectos/aplicar-efectos';
 import type { Estado } from '../estado/estado';
 import { calcularModificador } from '../modificadores/calcular-modificador';
@@ -33,7 +34,8 @@ export function mendigar(estado: Estado, sitio: Sitio, dados: Dados): ResultadoA
   }
 
   const tirada = resolverTabla(obtenerTabla('mendigar'), calcularModificador(estado.jugador, 'mendigar'), dados);
-  const resultado = aplicarEfectos(estado, tirada.efectos, dados);
+  const aplicado = aplicarEfectos(estado, tirada.efectos, dados);
+  const resultado = { ...aplicado, estado: conCausaDeMuerte(aplicado.estado, { tipo: 'accion', accion: 'mendigar' }) };
   const actual: Estado =
     tirada.especial === 'comida_gratis' ? { ...resultado.estado, mundo: { ...resultado.estado.mundo, comidaGratis: true } } : resultado.estado;
 

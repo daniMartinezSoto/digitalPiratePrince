@@ -105,6 +105,9 @@
       <div [hidden]="pestana() !== 'acciones'">
         @if (estado.mundo.finPartida; as fin) {
           <p class="fin">PARTIDA TERMINADA · {{ textoDeFin(fin) }}</p>
+          @if (textoDeMuerte(fin); as porque) {
+            <p class="porque">{{ porque }}</p>
+          }
           <button type="button" (click)="nuevaPartida()">Nueva partida</button>
         } @else if (estado.mundo.combateNaval) {
           <app-combate-naval />

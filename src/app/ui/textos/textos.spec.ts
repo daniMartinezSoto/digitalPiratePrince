@@ -1,4 +1,4 @@
-import { describirCambio, describirTirada, nombreDeEvento, textoDeMotivo } from './textos';
+import { describirCambio, describirTirada, nombreDeEvento, textoDeMotivo, textoDeMuerte } from './textos';
 
 describe('textos de la pantalla', () => {
   it('un recurso que sube o baja, con su "de... a..."', () => {
@@ -40,5 +40,26 @@ describe('textos de la pantalla', () => {
 
   it('el nombre de un evento pendiente', () => {
     expect(nombreDeEvento('taberna_clandestina')).toBe('taberna clandestina');
+  });
+});
+
+describe('textoDeMuerte (por qué has muerto, 22-nov)', () => {
+  const vida = { resultado: 'derrota', motivo: 'vida' } as const;
+  const tripulacion = { resultado: 'derrota', motivo: 'tripulacion' } as const;
+
+  it('sin causa, nada (la pantalla dice solo el motivo)', () => {
+    expect(textoDeMuerte(vida)).toBeNull();
+  });
+
+  it('un evento con su mensaje escrito lo usa tal cual; sin mensaje, nombra el evento', () => {
+    expect(textoDeMuerte({ ...vida, causa: { tipo: 'evento', evento: 'borracho', texto: 'Te abres la cabeza.' } })).toBe('Te abres la cabeza.');
+    expect(textoDeMuerte({ ...vida, causa: { tipo: 'evento', evento: 'guardia' } })).toBe('Tu aventura termina durante «Guardia».');
+  });
+
+  it('en combate nombra a los enemigos; con el hambre, la condición o una acción, lo dice', () => {
+    expect(textoDeMuerte({ ...vida, causa: { tipo: 'combate', enemigos: ['jaguar', 'guardia'] } })).toBe('Caes en combate contra jaguar y guardia. Tu aventura termina aquí.');
+    expect(textoDeMuerte({ ...vida, causa: { tipo: 'hambre' } })).toBe('El hambre puede contigo: mueres de inanición.');
+    expect(textoDeMuerte({ ...tripulacion, causa: { tipo: 'condicion', condicion: 'escorbuto' } })).toBe('«Escorbuto» acaba con tu tripulación: no queda nadie a bordo.');
+    expect(textoDeMuerte({ ...vida, causa: { tipo: 'accion', accion: 'cazar' } })).toBe('Mueres al cazar.');
   });
 });

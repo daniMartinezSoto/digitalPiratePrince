@@ -16,4 +16,23 @@ export type MotivoDeFin = (typeof MOTIVOS_DE_FIN)[number];
 export interface FinPartida {
   resultado: ResultadoDePartida;
   motivo: MotivoDeFin;
+
+  // POR QUÉ has muerto (pedido por el autor el 22-nov: al morir tiene que salir por qué). Lo apunta quien
+  // hace el daño (el combate, el hambre, una condición, cazar, un evento...) con conCausaDeMuerte.
+  // Sin causa, la pantalla dice solo el motivo ("te has quedado sin vida").
+  causa?: CausaDeMuerte;
 }
+
+/**
+ * Lo que te ha matado. La pantalla escribe el mensaje (ui/textos), salvo en los eventos, que pueden traer
+ * el suyo escrito en el JSON ("texto": el de la rama o el del evento).
+ */
+export type CausaDeMuerte =
+  | { tipo: 'combate'; enemigos: string[] }
+  | { tipo: 'combate_naval'; barco: string }
+  | { tipo: 'hambre' }
+  | { tipo: 'condicion'; condicion: string }
+  | { tipo: 'accion'; accion: string }
+  | { tipo: 'evento'; evento: string; texto?: string };
+
+export const TIPOS_DE_CAUSA_DE_MUERTE = ['combate', 'combate_naval', 'hambre', 'condicion', 'accion', 'evento'] as const;

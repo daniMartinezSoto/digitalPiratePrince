@@ -18,7 +18,7 @@ import {
 } from '../../textos/textos-de-combate';
 import { Combate } from '../combate/combate';
 import { cerrarCombateDelEvento, eventoEsperaUnCombate, vistaDelEvento } from '../../../core/eventos/motor';
-import { lineasDeEvento } from '../../textos/textos-de-eventos';
+import { lecturasDeLaVista, lineasDeEvento } from '../../textos/textos-de-eventos';
 
 // EL COMBATE NAVAL (pantalla de pruebas): el barco enemigo, tu tripulación y los botones Disparar,
 // Huir y Abordar. Durante el abordaje aparece el combate normal. Al terminar, "Cerrar el combate
@@ -71,7 +71,7 @@ export class CombateNaval {
       const evento = vistaDelEvento(estado)?.titulo ?? '';
       this.jugar.hacer(
         (e, d) => cerrarCombateDelEvento(e, d),
-        (r, n) => lineasDeEvento(`${evento}: se cierra el combate naval`, vistaDelEvento(r.estado)?.lectura ?? null, r.pendientes, n),
+        (r, n) => lineasDeEvento(`${evento}: se cierra el combate naval`, lecturasDeLaVista(vistaDelEvento(r.estado)), r.pendientes, n),
       );
       return;
     }

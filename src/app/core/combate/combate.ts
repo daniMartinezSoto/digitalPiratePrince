@@ -1,4 +1,5 @@
 import { CONDICIONES } from '../catalogos/cargar-condiciones';
+import { conCausaDeMuerte } from '../efectos/causa-de-muerte';
 import { ENEMIGOS } from '../catalogos/cargar-enemigos';
 import { OBJETOS } from '../catalogos/cargar-objetos';
 import type { Enemigo, HabilidadDeEnemigo } from '../catalogos/enemigo';
@@ -354,6 +355,7 @@ export function atacar(estado: Estado, dados: Dados): ResultadoRonda {
     efectos.push({ tipo: 'bandera', bandera: BANDERA_AFORTUNADO });
   }
   const aplicado = aplicarEfectos(estado, efectos, dados);
+  aplicado.estado = conCausaDeMuerte(aplicado.estado, { tipo: 'combate', enemigos: [...new Set(combate.enemigos.map(e => e.tipo))] });
   const despues = aplicado.estado.jugador;
   const partidaPerdida = aplicado.estado.mundo.finPartida !== null;
 

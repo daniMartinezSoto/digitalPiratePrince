@@ -7,8 +7,9 @@ import type { ResultadoTirada } from './resultado-tirada';
 // otro 6 y un 1. Así un test de combate dice exactamente qué pasa ("sale un 6 y luego un 1") en vez
 // de buscar una semilla que, por casualidad, lo produzca.
 //
-// Solo saben tirar UN dado ("1d6", "1d11"...) y entero(min, max): cada llamada gasta un número de la
-// lista. Si el número no cabe en el dado o se acaba la lista, lanzan un error (el test está mal escrito).
+// Solo saben tirar UN dado ("1d6", "1d11"...), también multiplicado o con suma ("1d6x5", "1d6+1": el
+// número de la lista es lo que saca el dado, y luego se multiplica y se suma), y entero(min, max): cada
+// llamada gasta un número de la lista. Si el número no cabe en el dado o se acaba la lista, lanzan un error (el test está mal escrito).
 // restantes() dice cuántos números quedan sin usar: sirve para comprobar que se gastaron los justos.
 
 class DadosTrucados extends Dados {
@@ -20,12 +21,14 @@ class DadosTrucados extends Dados {
   }
 
   override tirar(expresion: string): ResultadoTirada {
-    const coincidencia = /^1d(\d+)$/.exec(expresion);
+    const coincidencia = /^1d(\d+)(?:x(\d+))?(?:\+(\d+))?$/.exec(expresion);
     if (!coincidencia) {
-      throw new Error(`Dados trucados: solo saben tirar un dado ("1d6"), no "${expresion}"`);
+      throw new Error(`Dados trucados: solo saben tirar un dado ("1d6", "1d6x5"), no "${expresion}"`);
     }
     const valor = this.siguienteNumero(1, Number(coincidencia[1]));
-    return { dados: [valor], total: valor };
+    const multiplicador = coincidencia[2] ? Number(coincidencia[2]) : 1;
+    const suma = coincidencia[3] ? Number(coincidencia[3]) : 0;
+    return { dados: [valor], total: valor * multiplicador + suma };
   }
 
   override entero(min: number, max: number): number {

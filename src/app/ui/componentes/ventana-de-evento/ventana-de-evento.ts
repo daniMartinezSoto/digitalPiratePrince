@@ -19,7 +19,9 @@ import { Jugar } from '../../servicios/jugar';
 import { MesaDeTiradas } from '../../servicios/mesa-de-tiradas';
 import { TrampasDeEventos } from '../../servicios/trampas-de-eventos';
 import { nombresDeSeguidores } from '../../textos/lineas-del-registro';
-import { etiquetaDeResultado, lineasDeEvento, lineasDeLectura, NOMBRE_DE_CARACTERISTICA, TEXTO_DE_MOTIVO_DE_OPCION } from '../../textos/textos-de-eventos';
+import { etiquetaDeResultado, lecturasDeLaVista, lineasDeEvento, lineasDeLectura, NOMBRE_DE_CARACTERISTICA, TEXTO_DE_MOTIVO_DE_OPCION } from '../../textos/textos-de-eventos';
+import { textoDeMuerte } from '../../textos/textos';
+import type { Lectura } from '../../../core/estado/pila-eventos';
 
 // LA VENTANA DE EVENTOS (pantalla de pruebas, Sprint 10, paso 5): sale encima del mapa mientras hay
 // un evento en marcha, con el flujo decidido por el autor (CLAUDE.md, sección 8):
@@ -41,18 +43,29 @@ export class VentanaDeEvento {
   private readonly mesa = inject(MesaDeTiradas);
   private readonly trampas = inject(TrampasDeEventos);
 
+  /** Si mueres en un evento, la ventana se queda enseñando por qué hasta pulsar "Ver el final". */
+  protected readonly finVisto = signal(false);
+
   protected readonly vista = computed(() => {
     const estado = this.store.estado();
-    return estado && !estado.mundo.finPartida ? vistaDelEvento(estado) : null;
+    if (!estado || (estado.mundo.finPartida && this.finVisto())) return null;
+    return vistaDelEvento(estado);
   });
-  /** Las líneas de lo que se lee ahora (dados, chequeo, texto, cambios). */
-  protected readonly lineas = computed(() => {
-    const vista = this.vista();
-    if (!vista?.lectura) return [];
+  /** Las líneas de lo que se lee ahora (dados, chequeo, cambios), sin el texto, que sale aparte arriba. */
+  protected readonly lineas = computed(() => this.lineasDe(this.vista()?.lectura ?? null));
+  /** Lo de los pasos anteriores, que se queda arriba (sin "Continuar"): su texto y sus líneas. */
+  protected readonly anteriores = computed(() => (this.vista()?.anteriores ?? []).map(l => ({ texto: l.texto, lineas: this.lineasDe(l) })));
+  /** Al morir: por qué (el mensaje del evento o uno general según la causa). */
+  protected readonly textoDeMuerte = computed(() => {
+    const fin = this.store.estado()?.mundo.finPartida;
+    return fin ? (textoDeMuerte(fin) ?? 'Tu aventura termina aquí.') : null;
+  });
+
+  private lineasDe(lectura: Lectura | null): string[] {
+    if (!lectura) return [];
     const estado = this.store.estado();
-    // El texto ya sale aparte, arriba: aquí solo lo demás.
-    return lineasDeLectura({ ...vista.lectura, texto: undefined }, nombresDeSeguidores(estado, estado));
-  });
+    return lineasDeLectura({ ...lectura, texto: undefined }, nombresDeSeguidores(estado, estado));
+  }
 
   /** Plegada = escondida un momento para ver el mapa (no se puede hacer nada mientras). */
   protected readonly plegada = signal(false);
@@ -101,6 +114,10 @@ export class VentanaDeEvento {
     this.boton(`Eliges con el amuleto del destino: «${etiquetaDeResultado(resultado)}»`, (e, d) => tirarDadosDelEvento(e, d, { resultadoElegido: numero }));
   }
 
+  protected verElFinal(): void {
+    this.finVisto.set(true);
+  }
+
   protected chequeo(): void {
     const trucado = this.trampas.gastarProximaTirada();
     if (trucado !== null) {
@@ -130,11 +147,11 @@ export class VentanaDeEvento {
   private boton(titulo: string, regla: (estado: Estado, dados: Dados) => ResultadoMotor, conDados = false): void {
     const evento = this.vista()?.titulo ?? '';
     const r = this.jugar.hacer(regla, (resultado, nombres) => {
-      const lectura = vistaDelEvento(resultado.estado)?.lectura ?? null;
-      return lineasDeEvento(`${evento}: ${titulo}`, lectura, resultado.pendientes, nombres);
+      return lineasDeEvento(`${evento}: ${titulo}`, lecturasDeLaVista(vistaDelEvento(resultado.estado)), resultado.pendientes, nombres);
     });
     if (!r || !conDados) return;
-    const lectura = vistaDelEvento(r.estado)?.lectura;
+    // Los dados de lo que acaba de pasar: la primera lectura con dados (la de arriba si se ha seguido sin parar).
+    const lectura = lecturasDeLaVista(vistaDelEvento(r.estado)).find(l => l.tirada || l.chequeo);
     if (lectura?.tirada) this.mesa.ensenar(lectura.tirada);
     else if (lectura?.chequeo) this.mesa.ensenar({ dados: [lectura.chequeo.dado], modificador: lectura.chequeo.modificador, total: lectura.chequeo.total });
   }

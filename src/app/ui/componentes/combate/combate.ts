@@ -15,7 +15,7 @@ import {
 } from '../../textos/textos-de-combate';
 import { nombreDeEvento, nombreDeObjeto } from '../../textos/textos';
 import { cerrarCombateDelEvento, eventoEsperaUnCombate, vistaDelEvento } from '../../../core/eventos/motor';
-import { lineasDeEvento } from '../../textos/textos-de-eventos';
+import { lecturasDeLaVista, lineasDeEvento } from '../../textos/textos-de-eventos';
 
 // EL COMBATE (pantalla de pruebas): los dos bandos, quién ataca a quién y los botones (Atacar, Huir,
 // objetos de combate). Cuando termina, "Cerrar el combate" cobra las recompensas y enseña los eventos.
@@ -86,7 +86,7 @@ export class Combate {
       const evento = vistaDelEvento(estado)?.titulo ?? '';
       this.jugar.hacer(
         (e, d) => cerrarCombateDelEvento(e, d),
-        (r, n) => lineasDeEvento(`${evento}: se cierra el combate`, vistaDelEvento(r.estado)?.lectura ?? null, r.pendientes, n),
+        (r, n) => lineasDeEvento(`${evento}: se cierra el combate`, lecturasDeLaVista(vistaDelEvento(r.estado)), r.pendientes, n),
       );
       return;
     }

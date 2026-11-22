@@ -6,7 +6,8 @@ import { esSemillaValida, SEMILLA_MAXIMA } from '../../../core/partida/semilla';
 import type { Retrato } from '../../../core/personaje/retrato';
 import { JuegoStore } from '../../../store/juego.store';
 import { Registro } from '../../servicios/registro';
-import { nombreDeEvento, textoDeSobrenombre } from '../../textos/textos';
+import { nombreDeEvento, textoDeMuerte, textoDeSobrenombre } from '../../textos/textos';
+import type { EntradaCronica } from '../../../core/guardado/cronica';
 
 // PANTALLA "NUEVA PARTIDA" (pantalla de pruebas): nombre, hombre o mujer y semilla opcional.
 // Comprueba lo escrito (para avisar en la pantalla) y le pide la partida al store: la pantalla
@@ -25,6 +26,11 @@ export class PantallaNuevaPartida {
   protected readonly error = signal<string | null>(null);
   protected readonly semillaMaxima = SEMILLA_MAXIMA;
   protected readonly textoDeSobrenombre = textoDeSobrenombre;
+
+  /** Por qué murió (si se sabe), debajo de la ficha. */
+  protected porQueMurio(entrada: EntradaCronica): string | null {
+    return entrada.causa ? textoDeMuerte({ resultado: entrada.resultado, motivo: entrada.motivo, causa: entrada.causa }) : null;
+  }
 
   protected empezar(nombre: string, retrato: string, semillaEscrita: string): void {
     const nombreLimpio = nombre.trim();

@@ -13,7 +13,7 @@ import { Combate } from '../../componentes/combate/combate';
 import { CombateDePrueba } from '../../componentes/combate-de-prueba/combate-de-prueba';
 import { CombateNaval } from '../../componentes/combate-naval/combate-naval';
 import { Objetos } from '../../componentes/objetos/objetos';
-import { NOMBRE_DE_FASE, textoDeFin } from '../../textos/textos';
+import { NOMBRE_DE_FASE, textoDeFin, textoDeMuerte } from '../../textos/textos';
 import { progresoDePuertos } from '../../../core/viaje/puertos-principales';
 import { famaObjetivoActual } from '../../../core/condiciones/consultas';
 import { hayCombate } from '../../../core/combate/hay-combate';
@@ -61,6 +61,7 @@ export class PantallaPartida {
   protected readonly confirmandoAbandono = signal(false);
   protected readonly nombreDeFase = NOMBRE_DE_FASE;
   protected readonly textoDeFin = textoDeFin;
+  protected readonly textoDeMuerte = textoDeMuerte;
   /** "Puertos 1/4": los 4 puertos principales y cuáles se han visitado. */
   protected readonly puertos = computed(() => {
     const estado = this.store.estado();

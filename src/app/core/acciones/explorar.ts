@@ -1,4 +1,5 @@
 import type { Dados } from '../dados/dados';
+import { conCausaDeMuerte } from '../efectos/causa-de-muerte';
 import { aplicarEfectos } from '../efectos/aplicar-efectos';
 import type { Estado } from '../estado/estado';
 import { conMarca, hayMarca } from '../estado/marcas';
@@ -80,7 +81,8 @@ function explorar(estado: Estado, sitio: Sitio, accion: IdExploracion, dados: Da
     }
   }
 
-  const resultado = aplicarEfectos(estado, efectos, dados);
+  const aplicado = aplicarEfectos(estado, efectos, dados);
+  const resultado = { ...aplicado, estado: conCausaDeMuerte(aplicado.estado, { tipo: 'accion', accion: accion }) };
   const marcado = conMarca(resultado.estado, exploracion.marca, sitio.hex);
   const tiradas = resultados.map(paraEnsenar);
   return { estado: cerrarFaseDeAccion(marcado, dados), cambios: resultado.cambios, tirada: tiradas[0], tiradas, eventos };

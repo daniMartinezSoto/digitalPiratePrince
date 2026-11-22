@@ -1,0 +1,35 @@
+{
+  "id": "guardia",
+  "titulo": "Guardia",
+  "imagen": "eventos/guardia.png",
+  "libro": "E057",
+  "pasos": {
+    "inicio": {
+      "cantidad": "1d6x5",
+      "texto": "Un guardia se interpone entre tú y tus intereses. Aceptará un soborno de {cantidad} monedas de oro para dejarte en paz.",
+      "opciones": [
+        {
+          "texto": "Pagar el soborno ({cantidad} monedas de oro)",
+          "requiere": { "oro": "cantidad" },
+          "paso": "pagado"
+        },
+        { "texto": "No pagar y enfrentarte a él", "paso": "pelea" }
+      ]
+    },
+    "pagado": {
+      "texto": "El guardia se guarda las {cantidad} monedas y mira hacia otro lado.",
+      "efectos": [{ "tipo": "oro", "cantidad": "-cantidad" }]
+    },
+    "pelea": {
+      "texto": "El guardia desenvaina. No hay forma de escabullirse: tendrás que vencerle.",
+      "combate": {
+        "boton": "Luchar contra el guardia",
+        "enemigos": [{ "enemigo": "guardia", "recompensa": [{ "tipo": "oro", "cantidad": "1d6x2" }] }],
+        "puedeHuir": false,
+        "noMortal": true,
+        "victoria": { "texto": "Has vencido al guardia. Te libras de la prisión." },
+        "derrota": { "texto": "El guardia te reduce. Te quedas con 1 punto de vida y te llevan preso.", "evento": "arrestado" }
+      }
+    }
+  }
+}

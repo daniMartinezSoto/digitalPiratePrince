@@ -184,7 +184,7 @@ describe('iniciarTurno', () => {
 
     it('si la partida termina a mitad de la mañana, las condiciones que quedan no actúan', () => {
       const r = amanecer(estadoCon(['peste', 'fuga', 'tormenta']));
-      expect(r.estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'tripulacion' });
+      expect(r.estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'tripulacion', causa: { tipo: 'condicion', condicion: 'peste' } });
       expect(r.parte.map(p => p.condicion)).toEqual(['peste']);
       expect(r.estado.jugador.condiciones.map(c => c.id)).toEqual(['peste', 'fuga', 'tormenta']);
       expect(r.estado.mundo.fase).toBe('inicio'); // el día no sigue
@@ -192,7 +192,7 @@ describe('iniciarTurno', () => {
 
     it('si los efectos fijos acaban la partida, ya no se tira en la tabla', () => {
       const r = amanecer(estadoCon(['el_mal'], { tripulacion: 1 }));
-      expect(r.estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'tripulacion' });
+      expect(r.estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'tripulacion', causa: { tipo: 'condicion', condicion: 'el_mal' } });
       expect(r.parte[0].tirada).toBeUndefined();
     });
   });

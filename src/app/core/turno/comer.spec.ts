@@ -252,7 +252,7 @@ describe('comer', () => {
       const r = comer(estadoCon({ comida: 0, vida: 1 }), 'reservas', 'barco', new Dados(semillaCon(true)));
       expect(r.tiradaDeMuerte).toBe(1);
       expect(r.estado.jugador.vida).toBe(0);
-      expect(r.estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'vida' });
+      expect(r.estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'vida', causa: { tipo: 'hambre' } });
       expect(r.estado.mundo.fase).toBe('comida'); // el día no sigue
       expect(r.eventos).toEqual([]);
     });

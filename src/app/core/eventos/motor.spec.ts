@@ -52,7 +52,7 @@ const EVENTOS_DE_PRUEBA = [
       inicio: {
         texto: 'Tira el dado',
         tirada: {
-          dado: '1d6',
+          dado: '1d6', boton: 'Tirar',
           filas: [
             { min: 1, max: 1, texto: 'Un tentáculo', efectos: [{ tipo: 'tripulacion', cantidad: -1 }], volverATirar: true },
             { min: 2, max: 3, texto: 'No pasa nada' },
@@ -92,7 +92,7 @@ const EVENTOS_DE_PRUEBA = [
     pasos: {
       inicio: {
         tirada: {
-          dado: '1d6',
+          dado: '1d6', boton: 'Tirar',
           filas: [
             { min: 1, max: 3, evento: 'una_vez' },
             { min: 4, max: 6, texto: 'Otra cosa' },
@@ -233,12 +233,13 @@ describe('motor de eventos', () => {
 
     it('"vuelve a tirar": tras leerla, la misma tirada otra vez (sin repetir los efectos del paso)', () => {
       const antes = estadoCon().jugador.tripulacion;
-      let r = tirar(lanzar(estadoCon(), ['tirada']), dadosTrucados([1]));
+      const r = tirar(lanzar(estadoCon(), ['tirada']), dadosTrucados([1]));
       expect(r.estado.jugador.tripulacion).toBe(antes - 1);
-      expect(vista(r)!.texto).toBe('Un tentáculo');
 
-      r = continuar(r);
+      // Sin "Continuar" (22-nov): lo que salió se queda arriba y debajo vuelve a salir la misma tirada.
       expect(vista(r)!.modo).toBe('tirada');
+      expect(vista(r)!.anteriores).toHaveLength(1);
+      expect(vista(r)!.anteriores[0].texto).toBe('Un tentáculo');
       expect(vista(r)!.lectura).toBeNull();
     });
 
@@ -313,7 +314,7 @@ describe('motor de eventos', () => {
         {
           id: 'con_bonificador',
           titulo: 'Con bonificador',
-          pasos: { inicio: { tirada: { dado: '2d6', modificador: 1, filas: [{ min: 2, max: 2, texto: 'El dos' }, { min: 3, max: 12, texto: 'El resto' }] } } },
+          pasos: { inicio: { tirada: { dado: '2d6', boton: 'Tirar', modificador: 1, filas: [{ min: 2, max: 2, texto: 'El dos' }, { min: 3, max: 12, texto: 'El resto' }] } } },
         },
       ] as unknown as Evento[];
       const lanzado = lanzarEventos(conAmuleto(), ['con_bonificador'], new Dados(1), conBonificador).estado;
@@ -501,10 +502,10 @@ describe('motor de eventos', () => {
   });
 
   describe('seguridad', () => {
-    it('si la partida termina, la pila se vacía', () => {
+    it('si la partida termina, el evento se queda para enseñar por qué has muerto (y no sigue)', () => {
       const r = lanzar(estadoCon(), ['muerte', 'sencillo']);
-      expect(r.estado.mundo.finPartida).toMatchObject({ resultado: 'derrota' });
-      expect(r.estado.mundo.pilaEventos).toEqual([]);
+      expect(r.estado.mundo.finPartida).toMatchObject({ resultado: 'derrota', causa: { tipo: 'evento', evento: 'muerte' } });
+      expect(vista(r)).toMatchObject({ modo: 'muerte', titulo: 'Muerte' });
       expect(r.terminado).toBe(true);
       expect(() => lanzar(r.estado, ['sencillo'])).toThrow(/ya ha terminado/);
     });

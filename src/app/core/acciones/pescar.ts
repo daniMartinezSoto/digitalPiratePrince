@@ -1,4 +1,5 @@
 import type { Dados } from '../dados/dados';
+import { conCausaDeMuerte } from '../efectos/causa-de-muerte';
 import { aplicarEfectos } from '../efectos/aplicar-efectos';
 import type { Estado } from '../estado/estado';
 import { calcularModificador } from '../modificadores/calcular-modificador';
@@ -31,7 +32,8 @@ export function pescar(estado: Estado, sitio: Sitio, dados: Dados): ResultadoAcc
     efecto.tipo === 'comida' && 'cantidad' in efecto && efecto.cantidad > 0 ? { ...efecto, cantidad: efecto.cantidad + extra } : efecto,
   );
 
-  const resultado = aplicarEfectos(estado, efectos, dados);
+  const aplicado = aplicarEfectos(estado, efectos, dados);
+  const resultado = { ...aplicado, estado: conCausaDeMuerte(aplicado.estado, { tipo: 'accion', accion: 'pescar' }) };
 
   return {
     estado: cerrarFaseDeAccion(resultado.estado, dados),

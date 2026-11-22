@@ -1,6 +1,6 @@
 import type { Lectura } from '../../core/estado/pila-eventos';
 import { ENEMIGOS } from '../../core/catalogos/cargar-enemigos';
-import type { OpcionVisible, ResultadoPosible } from '../../core/eventos/motor';
+import type { OpcionVisible, ResultadoPosible, VistaDelEvento } from '../../core/eventos/motor';
 import { RECURSOS, type EfectoDefinicion, type TipoRecurso } from '../../core/tablas/efecto';
 import { describirCambio, NOMBRE_DE_RECURSO, nombreDeEvento, nombreDeObjeto, type NombresDeSeguidores } from './textos';
 
@@ -14,6 +14,7 @@ export const TEXTO_DE_MOTIVO_DE_OPCION: Record<NonNullable<OpcionVisible['motivo
   prohibido: 'No puedes tener más seguidores',
   al_maximo: 'Ya está al máximo',
   ya_ocurrio: 'Eso ya ocurrió',
+  sin_oro: 'No tienes suficiente oro',
 };
 
 export const NOMBRE_DE_CARACTERISTICA: Record<'fuerza' | 'ingenio', string> = { fuerza: 'Fuerza', ingenio: 'Ingenio' };
@@ -64,8 +65,17 @@ function sinUsoRepetido(cambios: Lectura['cambios']): Lectura['cambios'] {
 }
 
 /** Para el registro: el título y lo que ha pasado, con sangría, más los eventos pendientes. */
-export function lineasDeEvento(titulo: string, lectura: Lectura | null, pendientes: readonly string[], nombres: NombresDeSeguidores): string[] {
-  return [titulo, ...lineasDeLectura(lectura, nombres).map(l => '  ' + l), ...pendientes.map(e => `  Evento pendiente: ${nombreDeEvento(e)}`)];
+export function lineasDeEvento(titulo: string, lecturas: readonly Lectura[], pendientes: readonly string[], nombres: NombresDeSeguidores): string[] {
+  return [titulo, ...lecturas.flatMap(l => lineasDeLectura(l, nombres)).map(l => '  ' + l), ...pendientes.map(e => `  Evento pendiente: ${nombreDeEvento(e)}`)];
+}
+
+/**
+ * Todo lo que enseña ahora la ventana, en orden: lo de los pasos anteriores (que se queda arriba, sin
+ * "Continuar") y lo de ahora. Para el registro.
+ */
+export function lecturasDeLaVista(vista: VistaDelEvento | null): Lectura[] {
+  if (!vista) return [];
+  return [...vista.anteriores, ...(vista.lectura ? [vista.lectura] : [])];
 }
 
 /**

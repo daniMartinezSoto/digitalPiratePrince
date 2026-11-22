@@ -13,7 +13,7 @@ function erroresDe(e: Evento): string {
 }
 
 const TIRADA_1D6 = {
-  dado: '1d6',
+  dado: '1d6', boton: 'Tirar',
   filas: [
     { min: 1, max: 3, texto: 'Mal' },
     { min: 4, max: 6, texto: 'Bien' },
@@ -68,7 +68,7 @@ describe('validarEvento', () => {
     it('se llega a los pasos de dentro de opciones, filas y combates', () => {
       const e = evento({
         inicio: { opciones: [{ texto: 'A', paso: 'tirar' }, { texto: 'B', paso: 'luchar' }] },
-        tirar: { tirada: { dado: '1d6', filas: [{ min: 1, max: 6, texto: 'x', paso: 'final' }] } },
+        tirar: { tirada: { dado: '1d6', boton: 'Tirar', filas: [{ min: 1, max: 6, texto: 'x', paso: 'final' }] } },
         luchar: { combate: { enemigos: [{ enemigo: 'jaguar' }], victoria: { paso: 'final' } } },
         final: { texto: 'Fin' },
       });
@@ -141,13 +141,13 @@ describe('validarEvento', () => {
     });
 
     it('una fila vacía es un error', () => {
-      const e = evento({ inicio: { tirada: { dado: '1d6', filas: [{ min: 1, max: 6 }] } } });
+      const e = evento({ inicio: { tirada: { dado: '1d6', boton: 'Tirar', filas: [{ min: 1, max: 6 }] } } });
       expect(erroresDe(e)).toContain('fila 1-6: está vacía');
     });
 
     it('"volverATirar": solo true y sin saltar a otro sitio', () => {
       const conFila = (fila: Record<string, unknown>) =>
-        evento({ inicio: { tirada: { dado: '1d6', filas: [{ min: 1, max: 1, ...fila }, { min: 2, max: 6, texto: 'x' }] } } });
+        evento({ inicio: { tirada: { dado: '1d6', boton: 'Tirar', filas: [{ min: 1, max: 1, ...fila }, { min: 2, max: 6, texto: 'x' }] } } });
 
       expect(erroresDe(conFila({ texto: 'Un tentáculo...', volverATirar: true }))).toBe('');
       expect(erroresDe(conFila({ volverATirar: false }))).toContain('"volverATirar" solo puede ser true');
@@ -209,7 +209,7 @@ describe('eventos a los que se salta', () => {
     inicio: { opciones: [{ texto: 'Explorar', paso: 'explorar' }, { texto: 'No' }] },
     explorar: {
       tirada: {
-        dado: '1d6',
+        dado: '1d6', boton: 'Tirar',
         filas: [
           { min: 1, max: 2, evento: 'monstruo' },
           { min: 3, max: 4, llamar: 'dano_en_la_bodega', paso: 'nada' },
@@ -227,5 +227,69 @@ describe('eventos a los que se salta', () => {
   it('eventosQueFaltan da los que aún no están escritos', () => {
     const monstruo = { id: 'monstruo', titulo: 'Monstruo', pasos: { inicio: { texto: 'x' } } } as Evento;
     expect(eventosQueFaltan([islote, monstruo])).toEqual(['dano_en_la_bodega']);
+  });
+});
+
+describe('validarEvento: la cantidad del evento y los pasos "segun" (paso 7b)', () => {
+  const soborno = {
+    inicio: {
+      cantidad: '1d6x5',
+      texto: 'Pide {cantidad} monedas.',
+      opciones: [{ texto: 'Pagar {cantidad}', requiere: { oro: 'cantidad' }, paso: 'pagar' }, { texto: 'No' }],
+    },
+    pagar: { efectos: [{ tipo: 'oro', cantidad: '-cantidad' }] },
+  };
+
+  it('vale con su cantidad usada en textos, requisitos y efectos', () => {
+    expect(erroresDe(evento(soborno))).toBe('');
+  });
+
+  it('avisa si se usa la cantidad sin que ningún paso la tire', () => {
+    const sinCantidad = { ...soborno, inicio: { ...soborno.inicio, cantidad: undefined } };
+    const errores = erroresDe(evento(JSON.parse(JSON.stringify(sinCantidad))));
+
+    expect(errores).toContain('algún texto usa {cantidad}');
+    expect(errores).toContain('"oro": "cantidad" usa la cantidad del evento');
+    expect(errores).toContain('usa la cantidad del evento, pero ningún paso la tira');
+  });
+
+  it('avisa del dado de la cantidad mal escrito y del requisito de oro raro', () => {
+    expect(erroresDe(evento({ inicio: { cantidad: 'mucho', texto: 'x' } }))).toContain('la cantidad "mucho" no es un dado válido');
+    expect(erroresDe(evento({ inicio: { opciones: [{ texto: 'x', requiere: { oro: -3 } }] } }))).toContain('"oro" debe ser un número entero');
+    expect(erroresDe(evento({ inicio: { opciones: [{ texto: 'x', requiere: { oro: 25 } }] } }))).toBe('');
+  });
+
+  it('"segun" vale con barco, puerto y otro, y sus pasos cuentan como alcanzables', () => {
+    const e = evento({ inicio: { segun: { barco: { texto: 'A bordo', paso: 'fin' }, puerto: { texto: 'En puerto' } } }, fin: { texto: 'Fin' } });
+    expect(erroresDe(e)).toBe('');
+  });
+
+  it('"segun" no admite otros sitios, ni ir vacío, ni mezclarse con otra forma de seguir', () => {
+    expect(erroresDe(evento({ inicio: { segun: { taberna: {} } } }))).toContain('el campo "taberna" no existe');
+    expect(erroresDe(evento({ inicio: { segun: {} } }))).toContain('al menos una de estas ramas');
+    expect(erroresDe(evento({ inicio: { segun: { otro: {} }, tirada: TIRADA_1D6 } }))).toContain('un paso solo puede tener una');
+    expect(erroresDe(evento({ inicio: { segun: { otro: {} }, paso: 'inicio' } }))).toContain('ya dice por dónde se sigue');
+  });
+});
+
+describe('validarEvento: botones, pausa y mensajes de muerte (22-nov)', () => {
+  it('toda tirada necesita su botón', () => {
+    const sinBoton = evento({ inicio: { tirada: { dado: '1d6', filas: [{ min: 1, max: 6, texto: 'x' }] } } });
+    expect(erroresDe(sinBoton)).toContain('le falta "boton"');
+  });
+
+  it('los botones del chequeo, del combate y del encuentro son opcionales, pero si están deben tener texto', () => {
+    const chequeo = { caracteristica: 'fuerza', exito: {}, fallo: {} };
+    expect(erroresDe(evento({ inicio: { chequeo: { ...chequeo, boton: '¿Aguantas?' } } }))).toBe('');
+    expect(erroresDe(evento({ inicio: { chequeo: { ...chequeo, boton: '' } } }))).toContain('"boton" debe ser el texto del botón');
+    expect(erroresDe(evento({ inicio: { combate: { encuentro: 'piratas_hostiles', boton: 'A por ellos', botonDelEncuentro: '¿Quién?' } } }))).toBe('');
+  });
+
+  it('"pausa" solo con "paso" y solo true; "muerte" debe ser un texto (en ramas y en el evento)', () => {
+    expect(erroresDe(evento({ inicio: { texto: 'x', paso: 'b', pausa: true }, b: { texto: 'y' } }))).toBe('');
+    expect(erroresDe(evento({ inicio: { texto: 'x', pausa: true } }))).toContain('"pausa" solo puede ser true y solo sirve con "paso"');
+    expect(erroresDe(evento({ inicio: { texto: 'x', muerte: '' } }))).toContain('"muerte" debe ser el mensaje');
+    expect(erroresDe(evento({ inicio: { texto: 'x' } }, { muerte: 3 }))).toContain('"muerte" debe ser el mensaje si mueres en el evento');
+    expect(erroresDe(evento({ inicio: { texto: 'x', muerte: 'Mueres.' } }, { muerte: 'Mueres en el evento.' }))).toBe('');
   });
 });

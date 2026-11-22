@@ -124,7 +124,7 @@ describe('atacar (una ronda)', () => {
     const { estado, sucesos } = atacar(contraJaguar({ vida: 2 }), dadosTrucados([2, 4]));
 
     expect(estado.jugador.vida).toBe(0);
-    expect(estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'vida' });
+    expect(estado.mundo.finPartida).toEqual({ resultado: 'derrota', motivo: 'vida', causa: { tipo: 'combate', enemigos: ['jaguar'] } });
     expect(estado.mundo.combate!.resultado).toBe('derrota');
     expect(sucesos).toContainEqual({ tipo: 'muerte', luchador: 'jugador', nombre: 'Ana' });
     expect(cerrarCombate(estado, dadosTrucados([])).resultado).toBe('derrota');
