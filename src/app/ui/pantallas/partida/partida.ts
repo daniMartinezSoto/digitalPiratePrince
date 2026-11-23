@@ -25,6 +25,7 @@ import { casillasDeEmbarque } from '../../../core/viaje/embarcar';
 import { MapaDelJuego } from '../../componentes/mapa/mapa';
 import { Navegar } from '../../servicios/navegar';
 import { VentanaDeEvento } from '../../componentes/ventana-de-evento/ventana-de-evento';
+import { VentanaDeCombate } from '../../componentes/ventana-de-combate/ventana-de-combate';
 import { hayEventoEnCurso } from '../../../core/eventos/motor';
 
 type Pestana = 'acciones' | 'personaje' | 'registro' | 'pruebas';
@@ -41,7 +42,7 @@ const TEXTO_DE_AVISO: Record<AvisoDeGuardado, string> = {
 // terminado, lo dice y ofrece empezar otra. Todo lo que cambia la partida se pide al store.
 @Component({
   selector: 'app-pantalla-partida',
-  imports: [HojaPersonaje, DondeEstas, PanelDelDia, RegistroDeLaPartida, Trampas, Combate, CombateDePrueba, CombateNaval, Objetos, MapaDelJuego, DadosEnElMapa, VentanaDeEvento],
+  imports: [HojaPersonaje, DondeEstas, PanelDelDia, RegistroDeLaPartida, Trampas, Combate, CombateDePrueba, CombateNaval, Objetos, MapaDelJuego, DadosEnElMapa, VentanaDeEvento, VentanaDeCombate],
   host: { '[class.panel-plegado]': 'panelPlegado()' },
   templateUrl: './partida.html',
   styleUrl: './partida.css',
@@ -139,12 +140,14 @@ export class PantallaPartida {
   });
 
   constructor() {
-    // Al empezar un combate (o al terminar la partida) se vuelve a Acciones, que es donde se ve.
+    // Al empezar un combate (o al terminar la partida) se vuelve a Acciones.
     effect(() => {
-      // Y el panel se despliega solo, porque el combate y el final se ven en él.
-      if (this.hayCombateAhora() || this.store.estado()?.mundo.finPartida) {
+      const estado = this.store.estado();
+      if (this.hayCombateAhora() || estado?.mundo.finPartida) {
         this.pestana.set('acciones');
-        this.panelPlegado.set(false);
+        // El panel se despliega solo para el combate naval y el final, que se ven en él. El combate
+        // normal se juega en la ventana del mapa (Sprint 11): el panel se queda como esté.
+        if (estado?.mundo.combateNaval || estado?.mundo.finPartida) this.panelPlegado.set(false);
       }
     });
   }

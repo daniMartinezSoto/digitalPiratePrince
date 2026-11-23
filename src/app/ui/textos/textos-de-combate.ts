@@ -27,11 +27,13 @@ export const TEXTO_NO_HUIR: Record<MotivoNoHuir, string> = {
   no_se_puede_huir: 'De este combate no se puede huir',
   primera_ronda: 'Hay que pelear al menos una ronda',
   acabas_de_fallar: 'Acabas de fallar: pelea otra ronda antes',
+  ronda_a_medias: 'Primero decide qué haces con tu 6',
 };
 
 export const TEXTO_NO_USAR_OBJETO: Record<MotivoNoUsarObjeto, string> = {
   ya_usado_en_este_combate: 'Ya lo has usado en este combate',
   no_se_puede_huir: 'De este combate no se puede huir',
+  ronda_a_medias: 'Primero decide qué haces con tu 6',
 };
 
 export const TEXTO_NO_HUIR_NAVAL: Record<MotivoNoHuirNaval, string> = {
@@ -59,6 +61,8 @@ export function nombresDeLuchadores(...estados: (Estado | null)[]): Record<strin
 export function describirSuceso(suceso: SucesoDeCombate, nombres: Record<string, string>): string {
   const quien = (id: string) => nombres[id] ?? id;
   switch (suceso.tipo) {
+    case 'seis':
+      return `¡SEIS! Llevas ${suceso.dados.join(' + ')}. ¿Vuelves a tirar? (con un 1 pierdes todo el ataque)`;
     case 'emboscada':
       return suceso.quien === 'nuestra' ? '¡Emboscáis vosotros! En esta ronda solo atacáis vosotros.' : '¡EMBOSCADA! En esta ronda solo atacan ellos.';
     case 'enemigos_no_fallan':
@@ -66,15 +70,20 @@ export function describirSuceso(suceso: SucesoDeCombate, nombres: Record<string,
     case 'ataque': {
       const t = suceso.tirada;
       const dados = t.dados.join(' + ');
+      // "Tú atacas" / "Jaguar ataca": el jugador va en segunda persona.
+      const ataca = suceso.atacante === 'jugador' ? 'atacas' : 'ataca';
+      const cabeza = `${quien(suceso.atacante)} ${ataca} a ${quien(suceso.objetivo)}`;
       if (!t.acierta) {
-        return `${quien(suceso.atacante)} ataca a ${quien(suceso.objetivo)}: dados ${dados} → falla`;
+        // Un 1 después de arriesgar un 6 es una pifia: se pierde todo el ataque.
+        const pifia = suceso.atacante === 'jugador' && t.dados.length > 1;
+        return `${cabeza}: dados ${dados} → ${pifia ? '¡PIFIA! Pierdes todo el ataque' : '¡Fallo!'}`;
       }
       const partes = [`dados ${dados}`];
       if (suceso.dadosExtra?.length) partes.push(`+ pistola ${suceso.dadosExtra.join(' + ')}`);
       if (t.bonificador) partes.push(`${t.bonificador > 0 ? '+' : '−'} ${Math.abs(t.bonificador)} bonificador`);
       if (t.castigoHambre) partes.push(`− ${t.castigoHambre} por hambre`);
       if (suceso.pielDePiedra) partes.push(`− ${suceso.pielDePiedra} piel de piedra`);
-      return `${quien(suceso.atacante)} ataca a ${quien(suceso.objetivo)}: ${partes.join(' ')} → ${suceso.dano} de daño`;
+      return `${cabeza}: ${partes.join(' ')} → ${suceso.dano} de daño`;
     }
     case 'maldicion_pendiente':
       return `${quien(suceso.luchador)} saca un 6: ¡MALDITO! (al terminar el combate)`;
@@ -97,7 +106,9 @@ export function describirSuceso(suceso: SucesoDeCombate, nombres: Record<string,
     case 'nuevo_objetivo':
       return `${quien(suceso.luchador)} ahora ataca a ${quien(suceso.objetivo)}`;
     case 'huida':
-      return `Intentas huir: dado ${suceso.dado} → ${suceso.exito ? 'lo consigues' : 'no lo consigues'}`;
+      return suceso.exito
+        ? `Intentas huir: dado ${suceso.dado} → ¡lo consigues!`
+        : `Intentas huir: dado ${suceso.dado} → ¡No logras huir! Tus enemigos acertarán el siguiente ataque.`;
     case 'objeto_usado':
       return `Usas: ${nombreDeObjeto(suceso.objeto)}`;
     case 'fin':

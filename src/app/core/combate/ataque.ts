@@ -4,9 +4,11 @@ import type { Dados } from '../dados/dados';
 // LAS TIRADAS DE ATAQUE DEL COMBATE (Sprint 7, paso 2). Solo calculan: no tocan el estado.
 // Las reglas son las del papel (sección 4.8 del CLAUDE.md):
 //
-//   JUGADOR (ataqueDelJugador): 1d6. Con un 1 falla. Con 2-5 hace ese daño. Con un 6 hace 6 y vuelve a
-//   tirar sumando, tantas veces como salga 6; pero si en CUALQUIER momento sale un 1, todo el ataque
-//   falla y no hace nada (6, 6, 1 = 0 de daño).
+//   JUGADOR (ataqueDelJugador): 1d6. Con un 1 falla. Con 2-5 hace ese daño. Con un 6 hace 6 y EL JUGADOR
+//   DECIDE si vuelve a tirar sumando (Sprint 11, decidido por el autor: antes se repetía solo), tantas
+//   veces como salga 6; pero si en CUALQUIER momento sale un 1, todo el ataque falla y no hace nada
+//   (6, 6, 1 = 0 de daño: ¡pifia!). ataqueDelJugador tira solo el primer dado; los siguientes los
+//   añade el combate (volverATirar) y tiradaDelJugador calcula el resultado con todos los dados.
 //
 //   ENEMIGOS Y SEGUIDORES (ataqueBasico): 1d6. Con 1-2 fallan. Con 3-5 hacen su ataque. Con un 6, su
 //   ataque +1. Si "no pueden fallar" (tras una huida fallida), un 1-2 cuenta como golpe normal.
@@ -33,23 +35,31 @@ export function castigoPorHambre(diasSinComer: number): number {
 }
 
 /**
- * Ataque del jugador. Gasta un número del generador por cada dado: uno, más uno por cada 6.
+ * Primer dado del ataque del jugador. Gasta UN número del generador (los seises que se arriesgan
+ * los tira el combate, cuando el jugador lo decide).
  * castigo = castigoPorHambre(jugador.diasSinComer); bonificador = calcularModificador(jugador, 'ataque').
  */
 export function ataqueDelJugador(castigo: number, dados: Dados, bonificador = 0): TiradaDeAtaque {
-  const caras: number[] = [];
-  let suma = 0;
-  for (;;) {
-    const cara = dados.tirar('1d6').total;
-    caras.push(cara);
-    if (cara === 1) {
-      return resultado(caras, false, 0, castigo);
-    }
-    suma += cara;
-    if (cara !== 6) {
-      return resultado(caras, true, suma, castigo, bonificador);
-    }
+  return tiradaDelJugador([dados.tirar('1d6').total], castigo, bonificador);
+}
+
+/**
+ * El ataque del jugador con los dados que lleva sacados: [6, 4] = 10; [6, 6, 1] = falla todo; [6] = 6
+ * (se ha quedado con su 6). Solo calcula.
+ */
+export function tiradaDelJugador(caras: readonly number[], castigo: number, bonificador = 0): TiradaDeAtaque {
+  if (caras.length === 0) {
+    throw new Error('tiradaDelJugador: hace falta al menos un dado');
   }
+  if (caras.includes(1)) {
+    return resultado([...caras], false, 0, castigo);
+  }
+  return resultado([...caras], true, caras.reduce((suma, cara) => suma + cara, 0), castigo, bonificador);
+}
+
+/** ¿Puede arriesgarse a tirar otra vez? Solo si el último dado es un 6 (y, claro, no ha fallado). */
+export function puedeVolverATirar(tirada: TiradaDeAtaque): boolean {
+  return tirada.acierta && tirada.dados[tirada.dados.length - 1] === 6;
 }
 
 /**

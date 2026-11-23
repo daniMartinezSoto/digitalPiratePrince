@@ -15,7 +15,7 @@ describe('textos del combate', () => {
       },
       NOMBRES,
     );
-    expect(texto).toBe('Tú ataca a Jaguar: dados 6 + 3 + 2 bonificador − 1 por hambre − 1 piel de piedra → 9 de daño');
+    expect(texto).toBe('Tú atacas a Jaguar: dados 6 + 3 + 2 bonificador − 1 por hambre − 1 piel de piedra → 9 de daño');
   });
 
   it('un ataque que falla', () => {
@@ -30,7 +30,29 @@ describe('textos del combate', () => {
       },
       NOMBRES,
     );
-    expect(texto).toBe('Jaguar ataca a Rufus: dados 2 → falla');
+    expect(texto).toBe('Jaguar ataca a Rufus: dados 2 → ¡Fallo!');
+  });
+
+  it('el 6 a elegir: la pregunta y la pifia', () => {
+    expect(describirSuceso({ tipo: 'seis', dados: [6, 6] }, NOMBRES)).toBe('¡SEIS! Llevas 6 + 6. ¿Vuelves a tirar? (con un 1 pierdes todo el ataque)');
+    const pifia = describirSuceso(
+      {
+        tipo: 'ataque',
+        atacante: 'jugador',
+        objetivo: 'enemigo_1',
+        tirada: { dados: [6, 1], acierta: false, danoSinCastigo: 0, bonificador: 0, castigoHambre: 0, dano: 0 },
+        pielDePiedra: 0,
+        dano: 0,
+      },
+      NOMBRES,
+    );
+    expect(pifia).toBe('Tú atacas a Jaguar: dados 6 + 1 → ¡PIFIA! Pierdes todo el ataque');
+  });
+
+  it('una huida fallida avisa de que los enemigos acertarán', () => {
+    expect(describirSuceso({ tipo: 'huida', dado: 2, exito: false }, NOMBRES)).toBe(
+      'Intentas huir: dado 2 → ¡No logras huir! Tus enemigos acertarán el siguiente ataque.',
+    );
   });
 
   it('muertes, huidas y el chamán', () => {

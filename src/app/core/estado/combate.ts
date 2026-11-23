@@ -1,4 +1,6 @@
 import type { CategoriaEnemigo, HabilidadDeEnemigo } from '../catalogos/enemigo';
+import type { TiradaDeAtaque } from '../combate/ataque';
+import type { SucesoDeCombate } from '../combate/combate';
 import type { EfectoDefinicion } from '../tablas/efecto';
 
 // EL COMBATE EN CURSO (Sprint 7): lo que se guarda en mundo.combate mientras se pelea.
@@ -33,6 +35,29 @@ export interface EnemigoEnCombate {
   recompensa?: EfectoDefinicion[];
 }
 
+/** Un ataque ya tirado en la ronda: quién, a quién, sus dados y los de la pistola (si los hay). */
+export interface AtaqueDeLaRonda {
+  atacante: string;
+  objetivo: string;
+  tirada: TiradaDeAtaque;
+  dadosExtra?: number[];   // la pistola: solo suman si el ataque acierta
+}
+
+/**
+ * LA RONDA EN PAUSA POR UN 6 (Sprint 11, decidido por el autor). Todos han tirado a la vez, pero el
+ * jugador ha sacado un 6 y decide si se arriesga a tirar otra vez. Mientras decide, aquí están TODOS
+ * los dados de la ronda y todavía no se ha aplicado ningún golpe (los golpes son simultáneos).
+ * Se guarda en la partida: recargar no sirve para volver a tirar la ronda.
+ */
+export interface RondaEnPausa {
+  ataques: AtaqueDeLaRonda[];      // todos los de la ronda; el del jugador, con los dados que lleva
+  sucesos: SucesoDeCombate[];      // los del principio de la ronda (emboscada, ¡maldito!...)
+  eventosAlTerminar: string[];     // los del combate más los que han salido en esta ronda
+  castigo: number;                 // hambre y bonificador del jugador, para volver a calcular su ataque
+  bonificador: number;
+  dadoExtraDespues: string | null; // cómo queda la pistola después de la ronda
+}
+
 /** Cómo ha terminado un combate. */
 export type ResultadoCombate = 'victoria' | 'huida' | 'derrota';
 
@@ -62,6 +87,8 @@ export interface CombateEnCurso {
   objetosUsados: string[];
   // Eventos que saltarán al terminar el combate, como termine (la maldición del chamán).
   eventosAlTerminar: string[];
+  // Solo existe mientras la ronda está en pausa por un 6 del jugador (ver RondaEnPausa).
+  rondaEnPausa?: RondaEnPausa;
   // null mientras se pelea. Cuando termina, se queda apuntado hasta que quien lanzó el combate lo
   // recoge con cerrarCombate (hoy los tests; en el Sprint 10, el motor de eventos).
   resultado: ResultadoCombate | null;

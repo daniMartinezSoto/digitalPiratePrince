@@ -1,25 +1,16 @@
 import { Component, computed, inject } from '@angular/core';
-import { aliadosQueLuchan, atacar, cerrarCombate, huir, opcionesDeCombate, usarObjetoEnCombate, type ResultadoRonda } from '../../../core/combate/combate';
-import type { Dados } from '../../../core/dados/dados';
+import { aliadosQueLuchan, opcionesDeCombate } from '../../../core/combate/combate';
 import { vidaMaxActual } from '../../../core/condiciones/consultas';
-import type { Estado } from '../../../core/estado/estado';
 import { JuegoStore } from '../../../store/juego.store';
-import { Jugar } from '../../servicios/jugar';
-import { lineasSimples } from '../../textos/lineas-del-registro';
-import {
-  lineasDeRonda,
-  NOMBRE_DE_HABILIDAD_DE_ENEMIGO,
-  nombresDeLuchadores,
-  TEXTO_NO_HUIR,
-  TEXTO_NO_USAR_OBJETO,
-} from '../../textos/textos-de-combate';
-import { nombreDeEvento, nombreDeObjeto } from '../../textos/textos';
-import { cerrarCombateDelEvento, eventoEsperaUnCombate, vistaDelEvento } from '../../../core/eventos/motor';
-import { lecturasDeLaVista, lineasDeEvento } from '../../textos/textos-de-eventos';
+import { Luchar } from '../../servicios/luchar';
+import { NOMBRE_DE_HABILIDAD_DE_ENEMIGO, nombresDeLuchadores, TEXTO_NO_HUIR, TEXTO_NO_USAR_OBJETO } from '../../textos/textos-de-combate';
+import { nombreDeObjeto } from '../../textos/textos';
 
-// EL COMBATE (pantalla de pruebas): los dos bandos, quién ataca a quién y los botones (Atacar, Huir,
-// objetos de combate). Cuando termina, "Cerrar el combate" cobra las recompensas y enseña los eventos.
-// Si es el abordaje de un combate naval, lo cierra el combate naval (no este botón).
+// EL COMBATE DE TEXTO (pantalla de pruebas): los dos bandos, quién ataca a quién y los botones (Atacar,
+// Huir, objetos de combate y, con un 6, Tirar otra vez / Quedarme así). Desde el Sprint 11 el combate
+// normal se juega en la ventana de combate, encima del mapa; este se queda en la pestaña Pruebas para
+// ver los números en crudo, y dentro del combate naval para el abordaje. Los botones son los del
+// servicio Luchar, los mismos que usa la ventana.
 @Component({
   selector: 'app-combate',
   templateUrl: './combate.html',
@@ -27,7 +18,7 @@ import { lecturasDeLaVista, lineasDeEvento } from '../../textos/textos-de-evento
 })
 export class Combate {
   private readonly store = inject(JuegoStore);
-  private readonly jugar = inject(Jugar);
+  protected readonly luchar = inject(Luchar);
 
   protected readonly combate = computed(() => this.store.estado()?.mundo.combate ?? null);
   protected readonly esAbordaje = computed(() => this.store.estado()?.mundo.combateNaval != null);
@@ -65,42 +56,4 @@ export class Combate {
   protected readonly textoNoHuir = TEXTO_NO_HUIR;
   protected readonly textoNoUsar = TEXTO_NO_USAR_OBJETO;
   protected readonly nombreDeObjeto = nombreDeObjeto;
-
-  protected atacar(): void {
-    const ronda = (this.combate()?.ronda ?? 0) + 1;
-    this.ronda(`Ronda ${ronda}`, (e, d) => atacar(e, d));
-  }
-
-  protected huir(): void {
-    this.ronda('Huir', (e, d) => huir(e, d));
-  }
-
-  protected usar(posicion: number, objeto: string): void {
-    this.ronda(`Usar ${nombreDeObjeto(objeto)}`, (e, d) => usarObjetoEnCombate(e, posicion, d));
-  }
-
-  protected cerrar(): void {
-    const estado = this.store.estado();
-    // Un combate que lanzó un evento lo cierra el motor: así el evento sigue por donde toque.
-    if (estado && eventoEsperaUnCombate(estado)) {
-      const evento = vistaDelEvento(estado)?.titulo ?? '';
-      this.jugar.hacer(
-        (e, d) => cerrarCombateDelEvento(e, d),
-        (r, n) => lineasDeEvento(`${evento}: se cierra el combate`, lecturasDeLaVista(vistaDelEvento(r.estado)), r.pendientes, n),
-      );
-      return;
-    }
-    this.jugar.hacer(
-      (e, d) => cerrarCombate(e, d),
-      (r, n) => [
-        ...lineasSimples(`Se cierra el combate: ${r.resultado}`, r, n),
-        ...r.eventos.map(ev => (ev === 'maldicion' ? '  ¡MALDITO! Evento pendiente: maldicion' : `  Evento pendiente: ${nombreDeEvento(ev)}`)),
-      ],
-    );
-  }
-
-  private ronda(titulo: string, regla: (estado: Estado, dados: Dados) => ResultadoRonda): void {
-    const antes = this.store.estado();
-    this.jugar.hacer(regla, (r, seguidores) => lineasDeRonda(titulo, r, nombresDeLuchadores(antes, r.estado), seguidores));
-  }
 }

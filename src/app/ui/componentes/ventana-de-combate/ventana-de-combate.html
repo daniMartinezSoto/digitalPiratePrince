@@ -1,0 +1,184 @@
+@if (combate(); as c) {
+  @if (plegada()) {
+    <button type="button" class="desplegar" (click)="plegada.set(false)">Combate en curso (volver a la ventana)</button>
+  } @else {
+    <section class="ventana-combate" role="dialog" aria-label="Combate">
+      <header>
+        <h2>Combate · ronda {{ c.ronda }}</h2>
+        <button type="button" class="plegar" (click)="plegada.set(true)" title="Esconder un momento para ver el mapa">Plegar</button>
+      </header>
+
+      <!-- En medio: las cartas y el historial (si no cabe, se desplaza esta zona; los botones de abajo, no) -->
+      <div class="desplazable">
+        <div class="bandos" #bandos>
+          <svg class="lineas" aria-hidden="true">
+            <defs>
+              <marker id="punta-nuestra" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 Z" fill="#3f8a35" />
+              </marker>
+              <marker id="punta-suya" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0,0 L10,5 L0,10 Z" fill="#a3301f" />
+              </marker>
+            </defs>
+            @for (l of lineas(); track l.clave) {
+              <path [attr.d]="l.d" [attr.class]="'linea ' + l.bando" [attr.marker-end]="l.bando === 'nuestro' ? 'url(#punta-nuestra)' : 'url(#punta-suya)'" />
+            }
+          </svg>
+          @for (bando of [cartas().aliados, cartas().enemigos]; track $index; let enemigos = $odd) {
+            <div class="bando" [class.enemigos]="enemigos">
+              <h3>{{ enemigos ? 'Enemigos' : 'Tu bando' }}</h3>
+              @for (carta of bando; track carta.id) {
+                <article
+                  class="carta"
+                  [class.caido]="carta.caido"
+                  [class.tuya]="carta.esJugador"
+                  [attr.data-luchador]="carta.id"
+                  [attr.data-gesto]="gestos()[carta.id] ?? null"
+                >
+                  @for (m of mensajesDe(carta.id); track m.clave) {
+                    <span class="mensaje" [attr.data-tono]="m.paso.tono">{{ m.paso.mensaje }}</span>
+                  }
+                  <div class="dibujo" [class.silueta]="carta.silueta">
+                    <img [src]="carta.imagen" [alt]="carta.nombre" />
+                  </div>
+                  <div class="datos">
+                    <strong class="nombre">{{ carta.nombre }}</strong>
+                    <div class="barra" [title]="carta.vida + ' de ' + carta.maximo">
+                      <span class="queda" [style.width.%]="barra(carta).queda"></span>
+                      <span class="pierde" [style.width.%]="barra(carta).pierde"></span>
+                    </div>
+                    <small class="numeros">
+                      @if (carta.caido) {
+                        Caído
+                      } @else {
+                        {{ carta.vida }}/{{ carta.maximo }}@if (carta.perdera > 0) { <span class="aviso-perdida">(−{{ carta.perdera }})</span> }
+                        @if (carta.ataque !== null) { · ataque {{ carta.ataque }} }
+                      }
+                    </small>
+                    @if (carta.detalles.length > 0) {
+                      <small class="detalles">{{ carta.detalles.join(' · ') }}</small>
+                    }
+                    @if (carta.atacaA) {
+                      <small class="ataca">⚔ ataca a {{ carta.atacaA }}</small>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        </div>
+
+        @for (m of mensajesDelCentro(); track m.clave) {
+          <p class="mensaje-central" [attr.data-tono]="m.paso.tono">{{ m.paso.mensaje }}</p>
+        }
+
+        @if (c.noPuedenFallar && !c.resultado && !animando()) {
+          <p class="aviso">Tras tu huida fallida, tus enemigos no fallarán esta ronda.</p>
+        }
+
+
+        @if (historial().length > 0) {
+          <details class="historial">
+            <summary>Historial del combate ({{ historial().length }})</summary>
+            @for (r of historial(); track r.numero) {
+              <div class="ronda-del-historial">
+                <strong>{{ r.titulo }}</strong>
+                @if (r.dados.length > 0) {
+                  <span class="dados-del-historial">
+                    @for (d of r.dados; track $index) {
+                      <span class="dadito" [attr.data-color]="r.colores[$index]">{{ d }}</span>
+                    }
+                  </span>
+                }
+                <ul>
+                  @for (m of r.mensajes; track $index) {
+                    <li>{{ m }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          </details>
+        }
+      </div>
+
+      <!-- Abajo: los botones, siempre a la vista (pedido por el autor: no tener que bajar para "Cerrar el combate") -->
+      <footer>
+        @if (animando()) {
+          <button type="button" class="rapido" (click)="saltarAlFinal()" title="Ver ya cómo ha quedado la ronda">Rápido ⏩</button>
+        } @else if (c.resultado) {
+          <!-- La tarjeta final -->
+          <div class="tarjeta-final" [attr.data-resultado]="c.resultado">
+            <p class="resultado">{{ textoDelResultado[c.resultado] }}</p>
+            @if (resumen(); as r) {
+              <ul class="resumen">
+                <li>{{ r.rondas }} {{ r.rondas === 1 ? 'ronda' : 'rondas' }}</li>
+                @if (r.derrotados.length > 0) {
+                  <li>Derrotados: {{ r.derrotados.join(', ') }}</li>
+                }
+                @if (r.vidaPerdida !== null) {
+                  <li>{{ r.vidaPerdida > 0 ? 'Has perdido ' + r.vidaPerdida + ' PV' : 'No has perdido vida' }}</li>
+                }
+                @if (r.caidos.length > 0) {
+                  <li class="malo">Han caído: {{ r.caidos.join(', ') }}</li>
+                }
+                @if (r.maldito) {
+                  <li class="malo">¡Te han maldecido!</li>
+                }
+                @if (r.botin && !r.deUnEvento) {
+                  <li class="bueno">Hay botín que recoger</li>
+                }
+              </ul>
+            }
+            <button type="button" class="principal" (click)="luchar.cerrar()">Cerrar el combate</button>
+          </div>
+        } @else if (opciones(); as o) {
+          @if (o.seis; as seis) {
+            <div class="seis">
+              <p>
+                <strong>¡SEIS!</strong> Llevas {{ seis.dados.join(' + ') }} ({{ seis.dano }} de daño). ¿Volver a tirar? Con un 1 pierdes todo el
+                ataque.
+              </p>
+              <button type="button" (click)="luchar.volverATirar()">Tirar otra vez</button>
+              <button type="button" (click)="luchar.quedarse()">Quedarme así</button>
+            </div>
+          } @else {
+            <div class="botones">
+              <button type="button" class="principal" [disabled]="!o.atacar" (click)="luchar.atacar()">Atacar</button>
+              <button type="button" [disabled]="!o.huir.disponible" [title]="o.huir.motivo ? textoNoHuir[o.huir.motivo] : ''" (click)="luchar.huir()">
+                Huir
+              </button>
+              @for (obj of o.objetos; track obj.posicion) {
+                <button
+                  type="button"
+                  [disabled]="!obj.disponible"
+                  [title]="obj.motivo ? textoNoUsar[obj.motivo] : ''"
+                  (click)="luchar.usar(obj.posicion, obj.objeto)"
+                >
+                  Usar {{ nombreDeObjeto(obj.objeto) }}
+                </button>
+              }
+            </div>
+            @if (o.huir.motivo; as m) {
+              <small class="motivo">Huir: {{ textoNoHuir[m] }}</small>
+            }
+          }
+        }
+      </footer>
+    </section>
+  }
+} @else if (luchar.cierre(); as k) {
+  <!-- Después de cerrar: lo que has conseguido (el botín) y los eventos que saltan -->
+  <section class="ventana-combate cierre" role="dialog" aria-label="Fin del combate">
+    <h2>{{ textoDelResultado[k.resultado] }}</h2>
+    @if (k.lineas.length > 0) {
+      <ul class="resumen">
+        @for (linea of k.lineas; track $index) {
+          <li>{{ linea }}</li>
+        }
+      </ul>
+    } @else {
+      <p>No hay nada que recoger.</p>
+    }
+    <button type="button" class="principal" (click)="luchar.descartarCierre()">Continuar</button>
+  </section>
+}

@@ -2,7 +2,7 @@ import { dadosTrucados } from '../dados/dados-trucados';
 import type { Estado } from '../estado/estado';
 import type { ObjetoLlevado } from '../estado/objeto-llevado';
 import { crearPartida } from '../partida/crear-partida';
-import { atacar, cerrarCombate, EVENTO_MALDICION, huir, iniciarCombate, opcionesDeCombate, usarObjetoEnCombate, type EnemigoPedido, type OpcionesDeCombate, type SucesoDeCombate } from './combate';
+import { atacar, cerrarCombate, EVENTO_MALDICION, huir, iniciarCombate, opcionesDeCombate, usarObjetoEnCombate, volverATirar, type EnemigoPedido, type OpcionesDeCombate, type SucesoDeCombate } from './combate';
 
 // Paso 6 del combate: habilidades de los enemigos, opciones de cada combate, objetos y recompensas.
 
@@ -127,7 +127,8 @@ describe('habilidades de los enemigos', () => {
       const otraVez = atacar(estado, dadosTrucados([1, 6]));
       expect(de(otraVez.sucesos, 'maldicion_pendiente')).toEqual([]);
 
-      const ganado = rondas(otraVez.estado, [6, 2, 1]); // 8: cae
+      // Tú 6 (el chamán falla con un 1) y te arriesgas: 2 → 8, cae.
+      const ganado = volverATirar(atacar(otraVez.estado, dadosTrucados([6, 1])).estado, dadosTrucados([2])).estado;
       expect(cerrarCombate(ganado, dadosTrucados([])).eventos).toEqual([EVENTO_MALDICION]);
     });
 
@@ -138,7 +139,7 @@ describe('habilidades de los enemigos', () => {
     });
 
     it('sin un 6, no hay maldición', () => {
-      const ganado = rondas(contra('chaman'), [6, 2, 1]);
+      const ganado = volverATirar(atacar(contra('chaman'), dadosTrucados([6, 1])).estado, dadosTrucados([2])).estado;
       expect(cerrarCombate(ganado, dadosTrucados([])).eventos).toEqual([]);
     });
   });

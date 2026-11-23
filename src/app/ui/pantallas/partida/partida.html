@@ -77,6 +77,7 @@
           (embarqueElegido)="embarcarODesembarcar($event)"
         />
         <app-ventana-de-evento />
+        <app-ventana-de-combate />
         <app-dados-en-el-mapa />
       </div>
       <p class="opciones-del-mapa">
@@ -112,7 +113,7 @@
         } @else if (estado.mundo.combateNaval) {
           <app-combate-naval />
         } @else if (estado.mundo.combate) {
-          <app-combate />
+          <p class="fin">Hay un combate en curso: lucha en la ventana del mapa.</p>
         } @else if (hayEvento()) {
           <p class="fin">Hay un evento en curso: resuélvelo en la ventana del mapa.</p>
         } @else {
@@ -140,6 +141,10 @@
             <app-combate-de-prueba />
           }
           <app-trampas />
+        } @else if (estado.mundo.combate && !estado.mundo.combateNaval && !estado.mundo.finPartida) {
+          <!-- El combate en texto, con los números en crudo (Sprint 11: se juega en la ventana del mapa). -->
+          <p><em>El combate en texto (para probar): los mismos botones que la ventana del mapa.</em></p>
+          <app-combate />
         } @else {
           <p>Las pruebas vuelven cuando acabe el combate.</p>
         }

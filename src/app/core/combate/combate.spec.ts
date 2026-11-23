@@ -4,7 +4,21 @@ import { dadosTrucados } from '../dados/dados-trucados';
 import type { Estado } from '../estado/estado';
 import type { Seguidor } from '../estado/seguidor';
 import { crearPartida } from '../partida/crear-partida';
-import { aliadosQueLuchan, atacar, BANDERA_AFORTUNADO, cerrarCombate, huir, iniciarCombate, opcionesDeCombate } from './combate';
+import { guardarPartida } from '../guardado/guardar-partida';
+import { leerPartida } from '../guardado/leer-partida';
+import {
+  aliadosQueLuchan,
+  atacar,
+  BANDERA_AFORTUNADO,
+  cerrarCombate,
+  huir,
+  iniciarCombate,
+  opcionesDeCombate,
+  quedarseConElAtaque,
+  usarObjetoEnCombate,
+  vistaPreviaDeLaRonda,
+  volverATirar,
+} from './combate';
 
 // Partida de prueba: sobrenombre sin efectos en combate, 15 PV, sin seguidores ni condiciones, fase de acción.
 function partida(cambios: Partial<Estado['jugador']> = {}): Estado {
@@ -103,7 +117,8 @@ describe('atacar (una ronda)', () => {
   });
 
   it('victoria: cae el último enemigo (y su golpe de esa ronda también cuenta)', () => {
-    const { estado, sucesos } = atacar(contraJaguar(), dadosTrucados([6, 2, 4])); // tú 6 + 2 = 8; el jaguar acierta: 4
+    // Tu 6 ya basta para el jaguar (6 de resistencia): no se pregunta. El jaguar acierta: 4.
+    const { estado, sucesos } = atacar(contraJaguar(), dadosTrucados([6, 4]));
 
     expect(estado.jugador.vida).toBe(11);
     expect(estado.mundo.combate!.resultado).toBe('victoria');
@@ -112,7 +127,7 @@ describe('atacar (una ronda)', () => {
   });
 
   it('cerrarCombate recoge el resultado y quita el combate: ya se puede seguir jugando', () => {
-    const { estado } = atacar(contraJaguar(), dadosTrucados([6, 2, 4]));
+    const { estado } = atacar(contraJaguar(), dadosTrucados([6, 4]));
     const cerrado = cerrarCombate(estado, dadosTrucados([]));
 
     expect(cerrado.resultado).toBe('victoria');
@@ -131,7 +146,7 @@ describe('atacar (una ronda)', () => {
   });
 
   it('golpe de gracia: si matas a tu rival en la ronda en que caerías, te quedas con 1 PV', () => {
-    const { estado, sucesos } = atacar(contraJaguar({ vida: 3 }), dadosTrucados([6, 3, 6])); // 9 al jaguar; él te hace 5
+    const { estado, sucesos } = atacar(contraJaguar({ vida: 3 }), dadosTrucados([6, 6])); // 6 al jaguar; él te hace 5
 
     expect(sucesos).toContainEqual({ tipo: 'golpe_de_gracia' });
     expect(estado.jugador.vida).toBe(1);
@@ -142,7 +157,7 @@ describe('atacar (una ronda)', () => {
   it('golpe de gracia con más enemigos: te quedas con 1 PV y el combate sigue', () => {
     // Tú contra dos jaguares: atacas al 1 y te atacan los dos.
     const inicio = iniciarCombate(partida({ vida: 5 }), [{ enemigo: 'jaguar', cantidad: 2 }], dadosTrucados([0]));
-    const { estado, sucesos } = atacar(inicio, dadosTrucados([6, 2, 3, 3])); // matas al 1; cada uno te hace 4
+    const { estado, sucesos } = atacar(inicio, dadosTrucados([6, 3, 3])); // matas al 1; cada uno te hace 4
 
     expect(sucesos).toContainEqual({ tipo: 'golpe_de_gracia' });
     expect(estado.jugador.vida).toBe(1);
@@ -165,7 +180,7 @@ describe('atacar (una ronda)', () => {
   });
 
   it('el golpe de gracia va antes que el afortunado: si te salva el golpe, el afortunado no se gasta', () => {
-    const { estado, sucesos } = atacar(contraJaguar({ vida: 3, sobrenombre: 'el_afortunado' }), dadosTrucados([6, 3, 6]));
+    const { estado, sucesos } = atacar(contraJaguar({ vida: 3, sobrenombre: 'el_afortunado' }), dadosTrucados([6, 6]));
 
     expect(sucesos).toContainEqual({ tipo: 'golpe_de_gracia' });
     expect(estado.mundo.banderas[BANDERA_AFORTUNADO]).toBeUndefined();
@@ -202,7 +217,7 @@ describe('atacar (una ronda)', () => {
 
   it('el daño que sobra se pierde: no pasa a otro enemigo', () => {
     const inicio = iniciarCombate(partida(), [{ enemigo: 'pirata_esqueleto', cantidad: 2 }], dadosTrucados([0]));
-    const { estado } = atacar(inicio, dadosTrucados([6, 6, 2, 1, 1, 4])); // 14 al primero, que tenía 3 (y no revive: 4)
+    const { estado } = atacar(inicio, dadosTrucados([6, 1, 1, 4])); // 6 al primero, que tenía 3 (y no revive: 4)
 
     expect(estado.mundo.combate!.enemigos.map(e => e.resistencia)).toEqual([0, 3]);
   });
@@ -316,5 +331,123 @@ describe('huir', () => {
   it('sin combate no hay nada que hacer', () => {
     expect(opcionesDeCombate(partida())).toEqual({ atacar: false, huir: { disponible: false }, objetos: [] });
     expect(() => huir(partida(), dadosTrucados([6]))).toThrow(/no hay ningún combate/);
+  });
+});
+
+describe('el 6 a elegir (Sprint 11)', () => {
+  // El explorador: 2 de ataque y 10 de resistencia (un 6 solo no lo tumba).
+  const contraExplorador = (cambios: Partial<Estado['jugador']> = {}) => iniciarCombate(partida(cambios), [{ enemigo: 'explorador' }], dadosTrucados([]));
+
+  it('con un 6 todos han tirado, pero la ronda se queda en pausa sin aplicar nada', () => {
+    const dados = dadosTrucados([6, 4]); // tu 6; el explorador acierta (2)
+    const { estado, sucesos, cambios } = atacar(contraExplorador(), dados);
+
+    expect(dados.restantes()).toBe(0);
+    expect(sucesos).toEqual([{ tipo: 'seis', dados: [6] }]);
+    expect(cambios).toEqual([]);
+    expect(estado.jugador.vida).toBe(15);
+    expect(estado.mundo.combate!.enemigos[0].resistencia).toBe(10);
+    expect(estado.mundo.combate!.ronda).toBe(0);
+    expect(estado.mundo.combate!.rondaEnPausa).toBeDefined();
+  });
+
+  it('mientras decides: la vista previa dice lo que perdería cada uno, y solo valen los dos botones del 6', () => {
+    const { estado } = atacar(contraExplorador({ condiciones: [{ id: 'maleficio_del_pirata' }] }), dadosTrucados([6, 4]));
+
+    expect(vistaPreviaDeLaRonda(estado)).toEqual({ enemigo_1: 5, jugador: 2 }); // 6 − 1 del maleficio
+    expect(opcionesDeCombate(estado)).toEqual({
+      atacar: false,
+      huir: { disponible: false, motivo: 'ronda_a_medias' },
+      objetos: [],
+      seis: { dados: [6], dano: 5 },
+    });
+    expect(() => atacar(estado, dadosTrucados([1, 1]))).toThrow(/hay un 6 en la mesa/);
+    expect(() => huir(estado, dadosTrucados([6]))).toThrow(/ronda_a_medias/);
+  });
+
+  it('volver a tirar con 2-5: se suma y se aplican todos los golpes a la vez', () => {
+    const pausa = atacar(contraExplorador(), dadosTrucados([6, 4])).estado;
+    const { estado, sucesos } = volverATirar(pausa, dadosTrucados([3]));
+
+    expect(estado.mundo.combate!.enemigos[0].resistencia).toBe(1);
+    expect(estado.jugador.vida).toBe(13);
+    expect(estado.mundo.combate!.ronda).toBe(1);
+    expect(estado.mundo.combate!.rondaEnPausa).toBeUndefined();
+    const tuyo = sucesos.find(s => s.tipo === 'ataque' && s.atacante === 'jugador');
+    expect(tuyo?.tipo === 'ataque' && [tuyo.tirada.dados, tuyo.dano]).toEqual([[6, 3], 9]);
+    expect(vistaPreviaDeLaRonda(estado)).toBeNull();
+  });
+
+  it('volver a tirar y sacar un 1: ¡pifia!, pierdes todo el ataque (pero el enemigo sí te golpea)', () => {
+    const pausa = atacar(contraExplorador(), dadosTrucados([6, 4])).estado;
+    const { estado, sucesos } = volverATirar(pausa, dadosTrucados([1]));
+
+    expect(estado.mundo.combate!.enemigos[0].resistencia).toBe(10);
+    expect(estado.jugador.vida).toBe(13);
+    const tuyo = sucesos.find(s => s.tipo === 'ataque' && s.atacante === 'jugador');
+    expect(tuyo?.tipo === 'ataque' && [tuyo.tirada.dados, tuyo.tirada.acierta, tuyo.dano]).toEqual([[6, 1], false, 0]);
+  });
+
+  it('otro 6 vuelve a preguntar, mientras tu rival no caiga', () => {
+    const inicio = iniciarCombate(partida(), [{ enemigo: 'tiranosaurio' }], dadosTrucados([])); // 14 de resistencia
+    const pausa = atacar(inicio, dadosTrucados([6, 1])).estado;
+    const otra = volverATirar(pausa, dadosTrucados([6]));
+
+    expect(otra.sucesos).toEqual([{ tipo: 'seis', dados: [6, 6] }]);
+    expect(opcionesDeCombate(otra.estado).seis).toEqual({ dados: [6, 6], dano: 12 });
+
+    const fin = quedarseConElAtaque(otra.estado, dadosTrucados([]));
+    expect(fin.estado.mundo.combate!.enemigos[0].resistencia).toBe(2);
+  });
+
+  it('si con lo que llevas ya cae, no se pregunta: 6 + 6 contra 10', () => {
+    const pausa = atacar(contraExplorador(), dadosTrucados([6, 4])).estado;
+    const { estado, sucesos } = volverATirar(pausa, dadosTrucados([6]));
+
+    expect(sucesos).not.toContainEqual({ tipo: 'seis', dados: [6, 6] });
+    expect(estado.mundo.combate!.resultado).toBe('victoria');
+  });
+
+  it('quedarse así: vale lo que llevas y no se tira nada más', () => {
+    const pausa = atacar(contraExplorador(), dadosTrucados([6, 4])).estado;
+    const dados = dadosTrucados([]);
+    const { estado } = quedarseConElAtaque(pausa, dados);
+
+    expect(estado.mundo.combate!.enemigos[0].resistencia).toBe(4);
+    expect(estado.jugador.vida).toBe(13);
+  });
+
+  it('no pregunta si entre todos ya lo tumbáis: tu 6 + el forzudo (6 → 4) contra 10', () => {
+    const inicio = iniciarCombate(partida({ seguidores: [seguidor('forzudo_1', 3, 10)] }), [{ enemigo: 'explorador' }], dadosTrucados([0]));
+    const { estado, sucesos } = atacar(inicio, dadosTrucados([6, 6, 1]));
+
+    expect(sucesos[0]).not.toEqual({ tipo: 'seis', dados: [6] });
+    expect(estado.mundo.combate!.resultado).toBe('victoria');
+  });
+
+  it('sin 6, ni pausa ni pregunta (como siempre)', () => {
+    const { estado } = atacar(contraExplorador(), dadosTrucados([5, 4]));
+    expect(estado.mundo.combate!.rondaEnPausa).toBeUndefined();
+    expect(estado.mundo.combate!.enemigos[0].resistencia).toBe(5);
+  });
+
+  it('sin un 6 en la mesa, los botones del 6 dan error; y con él, los objetos tampoco se pueden usar', () => {
+    expect(() => volverATirar(contraExplorador(), dadosTrucados([3]))).toThrow(/no hay ningún 6/);
+    expect(() => quedarseConElAtaque(contraExplorador(), dadosTrucados([]))).toThrow(/no hay ningún 6/);
+
+    const conRon = atacar(contraExplorador({ inventario: [{ id: 'ron', usosRestantes: 1 }] }), dadosTrucados([6, 4])).estado;
+    expect(opcionesDeCombate(conRon).objetos).toEqual([{ posicion: 0, objeto: 'ron', disponible: false, motivo: 'ronda_a_medias' }]);
+    expect(() => usarObjetoEnCombate(conRon, 0, dadosTrucados([]))).toThrow(/ronda_a_medias/);
+  });
+
+  it('la pausa se guarda con la partida: recargar no sirve para volver a tirar la ronda', () => {
+    const pausa = atacar(contraExplorador(), dadosTrucados([6, 4])).estado;
+    const leida = leerPartida(guardarPartida(pausa));
+
+    expect(leida.ok).toBe(true);
+    if (leida.ok) {
+      expect(leida.estado).toEqual(pausa);
+      expect(volverATirar(leida.estado, dadosTrucados([3])).estado.mundo.combate!.enemigos[0].resistencia).toBe(1);
+    }
   });
 });

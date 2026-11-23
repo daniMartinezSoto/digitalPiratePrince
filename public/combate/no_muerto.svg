@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Silueta a tinta de un no muerto (calavera con huesos cruzados). Provisional, para Pirate Prince. -->
+  <g stroke="#2a1d10" stroke-width="8" stroke-linecap="round">
+    <line x1="20" y1="62" x2="80" y2="94"/>
+    <line x1="80" y1="62" x2="20" y2="94"/>
+  </g>
+  <g fill="#2a1d10">
+    <circle cx="16" cy="58" r="5"/><circle cx="22" cy="56" r="5"/>
+    <circle cx="84" cy="58" r="5"/><circle cx="78" cy="56" r="5"/>
+    <circle cx="16" cy="96" r="5"/><circle cx="22" cy="99" r="5"/>
+    <circle cx="84" cy="96" r="5"/><circle cx="78" cy="99" r="5"/>
+    <path fill-rule="evenodd" d="M50 6C30 6 17 20 17 38c0 11 6 19 13 23v9c0 3 2 5 5 5h30c3 0 5-2 5-5v-9c7-4 13-12 13-23C83 20 70 6 50 6zM27 38a9 9 0 1 0 18 0a9 9 0 1 0-18 0zM55 38a9 9 0 1 0 18 0a9 9 0 1 0-18 0zM50 49l-4.5 8h9zM42.5 65h3v10h-3zM54.5 65h3v10h-3z"/>
+  </g>
+</svg>

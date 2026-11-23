@@ -49,12 +49,30 @@ app-dados-en-el-mapa {
   grid-template: repeat(3, 1fr) / repeat(3, 1fr);
   padding: 15%;
   border-radius: 16%;
-  background: radial-gradient(120% 120% at 30% 25%, #fbf5e4, var(--dados-hueso) 45%, var(--dados-hueso-bajo));
+  background: radial-gradient(120% 120% at 30% 25%, var(--dados-brillo, #fbf5e4), var(--dados-hueso) 45%, var(--dados-hueso-bajo));
   box-shadow:
     inset 0 0 0 1.5px rgba(80, 60, 30, 0.35),
     inset 0 -6px 12px rgba(90, 70, 35, 0.25);
   backface-visibility: hidden;
 }
+/* Colores del combate (Sprint 11): dorado = tú, verde = tus seguidores, rojo = los enemigos.
+   Solo cambia el color del hueso; los puntos y la calavera siguen siendo de tinta. */
+.dados-dorado {
+  --dados-hueso: #e9c35e;
+  --dados-hueso-bajo: #a8791f;
+  --dados-brillo: #fff0b8;
+}
+.dados-verde {
+  --dados-hueso: #8fc882;
+  --dados-hueso-bajo: #3f7a3a;
+  --dados-brillo: #dff5d6;
+}
+.dados-rojo {
+  --dados-hueso: #e0806d;
+  --dados-hueso-bajo: #9a2e22;
+  --dados-brillo: #ffd9cf;
+}
+
 .dados-f1 { transform: translateZ(calc(var(--s) / 2)); }
 .dados-f2 { transform: rotateY(90deg) translateZ(calc(var(--s) / 2)); }
 .dados-f3 { transform: rotateX(90deg) translateZ(calc(var(--s) / 2)); }

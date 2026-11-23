@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Silueta a tinta de un humano (pirata con tricornio y parche). Provisional, para Pirate Prince. -->
+  <g fill="#2a1d10">
+    <path d="M18 100 Q19 74 50 70 Q81 74 82 100 Z"/>
+    <rect x="43" y="60" width="14" height="12" rx="3"/>
+    <ellipse cx="50" cy="52" rx="14" ry="16"/>
+    <path d="M32 40 Q34 14 50 13 Q66 14 68 40 Z"/>
+    <path d="M6 28 Q20 42 50 39 Q80 42 94 28 Q88 48 50 48 Q12 48 6 28 Z"/>
+  </g>
+  <circle cx="44" cy="53" r="2.2" fill="#f4ead2"/>
+  <ellipse cx="56.5" cy="53" rx="4.5" ry="4" fill="#000" stroke="#f4ead2" stroke-width="1"/>
+  <path d="M38 47 L66 50" stroke="#f4ead2" stroke-width="1" opacity=".7"/>
+</svg>

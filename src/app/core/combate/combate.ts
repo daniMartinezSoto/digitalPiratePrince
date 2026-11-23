@@ -8,13 +8,13 @@ import { reduccionDanoActual } from '../condiciones/consultas';
 import type { Dados } from '../dados/dados';
 import { aplicarEfectos } from '../efectos/aplicar-efectos';
 import type { Cambio } from '../efectos/cambio';
-import type { CombateEnCurso, EnemigoEnCombate, ResultadoCombate, Sorpresa } from '../estado/combate';
+import type { AtaqueDeLaRonda, CombateEnCurso, EnemigoEnCombate, ResultadoCombate, RondaEnPausa, Sorpresa } from '../estado/combate';
 import type { Estado } from '../estado/estado';
 import type { Jugador } from '../estado/jugador';
 import { calcularModificador } from '../modificadores/calcular-modificador';
 import type { Efecto, EfectoDefinicion } from '../tablas/efecto';
 import { resolverEfecto } from '../tablas/rangos/resolver-tabla';
-import { ataqueBasico, ataqueDelJugador, castigoPorHambre, reducirDano, type TiradaDeAtaque } from './ataque';
+import { ataqueBasico, ataqueDelJugador, castigoPorHambre, puedeVolverATirar, reducirDano, tiradaDelJugador, type TiradaDeAtaque } from './ataque';
 import { emparejar, reemparejar } from './emparejamiento';
 
 // EL COMBATE (Sprint 7). Reglas en la sección 3.12 del CLAUDE.md.
@@ -22,6 +22,8 @@ import { emparejar, reemparejar } from './emparejamiento';
 //   iniciarCombate:      copia los enemigos del bestiario, los numera y sortea quién ataca a quién.
 //   atacar:              juega UNA ronda (el botón "Atacar"): todos tiran, el daño se aplica a la vez,
 //                        los muertos salen (o reviven), alguno se cura, y quien se queda sin rival recibe otro.
+//                        Si el jugador saca un 6, la ronda se queda en pausa hasta que decide:
+//   volverATirar / quedarseConElAtaque: el 6 a elegir (Sprint 11). vistaPreviaDeLaRonda: lo que perdería cada uno.
 //   huir:                intento de huida (después de cualquier ronda, nunca antes de la primera): 1d6, con 4+
 //                        huye todo el grupo; si falla, en la próxima ronda los enemigos aciertan siempre.
 //   usarObjetoEnCombate: un objeto de combate (ron, pistola, bomba de humo, poción). No gasta el ataque.
@@ -76,6 +78,8 @@ export interface OpcionesDeCombate {
  * Lo que va pasando, EN ORDEN, para que la interfaz lo enseñe de uno en uno
  * ("tiras 6 + 2", "−3 por hambre", "−1 piel de piedra", "pierdes 3 PV", "Pirata 3 muere"...).
  * Son datos, no mensajes. Los luchadores van por su id (jugador, forzudo_1, enemigo_2).
+ *   seis:               el jugador ha sacado un 6 (dados: los que lleva): la ronda está EN PAUSA hasta que
+ *                       decida si vuelve a tirar. Cuando sale, es el único suceso (todavía no se ha aplicado nada).
  *   emboscada:          la primera ronda solo atacáis vosotros ("nuestra") o solo ellos ("suya").
  *   enemigos_no_fallan: al empezar la ronda, si el jugador acaba de fallar una huida.
  *   ataque:             un ataque, con sus dados (tirada) y lo que recibe de verdad el objetivo (dano).
@@ -96,6 +100,7 @@ export interface OpcionesDeCombate {
  *   fin:                el combate ha terminado.
  */
 export type SucesoDeCombate =
+  | { tipo: 'seis'; dados: number[] }
   | { tipo: 'emboscada'; quien: Sorpresa }
   | { tipo: 'enemigos_no_fallan' }
   | { tipo: 'ataque'; atacante: string; objetivo: string; tirada: TiradaDeAtaque; pielDePiedra: number; dano: number; dadosExtra?: number[] }
@@ -234,17 +239,25 @@ function crearEnemigos(pedidos: readonly EnemigoPedido[], bestiario: readonly En
 // ---------------------------------------------------------------------------
 
 /**
- * Juega una ronda. Orden fijo de los dados: el jugador (y los de la pistola, si los hay), sus seguidores
- * (en el orden del grupo) y los enemigos vivos (en su orden; el velociraptor, sus dos ataques seguidos);
- * después, los esqueletos que intentan revivir, los que se curan y el nuevo emparejamiento.
+ * Juega una ronda (el botón "Atacar"). TODOS tiran a la vez y después los golpes se aplican a la vez.
+ * Orden fijo de los dados: el primer dado del jugador (y los de la pistola, si los hay y ese dado no es
+ * un 1), sus seguidores (en el orden del grupo) y los enemigos vivos (en su orden; el velociraptor, sus
+ * dos ataques seguidos); después, los esqueletos que intentan revivir, los que se curan y el nuevo
+ * emparejamiento.
+ *
+ * EL 6 A ELEGIR (Sprint 11): si el jugador saca un 6 y con todo lo de la ronda su rival no cae, la
+ * ronda se queda EN PAUSA (combate.rondaEnPausa, suceso "seis") sin aplicar nada: el jugador decide con
+ * volverATirar o quedarseConElAtaque. Si su rival ya cae, no se pregunta (sería arriesgarse para nada).
  */
 export function atacar(estado: Estado, dados: Dados): ResultadoRonda {
   const combate = comprobarCombateAbierto(estado, 'atacar');
+  comprobarSinPausa(combate, 'atacar');
   const jugador = estado.jugador;
   const castigo = castigoPorHambre(jugador.diasSinComer);
   const sucesos: SucesoDeCombate[] = [];
   const eventosAlTerminar = [...combate.eventosAlTerminar];
   let dadoExtra = combate.dadoExtra;
+  let bonificador = 0;
 
   const atacanAliados = combate.ronda > 0 || combate.sorpresa !== 'suya';
   const atacanEnemigos = combate.ronda > 0 || combate.sorpresa !== 'nuestra';
@@ -255,16 +268,20 @@ export function atacar(estado: Estado, dados: Dados): ResultadoRonda {
     sucesos.push({ tipo: 'enemigos_no_fallan' });
   }
 
-  // 1. Todos tiran.
-  type Ataque = { atacante: string; objetivo: string; tirada: TiradaDeAtaque; dadosExtra?: number[] };
-  const ataques: Ataque[] = [];
+  // Todos tiran.
+  const ataques: AtaqueDeLaRonda[] = [];
   if (atacanAliados) {
     for (const id of aliadosQueLuchan(jugador)) {
       const objetivo = combate.objetivos[id];
       if (objetivo === undefined) continue;
       if (id === ID_JUGADOR) {
-        ataques.push(ataqueDelJugadorEnCombate(jugador, combate, objetivo, castigo, dadoExtra, dados));
-        dadoExtra = null; // la pistola se gasta en este ataque, acierte o no
+        bonificador = bonificadorDelJugador(jugador, combate, objetivo);
+        const tirada = ataqueDelJugador(castigo, dados, bonificador);
+        // La pistola se dispara a la vez que tu primer dado (si ese dado ya es un 1, ni se tira);
+        // solo suma si al final el ataque acierta. Se gasta en este ataque, acierte o no.
+        const extra = dadoExtra && tirada.acierta ? dados.tirar(dadoExtra).dados : undefined;
+        ataques.push(extra ? { atacante: ID_JUGADOR, objetivo, tirada, dadosExtra: extra } : { atacante: ID_JUGADOR, objetivo, tirada });
+        dadoExtra = null;
       } else {
         const seguidor = jugador.seguidores.find(s => s.id === id)!;
         ataques.push({ atacante: id, objetivo, tirada: ataqueBasico(seguidor.ataque, castigo, dados) });
@@ -291,18 +308,89 @@ export function atacar(estado: Estado, dados: Dados): ResultadoRonda {
     }
   }
 
-  // 2. Lo que recibe cada uno (piel de piedra, golpe a golpe). El daño que sobra se pierde.
+  const ronda: RondaEnPausa = { ataques, sucesos, eventosAlTerminar, castigo, bonificador, dadoExtraDespues: dadoExtra };
+  return pausarOResolver(estado, combate, ronda, dados);
+}
+
+/**
+ * EL 6: el jugador se arriesga y tira otro dado. Con un 1, pierde todo su ataque (¡pifia!); con 2-5 se
+ * suma y la ronda se resuelve; con otro 6 se suma y vuelve a preguntar (salvo que su rival ya caiga).
+ * Gasta un número del generador.
+ */
+export function volverATirar(estado: Estado, dados: Dados): ResultadoRonda {
+  const combate = comprobarCombateAbierto(estado, 'volverATirar');
+  const pausa = combate.rondaEnPausa;
+  if (!pausa) {
+    throw new Error('volverATirar: no hay ningún 6 en la mesa');
+  }
+  const ataques = pausa.ataques.map(a => {
+    if (a.atacante !== ID_JUGADOR) return a;
+    return { ...a, tirada: tiradaDelJugador([...a.tirada.dados, dados.tirar('1d6').total], pausa.castigo, pausa.bonificador) };
+  });
+  return pausarOResolver(estado, combate, { ...pausa, ataques }, dados);
+}
+
+/** EL 6: el jugador se queda con lo que lleva y la ronda se resuelve. No gasta dados para el ataque. */
+export function quedarseConElAtaque(estado: Estado, dados: Dados): ResultadoRonda {
+  const combate = comprobarCombateAbierto(estado, 'quedarseConElAtaque');
+  if (!combate.rondaEnPausa) {
+    throw new Error('quedarseConElAtaque: no hay ningún 6 en la mesa');
+  }
+  return resolverRonda(estado, combate, combate.rondaEnPausa, dados);
+}
+
+/**
+ * Solo consulta: con la ronda en pausa, cuánto daño recibiría cada luchador si se resolviera ahora
+ * (con la piel de piedra; antes del golpe de gracia, el afortunado o el combate no mortal).
+ * Para pintar en translúcido lo que va a perder cada barra. Sin pausa, null.
+ */
+export function vistaPreviaDeLaRonda(estado: Estado): Record<string, number> | null {
+  const combate = estado.mundo.combate;
+  if (!combate?.rondaEnPausa) return null;
+  return Object.fromEntries(danoPorLuchador(estado.jugador, combate, combate.rondaEnPausa.ataques).recibido);
+}
+
+function pausarOResolver(estado: Estado, combate: CombateEnCurso, ronda: RondaEnPausa, dados: Dados): ResultadoRonda {
+  const delJugador = ronda.ataques.find(a => a.atacante === ID_JUGADOR);
+  if (delJugador && puedeVolverATirar(delJugador.tirada)) {
+    const rival = combate.enemigos.find(e => e.id === delJugador.objetivo);
+    const recibe = danoPorLuchador(estado.jugador, combate, ronda.ataques).recibido.get(delJugador.objetivo) ?? 0;
+    if (rival && recibe < rival.resistencia) {
+      const enPausa: CombateEnCurso = { ...combate, rondaEnPausa: ronda };
+      return { estado: conCombate(estado, enPausa, dados), sucesos: [{ tipo: 'seis', dados: [...delJugador.tirada.dados] }], cambios: [] };
+    }
+  }
+  return resolverRonda(estado, combate, ronda, dados);
+}
+
+/** Lo que recibe cada uno con estos ataques (piel de piedra, golpe a golpe) y el daño de cada ataque. */
+function danoPorLuchador(jugador: Jugador, combate: CombateEnCurso, ataques: readonly AtaqueDeLaRonda[]) {
   const reduccionJugador = reduccionDanoActual(jugador);
-  const danoRecibido = new Map<string, number>();
-  for (const { atacante, objetivo, tirada, dadosExtra } of ataques) {
-    const golpe = tirada.dano + (dadosExtra ?? []).reduce((suma, d) => suma + d, 0);
+  const recibido = new Map<string, number>();
+  const porAtaque = ataques.map(({ objetivo, tirada, dadosExtra }) => {
+    const golpe = tirada.dano + (tirada.acierta ? (dadosExtra ?? []).reduce((suma, d) => suma + d, 0) : 0);
     const reduccion = objetivo === ID_JUGADOR ? reduccionJugador : tieneEnemigo(combate, objetivo, 'piel_de_piedra') ? 1 : 0;
     const dano = reducirDano(golpe, reduccion);
-    const suceso: SucesoDeCombate = { tipo: 'ataque', atacante, objetivo, tirada, pielDePiedra: golpe - dano, dano };
-    sucesos.push(dadosExtra ? { ...suceso, dadosExtra } : suceso);
-    danoRecibido.set(objetivo, (danoRecibido.get(objetivo) ?? 0) + dano);
-  }
+    recibido.set(objetivo, (recibido.get(objetivo) ?? 0) + dano);
+    return { golpe, dano };
+  });
+  return { recibido, porAtaque };
+}
 
+/** Aplica TODOS los golpes de la ronda a la vez, y lo que viene después (muertes, revivir, curarse...). */
+function resolverRonda(estado: Estado, combateConPausa: CombateEnCurso, tirada: RondaEnPausa, dados: Dados): ResultadoRonda {
+  const { rondaEnPausa: _, ...combate } = combateConPausa;
+  const jugador = estado.jugador;
+  const sucesos: SucesoDeCombate[] = [...tirada.sucesos];
+  const ataques = tirada.ataques;
+
+  // 2. Lo que recibe cada uno (piel de piedra, golpe a golpe). El daño que sobra se pierde.
+  const { recibido: danoRecibido, porAtaque } = danoPorLuchador(jugador, combate, ataques);
+  ataques.forEach(({ atacante, objetivo, tirada, dadosExtra }, i) => {
+    const { golpe, dano } = porAtaque[i];
+    const suceso: SucesoDeCombate = { tipo: 'ataque', atacante, objetivo, tirada, pielDePiedra: golpe - dano, dano };
+    sucesos.push(dadosExtra && tirada.acierta ? { ...suceso, dadosExtra } : suceso);
+  });
   // 3. Los enemigos reciben su daño (todo a la vez).
   const enemigos = combate.enemigos.map(e => ({ ...e }));
   const heridosEnemigos: SucesoDeCombate[] = [];
@@ -445,30 +533,24 @@ export function atacar(estado: Estado, dados: Dados): ResultadoRonda {
     ronda,
     sorpresa: null,
     noPuedenFallar: false,
-    dadoExtra,
-    eventosAlTerminar,
+    dadoExtra: tirada.dadoExtraDespues,
+    eventosAlTerminar: tirada.eventosAlTerminar,
     resultado,
   };
   return { estado: conCombate(aplicado.estado, nuevoCombate, dados), sucesos, cambios: aplicado.cambios };
 }
 
-/** El ataque del jugador con todo lo suyo: bonificadores (objetos, condiciones, ron, contra no humanos) y la pistola. */
-function ataqueDelJugadorEnCombate(
-  jugador: Jugador,
-  combate: CombateEnCurso,
-  objetivo: string,
-  castigo: number,
-  dadoExtra: string | null,
-  dados: Dados,
-) {
+/** Lo que suma al daño del jugador: objetos y condiciones, el ron y, contra no humanos, la lanza. */
+function bonificadorDelJugador(jugador: Jugador, combate: CombateEnCurso, objetivo: string): number {
   const rival = combate.enemigos.find(e => e.id === objetivo);
   const contraNoHumano = rival !== undefined && rival.categoria !== 'humano' ? calcularModificador(jugador, 'ataque_no_humano') : 0;
-  const bonificador = calcularModificador(jugador, 'ataque') + contraNoHumano + combate.bonificador;
-  const tirada = ataqueDelJugador(castigo, dados, bonificador);
-  if (dadoExtra && tirada.acierta) {
-    return { atacante: ID_JUGADOR, objetivo, tirada, dadosExtra: dados.tirar(dadoExtra).dados };
+  return calcularModificador(jugador, 'ataque') + contraNoHumano + combate.bonificador;
+}
+
+function comprobarSinPausa(combate: CombateEnCurso, funcion: string): void {
+  if (combate.rondaEnPausa) {
+    throw new Error(`${funcion}: hay un 6 en la mesa; primero decide si vuelves a tirar`);
   }
-  return { atacante: ID_JUGADOR, objetivo, tirada };
 }
 
 function tieneEnemigo(combate: CombateEnCurso, id: string, habilidad: HabilidadDeEnemigo): boolean {
@@ -484,12 +566,14 @@ function tieneEnemigo(combate: CombateEnCurso, id: string, habilidad: HabilidadD
 export type MotivoNoHuir =
   | 'no_se_puede_huir'    // este combate no lo permite (dentro del barco...)
   | 'primera_ronda'       // hay que pelear al menos una ronda antes de intentarlo
-  | 'acabas_de_fallar';   // ya lo intentaste tras esta ronda: toca pelear otra antes de volver a probar
+  | 'acabas_de_fallar'    // ya lo intentaste tras esta ronda: toca pelear otra antes de volver a probar
+  | 'ronda_a_medias';     // hay un 6 en la mesa: primero hay que decidir si se vuelve a tirar
 
 /** Por qué no se puede usar un objeto de combate ahora. */
 export type MotivoNoUsarObjeto =
   | 'ya_usado_en_este_combate'   // los permanentes (la pistola), una vez por combate
-  | 'no_se_puede_huir';          // la bomba de humo, en un combate del que no se puede huir
+  | 'no_se_puede_huir'           // la bomba de humo, en un combate del que no se puede huir
+  | 'ronda_a_medias';            // hay un 6 en la mesa: primero hay que decidir si se vuelve a tirar
 
 /** Un objeto de combate del inventario, tal como lo enseña la interfaz (junto a "Atacar"). */
 export interface ObjetoDeCombateDisponible {
@@ -504,6 +588,8 @@ export interface OpcionesDelCombate {
   atacar: boolean;
   huir: { disponible: boolean; motivo?: MotivoNoHuir };
   objetos: ObjetoDeCombateDisponible[];
+  // Solo con la ronda en pausa por un 6: los dados que lleva el jugador y el daño que haría si se quedara así.
+  seis?: { dados: number[]; dano: number };
 }
 
 /** Solo consulta: qué se puede hacer ahora en el combate. Sin combate o ya terminado, nada. */
@@ -520,10 +606,18 @@ export function opcionesDeCombate(estado: Estado, objetos: readonly Objeto[] = O
     const noPuede = motivoParaNoUsar(combate, llevado.id, llevado.usosRestantes, ficha);
     deCombate.push(noPuede ? { posicion, objeto: llevado.id, disponible: false, motivo: noPuede } : { posicion, objeto: llevado.id, disponible: true });
   });
+  const pausa = combate.rondaEnPausa;
+  const delJugador = pausa?.ataques.find(a => a.atacante === ID_JUGADOR);
+  if (pausa && delJugador) {
+    const sinUsar = deCombate.map(o => ({ posicion: o.posicion, objeto: o.objeto, disponible: false, motivo: 'ronda_a_medias' as const }));
+    const dano = danoPorLuchador(estado.jugador, combate, pausa.ataques).porAtaque[pausa.ataques.indexOf(delJugador)].dano;
+    return { atacar: false, huir: { disponible: false, motivo: 'ronda_a_medias' }, objetos: sinUsar, seis: { dados: [...delJugador.tirada.dados], dano } };
+  }
   return { atacar: true, huir: motivo ? { disponible: false, motivo } : { disponible: true }, objetos: deCombate };
 }
 
 function motivoParaNoHuir(combate: CombateEnCurso): MotivoNoHuir | undefined {
+  if (combate.rondaEnPausa) return 'ronda_a_medias';
   if (!combate.puedeHuir) return 'no_se_puede_huir';
   if (combate.ronda === 0) return 'primera_ronda';
   if (combate.noPuedenFallar) return 'acabas_de_fallar';
@@ -531,6 +625,7 @@ function motivoParaNoHuir(combate: CombateEnCurso): MotivoNoHuir | undefined {
 }
 
 function motivoParaNoUsar(combate: CombateEnCurso, id: string, usosRestantes: number | undefined, ficha: Objeto): MotivoNoUsarObjeto | undefined {
+  if (combate.rondaEnPausa) return 'ronda_a_medias';
   if (usosRestantes === undefined && combate.objetosUsados.includes(id)) return 'ya_usado_en_este_combate';
   if (ficha.enCombate?.efecto === 'huida' && !combate.puedeHuir) return 'no_se_puede_huir';
   return undefined;

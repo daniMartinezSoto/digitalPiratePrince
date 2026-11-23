@@ -1,5 +1,5 @@
 import { Component, DestroyRef, effect, ElementRef, inject, signal, untracked, viewChild, ViewEncapsulation } from '@angular/core';
-import { MesaDeTiradas, type TiradaEnLaMesa } from '../../servicios/mesa-de-tiradas';
+import { MesaDeTiradas, type ColorDeDadoEnLaMesa, type TiradaEnLaMesa } from '../../servicios/mesa-de-tiradas';
 
 // LOS DADOS SOBRE EL MAPA (pedido por el autor el 21-nov): cuando hay una tirada pública, los dados
 // caen encima del mapa como si fuera un tablero y enseñan lo que ha sacado el juego. A los 2 segundos
@@ -26,6 +26,27 @@ const TIEMPO_DESVANECER = 400;
 /** Espacio que se deja abajo para no tapar la barra del mapa (texto y botones de zoom), en px. */
 const MARGEN_ABAJO = 100;
 
+/**
+ * Tamaño del dado (px): el del documento (100), más pequeño si hay muchos dados o poco sitio, y nunca
+ * menos de 40. "pequenos" (combate, donde caen muchos a la vez) los deja como mucho en 70.
+ */
+export function tamanoDelDado(n: number, W: number, H: number, pequenos = false): number {
+  const maximo = pequenos ? 70 : 100;
+  const minimo = pequenos ? 40 : 48;
+  return Math.max(minimo, Math.min(maximo, W * 0.18, (H - MARGEN_ABAJO) * 0.3, (pequenos ? 200 : 260) / Math.sqrt(Math.max(1, n))));
+}
+
+/**
+ * En qué parte de la mesa cae cada dado (pedido por el autor, 23-nov): en combate, los tuyos (dorado) y
+ * los de tus seguidores (verde) a la IZQUIERDA, como tu bando en la ventana, y los de los enemigos
+ * (rojo) a la DERECHA. Los de siempre (hueso), en cualquier sitio.
+ */
+export type LadoDeLaMesa = 'izquierda' | 'derecha' | 'toda';
+export function ladoDelDado(color: ColorDeDadoEnLaMesa): LadoDeLaMesa {
+  if (color === 'rojo') return 'derecha';
+  return color === 'hueso' ? 'toda' : 'izquierda';
+}
+
 const azar = (a: number, b: number) => a + Math.random() * (b - a);
 const salidaCubica = (t: number) => 1 - (1 - t) ** 3;
 /** El siguiente ángulo equivalente a "objetivo", con "vueltas" vueltas completas de más. */
@@ -45,6 +66,8 @@ export class DadosEnElMapa {
   protected readonly resultado = signal<string | null>(null);
   protected readonly saliendo = signal(false);
   private relojes: number[] = [];
+  /** Dónde están los dados que hay ahora en la mesa (para que los que se añaden no caigan encima). */
+  private ocupados: [number, number][] = [];
   private audio: AudioContext | null = null;
 
   constructor() {
@@ -54,6 +77,11 @@ export class DadosEnElMapa {
     effect(() => {
       const tirada = this.mesa.tirada();
       if (tirada && tirada.numero !== yaEnsenada) untracked(() => this.tirar(tirada));
+    });
+    // Recoger los dados que se habían quedado en la mesa (ronda en pausa por un 6).
+    const yaRecogida = this.mesa.recogida();
+    effect(() => {
+      if (this.mesa.recogida() !== yaRecogida) untracked(() => this.desvanecer());
     });
     inject(DestroyRef).onDestroy(() => {
       this.limpiarRelojes();
@@ -73,7 +101,12 @@ export class DadosEnElMapa {
   private tirar(tirada: TiradaEnLaMesa): void {
     const mesa = this.lienzo().nativeElement;
     this.limpiarRelojes();
-    mesa.replaceChildren();
+    // "anadir": los dados que hay se quedan (salvo que ya se estuvieran yendo)
+    const anadir = tirada.anadir === true && !mesa.classList.contains('dados-saliendo') && mesa.childElementCount > 0;
+    if (!anadir) {
+      mesa.replaceChildren();
+      this.ocupados = [];
+    }
     mesa.classList.remove('dados-saliendo');
     this.resultado.set(null);
     this.saliendo.set(false);
@@ -82,16 +115,22 @@ export class DadosEnElMapa {
     if (W <= 0 || H <= 0 || tirada.dados.length === 0) return; // sin sitio (p. ej. en los tests) no se pinta
     const reducir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
     const n = tirada.dados.length;
-    // tamaño del dado: el del documento, más pequeño si hay muchos dados o poco sitio
-    const s = Math.max(48, Math.min(100, W * 0.18, (H - MARGEN_ABAJO) * 0.3, 260 / Math.sqrt(n)));
-    const centros = this.repartir(n, s, W, H);
+    const s = tamanoDelDado(n + this.ocupados.length, W, H, tirada.pequenos);
+    const lados = tirada.dados.map((_, i) => ladoDelDado(tirada.colores?.[i] ?? 'hueso'));
+    const centros = this.repartir(n, s, W, H, this.ocupados, lados);
+    this.ocupados = [...this.ocupados, ...centros];
     const duracion = reducir ? 250 : azar(1250, 1450);
-    const origenX = W / 2 + azar(-0.25, 0.25) * W;
+    // de dónde salen lanzados: del centro (los de siempre) o de su lado de la mesa (en combate)
+    const origenes: Record<LadoDeLaMesa, number> = {
+      toda: W / 2 + azar(-0.25, 0.25) * W,
+      izquierda: W * azar(0.15, 0.3),
+      derecha: W * azar(0.7, 0.85),
+    };
     const origenY = H - 0.55 * s;
 
     tirada.dados.forEach((valor, i) => {
       const [cx, cy] = centros[i];
-      const dado = this.crearDado(s);
+      const dado = this.crearDado(s, tirada.colores?.[i] ?? 'hueso');
       dado.raiz.style.left = `${cx - s / 2}px`;
       dado.raiz.style.top = `${cy - s / 2}px`;
       mesa.appendChild(dado.raiz);
@@ -112,7 +151,7 @@ export class DadosEnElMapa {
 
       // el vuelo: el mismo muestreo para el dado y su sombra (40 fotogramas, sin saltos)
       if (!reducir && typeof dado.vuelo.animate === 'function') {
-        const dx = origenX + azar(-0.6, 0.6) * s - cx, dy = origenY - cy;
+        const dx = origenes[lados[i]] + azar(-0.6, 0.6) * s - cx, dy = origenY - cy;
         const alturaSombra = Math.min(130, s * 1.05);
         const vuelo: Keyframe[] = [], sombra: Keyframe[] = [];
         for (let f = 0; f <= 40; f++) {
@@ -141,35 +180,64 @@ export class DadosEnElMapa {
       }
     });
 
-    // al pararse: el resultado; a los 2 segundos, se desvanece todo
+    // al pararse: el resultado; a los 2 segundos, se desvanece todo (salvo "seQueda": hasta recoger())
     this.despues(duracion + 80, () => {
+      if (tirada.seQueda) return;
+      if (tirada.sinTotal) {
+        this.despues(TIEMPO_A_LA_VISTA, () => this.desvanecer());
+        return;
+      }
       const suma = tirada.dados.join(' + ');
       const mod = tirada.modificador > 0 ? ` + ${tirada.modificador}` : tirada.modificador < 0 ? ` − ${-tirada.modificador}` : '';
       this.resultado.set(n === 1 && !mod ? `${tirada.total}` : `${suma}${mod} = ${tirada.total}`);
-      this.despues(TIEMPO_A_LA_VISTA, () => {
-        mesa.classList.add('dados-saliendo');
-        this.saliendo.set(true);
-        this.despues(TIEMPO_DESVANECER, () => {
-          mesa.replaceChildren();
-          mesa.classList.remove('dados-saliendo');
-          this.resultado.set(null);
-          this.saliendo.set(false);
-        });
-      });
+      this.despues(TIEMPO_A_LA_VISTA, () => this.desvanecer());
     });
   }
 
-  /** Sitios al azar para n dados, sin solaparse ni salirse (el mejor de 60 intentos). */
-  private repartir(n: number, s: number, W: number, H: number): [number, number][] {
+  /** Desvanece todo lo que hay en la mesa (dados y resultado) y la deja vacía. */
+  private desvanecer(): void {
+    const mesa = this.lienzo().nativeElement;
+    this.limpiarRelojes();
+    if (mesa.childElementCount === 0 && !this.resultado()) return;
+    mesa.classList.add('dados-saliendo');
+    this.saliendo.set(true);
+    this.despues(TIEMPO_DESVANECER, () => {
+      mesa.replaceChildren();
+      this.ocupados = [];
+      mesa.classList.remove('dados-saliendo');
+      this.resultado.set(null);
+      this.saliendo.set(false);
+    });
+  }
+
+  /** Sitios al azar para n dados, sin solaparse ni salirse ni caer sobre los que ya hay (el mejor de 60 intentos). */
+  private repartir(
+    n: number,
+    s: number,
+    W: number,
+    H: number,
+    ocupados: [number, number][] = [],
+    lados: LadoDeLaMesa[] = [],
+  ): [number, number][] {
     const m = s * 0.75 + 6; // cabe el dado girado
-    const x0 = m, x1 = Math.max(m, W - m), y0 = m, y1 = Math.max(m, H - m - MARGEN_ABAJO);
+    const y0 = m, y1 = Math.max(m, H - m - MARGEN_ABAJO);
+    const xs = (lado: LadoDeLaMesa = 'toda'): [number, number] => {
+      if (lado === 'izquierda') return [m, Math.max(m, W / 2 - m)];
+      if (lado === 'derecha') return [Math.min(W - m, W / 2 + m), Math.max(m, W - m)];
+      return [m, Math.max(m, W - m)];
+    };
     let mejor: [number, number][] = [], mejorSeparacion = -1;
     for (let intento = 0; intento < 60; intento++) {
-      const puntos: [number, number][] = Array.from({ length: n }, () => [azar(x0, x1), azar(y0, y1)]);
+      const puntos: [number, number][] = Array.from({ length: n }, (_, i) => {
+        const [x0, x1] = xs(lados[i]);
+        return [azar(x0, x1), azar(y0, y1)];
+      });
       let separacion = Infinity;
-      for (let a = 0; a < n; a++)
+      for (let a = 0; a < n; a++) {
         for (let b = a + 1; b < n; b++)
           separacion = Math.min(separacion, Math.hypot(puntos[a][0] - puntos[b][0], puntos[a][1] - puntos[b][1]));
+        for (const [ox, oy] of ocupados) separacion = Math.min(separacion, Math.hypot(puntos[a][0] - ox, puntos[a][1] - oy));
+      }
       if (separacion > mejorSeparacion) {
         mejor = puntos;
         mejorSeparacion = separacion;
@@ -180,13 +248,13 @@ export class DadosEnElMapa {
   }
 
   /** Construye un dado: raíz > sombra + vuelo > inclinación > cubo > 6 caras. */
-  private crearDado(s: number) {
+  private crearDado(s: number, color: ColorDeDadoEnLaMesa) {
     const div = (clase: string) => {
       const d = document.createElement('div');
       d.className = clase;
       return d;
     };
-    const raiz = div('dados-dado'), sombra = div('dados-sombra'), vuelo = div('dados-vuelo');
+    const raiz = div(`dados-dado dados-${color}`), sombra = div('dados-sombra'), vuelo = div('dados-vuelo');
     const inclinacion = div('dados-inclinacion'), cubo = div('dados-cubo');
     raiz.style.setProperty('--s', `${s}px`);
     for (let cara = 1; cara <= 6; cara++) {

@@ -3,7 +3,7 @@ import { reduccionDanoActual } from '../condiciones/consultas';
 import { dadosTrucados } from '../dados/dados-trucados';
 import type { Jugador } from '../estado/jugador';
 import { crearPartida } from '../partida/crear-partida';
-import { ataqueBasico, ataqueDelJugador, castigoPorHambre, reducirDano } from './ataque';
+import { ataqueBasico, ataqueDelJugador, castigoPorHambre, puedeVolverATirar, reducirDano, tiradaDelJugador } from './ataque';
 
 describe('ataqueDelJugador', () => {
   it('con un 1 falla', () => {
@@ -18,28 +18,13 @@ describe('ataqueDelJugador', () => {
     }
   });
 
-  it('con un 6 vuelve a tirar y suma: 6 + 4 = 10', () => {
-    expect(ataqueDelJugador(0, dadosTrucados([6, 4]))).toEqual({ dados: [6, 4], acierta: true, danoSinCastigo: 10, bonificador: 0, castigoHambre: 0, dano: 10 });
-  });
-
-  it('sigue tirando mientras salgan seises: 6 + 6 + 3 = 15', () => {
-    const ataque = ataqueDelJugador(0, dadosTrucados([6, 6, 3]));
-    expect(ataque.dados).toEqual([6, 6, 3]);
-    expect(ataque.dano).toBe(15);
-  });
-
-  it('si después de un 6 sale un 1, falla TODO el ataque', () => {
-    expect(ataqueDelJugador(0, dadosTrucados([6, 6, 1]))).toEqual({ dados: [6, 6, 1], acierta: false, danoSinCastigo: 0, bonificador: 0, castigoHambre: 0, dano: 0 });
-  });
-
-  it('gasta un dado más por cada 6, ni uno más', () => {
-    const dados = dadosTrucados([6, 2, 5]);
-    ataqueDelJugador(0, dados);
+  it('con un 6 NO vuelve a tirar solo: tira un único dado (lo demás lo decide el jugador)', () => {
+    const dados = dadosTrucados([6, 4]);
+    expect(ataqueDelJugador(0, dados)).toEqual({ dados: [6], acierta: true, danoSinCastigo: 6, bonificador: 0, castigoHambre: 0, dano: 6 });
     expect(dados.restantes()).toBe(1);
   });
-
   it('el hambre se resta al daño: con −3, un 6 + 2 hace 5', () => {
-    const ataque = ataqueDelJugador(3, dadosTrucados([6, 2]));
+    const ataque = tiradaDelJugador([6, 2], 3);
     expect(ataque.danoSinCastigo).toBe(8);
     expect(ataque.castigoHambre).toBe(3);
     expect(ataque.dano).toBe(5);
@@ -63,7 +48,7 @@ describe('ataqueDelJugador', () => {
   });
 
   it('un bonificador negativo no quita el 6 que repite: maleficio (−1) con 6 + 3 hace 8', () => {
-    const ataque = ataqueDelJugador(0, dadosTrucados([6, 3]), -1);
+    const ataque = tiradaDelJugador([6, 3], 0, -1);
     expect(ataque.dados).toEqual([6, 3]);
     expect(ataque.dano).toBe(8);
   });
@@ -74,6 +59,33 @@ describe('ataqueDelJugador', () => {
 
   it('si falla, no se apunta castigo por hambre (no hay nada que restar)', () => {
     expect(ataqueDelJugador(2, dadosTrucados([1])).castigoHambre).toBe(0);
+  });
+});
+
+describe('tiradaDelJugador y puedeVolverATirar (el 6 a elegir)', () => {
+  it('suma los dados: 6 + 4 = 10, y 6 + 6 + 3 = 15', () => {
+    expect(tiradaDelJugador([6, 4], 0)).toEqual({ dados: [6, 4], acierta: true, danoSinCastigo: 10, bonificador: 0, castigoHambre: 0, dano: 10 });
+    expect(tiradaDelJugador([6, 6, 3], 0).dano).toBe(15);
+  });
+
+  it('si después de un 6 sale un 1, falla TODO el ataque (¡pifia!)', () => {
+    expect(tiradaDelJugador([6, 6, 1], 0, 2)).toEqual({ dados: [6, 6, 1], acierta: false, danoSinCastigo: 0, bonificador: 0, castigoHambre: 0, dano: 0 });
+  });
+
+  it('quedarse con el 6 vale 6 (más el bonificador)', () => {
+    expect(tiradaDelJugador([6], 0, 1).dano).toBe(7);
+  });
+
+  it('solo se puede volver a tirar si el último dado es un 6', () => {
+    expect(puedeVolverATirar(tiradaDelJugador([6], 0))).toBe(true);
+    expect(puedeVolverATirar(tiradaDelJugador([6, 6], 0))).toBe(true);
+    expect(puedeVolverATirar(tiradaDelJugador([6, 4], 0))).toBe(false);
+    expect(puedeVolverATirar(tiradaDelJugador([6, 1], 0))).toBe(false);
+    expect(puedeVolverATirar(tiradaDelJugador([5], 0))).toBe(false);
+  });
+
+  it('sin dados, error', () => {
+    expect(() => tiradaDelJugador([], 0)).toThrow(/al menos un dado/);
   });
 });
 

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Silueta a tinta de un animal (cabeza de felino). Provisional, para Pirate Prince. -->
+  <path fill="#2a1d10" d="M20 32 L30 12 L42 28 Q50 25 58 28 L70 12 L80 32 Q90 52 78 72 Q66 90 50 92 Q34 90 22 72 Q10 52 20 32 Z"/>
+  <g fill="#f4ead2">
+    <path d="M32 48 Q38 42 44 48 Q38 52 32 48 Z"/>
+    <path d="M56 48 Q62 42 68 48 Q62 52 56 48 Z"/>
+    <path d="M44 64 L56 64 L50 71 Z"/>
+    <path d="M50 71 L50 78 M50 76 Q44 82 38 78 M50 76 Q56 82 62 78" stroke="#f4ead2" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M24 62 L38 66 M24 70 L38 69 M76 62 L62 66 M76 70 L62 69" stroke="#f4ead2" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".7"/>
+  </g>
+  <g fill="#2a1d10"><circle cx="38" cy="48" r="2"/><circle cx="62" cy="48" r="2"/></g>
+</svg>

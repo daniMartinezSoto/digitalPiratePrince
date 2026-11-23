@@ -21,15 +21,22 @@
   @if (c.resultado) {
     <p class="fin">EL COMBATE HA TERMINADO: {{ c.resultado }}</p>
     @if (!esAbordaje()) {
-      <button type="button" (click)="cerrar()">Cerrar el combate</button>
+      <button type="button" (click)="luchar.cerrar()">Cerrar el combate</button>
     }
   } @else if (opciones(); as o) {
-    <button type="button" [disabled]="!o.atacar" (click)="atacar()">Atacar</button>
-    <button type="button" [disabled]="!o.huir.disponible" (click)="huir()">Huir</button>
+    @if (o.seis; as seis) {
+      <p class="seis">
+        ¡SEIS! Llevas {{ seis.dados.join(' + ') }} ({{ seis.dano }} de daño). ¿Vuelves a tirar? Con un 1 pierdes todo el ataque.
+      </p>
+      <button type="button" (click)="luchar.volverATirar()">Tirar otra vez</button>
+      <button type="button" (click)="luchar.quedarse()">Quedarme así</button>
+    }
+    <button type="button" [disabled]="!o.atacar" (click)="luchar.atacar()">Atacar</button>
+    <button type="button" [disabled]="!o.huir.disponible" (click)="luchar.huir()">Huir</button>
     @if (o.huir.motivo; as m) { <small> {{ textoNoHuir[m] }}</small> }
     @for (obj of o.objetos; track obj.posicion) {
       <p>
-        <button type="button" [disabled]="!obj.disponible" (click)="usar(obj.posicion, obj.objeto)">Usar {{ nombreDeObjeto(obj.objeto) }}</button>
+        <button type="button" [disabled]="!obj.disponible" (click)="luchar.usar(obj.posicion, obj.objeto)">Usar {{ nombreDeObjeto(obj.objeto) }}</button>
         @if (obj.motivo; as m) { <small> {{ textoNoUsar[m] }}</small> }
       </p>
     }

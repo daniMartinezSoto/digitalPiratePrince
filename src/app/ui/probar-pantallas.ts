@@ -4,6 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { AlmacenEnMemoria } from '../core/guardado/almacen-en-memoria';
 import { ALMACEN, GENERAR_SEMILLA, JuegoStore, RELOJ } from '../store/juego.store';
 import { RUTAS } from './rutas';
+import { RITMO_DEL_COMBATE, SIN_ANIMACION } from './servicios/luchar';
 
 // AYUDAS SOLO PARA LOS TESTS DE LAS PANTALLAS (no las usa el juego).
 
@@ -17,6 +18,8 @@ export function prepararJuego(almacen = new AlmacenEnMemoria()): JuegoStore {
       { provide: ALMACEN, useValue: almacen },
       { provide: RELOJ, useValue: () => '2026-11-19T12:30:00.000Z' },
       { provide: GENERAR_SEMILLA, useValue: () => SEMILLA_DE_PRUEBA },
+      // Sin animación del combate: los botones responden en el acto (el test de la ventana la prueba aparte).
+      { provide: RITMO_DEL_COMBATE, useValue: SIN_ANIMACION },
     ],
   });
   return TestBed.inject(JuegoStore);
