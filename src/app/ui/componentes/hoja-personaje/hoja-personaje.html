@@ -19,7 +19,7 @@
   } @else {
     <ul>
       @for (objeto of h.inventario; track $index) {
-        <li>{{ objeto.nombre }}@if (objeto.usosRestantes !== undefined) { ({{ objeto.usosRestantes }} usos) }</li>
+        <li [title]="descripcionDeObjeto(objeto.id)">{{ objeto.nombre }}@if (objeto.usosRestantes !== undefined) { ({{ objeto.usosRestantes }} usos) }</li>
       }
     </ul>
   }

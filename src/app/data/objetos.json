@@ -53,7 +53,7 @@
   {
     "id": "unguento",
     "nombre": "Ungüento curativo",
-    "descripcion": "Un ungüento de hierbas del chamán. Al usarlo, recuperas 1d6 de vida. Solo se puede usar fuera de combate.",
+    "descripcion": "Un ungüento de hierbas del chamán. Al usarlo, recuperas 1d6 de vida. Solo se puede usar fuera de combate. Con la vida llena no se puede usar.",
     "tipo": "activo",
     "usosMaximos": 1,
     "cuandoSeUsa": "accion",
@@ -63,7 +63,8 @@
         "cantidad": "1d6"
       }
     ],
-    "precioVenta": 10
+    "precioVenta": 10,
+    "soloSiHerido": true
   },
   {
     "id": "idolo_antediluviano",
@@ -170,5 +171,147 @@
     "tipo": "pasivo",
     "espacios": 2,
     "precioVenta": 20
+  },
+  {
+    "id": "medicina",
+    "nombre": "Medicina",
+    "descripcion": "Un frasco de medicina de botica. Al usarlo, recuperas 5 puntos de vida. Con la vida llena no se puede usar.",
+    "tipo": "activo",
+    "usosMaximos": 1,
+    "cuandoSeUsa": "accion",
+    "alUsar": [
+      {
+        "tipo": "vida",
+        "cantidad": 5
+      }
+    ],
+    "precioVenta": 5,
+    "soloSiHerido": true
+  },
+  {
+    "id": "bigote_falso",
+    "nombre": "Bigote falso",
+    "descripcion": "Nadie te reconoce con él. Te deja entrar una vez donde te han prohibido la entrada (una aldea que te ha echado o vetado, o una segunda audiencia en un puerto) o huir una vez de la cárcel. Se gasta al usarlo.",
+    "tipo": "pasivo",
+    "precioVenta": 15
+  },
+  {
+    "id": "loro_parlante",
+    "nombre": "Loro parlante",
+    "descripcion": "Repite tu nombre en cada puerto: +1 de fama mientras lo lleves (si lo pierdes o lo vendes, pierdes ese punto).",
+    "tipo": "pasivo",
+    "fama": 1,
+    "precioVenta": 30
+  },
+  {
+    "id": "kit_de_reparaciones",
+    "nombre": "Kit de cabos, tablones y herramientas",
+    "descripcion": "Te da una acción nueva, Reparar el barco (estando a bordo): gastas la acción del día y recuperas 1d6 de tripulación. Después hay que esperar 3 días para volver a reparar.",
+    "tipo": "pasivo",
+    "precioVenta": 50
+  },
+  {
+    "id": "ropajes_caros",
+    "nombre": "Ropajes caros",
+    "descripcion": "Vestido como un noble: +2 al solicitar una audiencia.",
+    "tipo": "pasivo",
+    "modificadores": {
+      "audiencia_puerto": 2,
+      "audiencia_aldea": 2,
+      "audiencia_guarida": 2
+    },
+    "precioVenta": 30
+  },
+  {
+    "id": "ropajes_de_pirata",
+    "nombre": "Ropajes de pirata profesional",
+    "descripcion": "Pareces un capitán de verdad: los seguidores te cobran 10 monedas de oro menos al contratarlos.",
+    "tipo": "pasivo",
+    "otorga": [
+      "ropajes_de_pirata"
+    ],
+    "precioVenta": 20
+  },
+  {
+    "id": "biblia",
+    "nombre": "Biblia",
+    "descripcion": "Al usarla, te libras de una maldición (el amuleto maldito incluido). Se descarta después. Sin maldiciones no se puede usar.",
+    "tipo": "activo",
+    "usosMaximos": 1,
+    "cuandoSeUsa": "accion",
+    "alUsar": [
+      {
+        "tipo": "quitar_condicion",
+        "categoria": "maldicion"
+      }
+    ],
+    "precioVenta": 12,
+    "soloConCategoria": "maldicion"
+  },
+  {
+    "id": "red_de_pesca",
+    "nombre": "Red de pesca",
+    "descripcion": "Una buena red: +1 al pescar.",
+    "tipo": "pasivo",
+    "modificadores": {
+      "pesca": 1
+    },
+    "precioVenta": 10
+  },
+  {
+    "id": "perfume",
+    "nombre": "Perfume",
+    "descripcion": "Hueles a gobernador: +1 al solicitar una audiencia y al buscar información.",
+    "tipo": "pasivo",
+    "modificadores": {
+      "audiencia_puerto": 1,
+      "audiencia_aldea": 1,
+      "audiencia_guarida": 1,
+      "buscar_info_puerto": 1,
+      "buscar_info_aldea": 1,
+      "buscar_info_guarida": 1
+    },
+    "precioVenta": 17
+  },
+  {
+    "id": "mochila_sin_fondo",
+    "nombre": "Mochila sin fondo",
+    "descripcion": "Cabe todo lo que le eches: no ocupa hueco y te da 4 huecos más en el inventario.",
+    "tipo": "pasivo",
+    "espacios": 0,
+    "huecosExtra": 4,
+    "magico": true,
+    "precioVenta": 120
+  },
+  {
+    "id": "hogaza_magica",
+    "nombre": "Hogaza mágica",
+    "descripcion": "Nunca se acaba: mientras la lleves, tu grupo no necesita comer en la fase de comida.",
+    "tipo": "pasivo",
+    "otorga": [
+      "hogaza_magica"
+    ],
+    "magico": true,
+    "precioVenta": 100
+  },
+  {
+    "id": "anillo_de_los_deseos",
+    "nombre": "Anillo de los deseos",
+    "descripcion": "Al usarlo aparece un djinn que te concede un deseo. Se descarta después.",
+    "tipo": "activo",
+    "usosMaximos": 1,
+    "cuandoSeUsa": "accion",
+    "alUsarEvento": "deseo",
+    "magico": true,
+    "precioVenta": 150
+  },
+  {
+    "id": "lira_de_las_sirenas",
+    "nombre": "La lira de las sirenas",
+    "descripcion": "Un tesoro mítico que se creía una leyenda: +1 de fama mientras la lleves (además del +1 de todo objeto mágico).",
+    "tipo": "pasivo",
+    "fama": 1,
+    "magico": true,
+    "precioVenta": 250
   }
 ]

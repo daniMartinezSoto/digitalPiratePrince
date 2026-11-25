@@ -8,7 +8,7 @@ import type { IdAccion } from '../../core/acciones/accion';
 // ataques, tiradas de eventos); por detrás, los sorteos internos (si salta un evento, cuál, nombres...).
 
 /** Las acciones cuya tirada se enseña con dados (de momento, solo para probar: pescar y cazar). */
-export const ACCIONES_CON_DADOS: ReadonlySet<IdAccion> = new Set<IdAccion>(['pescar', 'cazar']);
+export const ACCIONES_CON_DADOS: ReadonlySet<IdAccion> = new Set<IdAccion>(['pescar', 'cazar', 'reparar']);
 
 /** El color de un dado: hueso (el de siempre) o, en combate, dorado (tú), verde (tus seguidores) o rojo (enemigos). */
 export type ColorDeDadoEnLaMesa = 'hueso' | 'dorado' | 'verde' | 'rojo';

@@ -24,9 +24,10 @@ import { hayEventoEnCurso } from '../eventos/una-vez';
 // "jugar_a_los_dados", "echar_un_pulso": exclusivas de las guaridas piratas (core/guarida/).
 // "investigar_naufragio", "registrar_ruinas": una vez por casilla (core/acciones/explorar.ts).
 // "mendigar": la da el artista, en puertos y guaridas (core/acciones/mendigar.ts).
+// "reparar": la da el kit de reparaciones, cada 3 días (core/acciones/reparar.ts).
 // No confundir con la FASE de descanso, que es dormir por la noche (core/turno/descansar.ts):
 // son dos cosas distintas y por eso tienen nombres distintos.
-export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado', 'dar_discurso', 'contratar_marineros', 'buscar_seguidor', 'rezar', 'descansar_en_monasterio', 'enterrar_tesoro', 'buscar_informacion', 'solicitar_audiencia', 'jugar_a_los_dados', 'echar_un_pulso', 'investigar_naufragio', 'registrar_ruinas', 'mendigar'] as const;
+export const ACCIONES = ['pescar', 'cazar', 'reposar', 'ir_al_mercado', 'dar_discurso', 'contratar_marineros', 'buscar_seguidor', 'rezar', 'descansar_en_monasterio', 'enterrar_tesoro', 'buscar_informacion', 'solicitar_audiencia', 'jugar_a_los_dados', 'echar_un_pulso', 'investigar_naufragio', 'registrar_ruinas', 'mendigar', 'reparar'] as const;
 export type IdAccion = (typeof ACCIONES)[number];
 
 /**

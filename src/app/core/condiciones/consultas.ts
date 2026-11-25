@@ -52,6 +52,11 @@ export function famaObjetivoActual(jugador: Jugador, condiciones: readonly Condi
  * Reservas de comida que gasta el grupo hoy: 1, más lo que digan sus condiciones
  * (hambre insaciable: +1). Nunca menos de 0.
  */
+/** Oro de más (o de menos) al contratar un seguidor (los ropajes de pirata profesional: −10). */
+export function ajustePrecioSeguidores(jugador: Jugador, condiciones: readonly Condicion[] = CONDICIONES): number {
+  return sumaDeAjustes(jugador, 'precioSeguidores', condiciones);
+}
+
 export function comidaPorDia(jugador: Jugador, condiciones: readonly Condicion[] = CONDICIONES): number {
   return Math.max(0, COMIDA_POR_DIA_NORMAL + sumaDeAjustes(jugador, 'comidaPorDia', condiciones));
 }

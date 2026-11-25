@@ -16,8 +16,9 @@ export const CARACTERISTICAS: readonly TipoRecurso[] = ['fuerza', 'ingenio', 'vi
 //   mitad  → lo deja en la mitad (te roban medio oro):     { "tipo": "oro", "operacion": "mitad" }
 //   maximo → lo sube a su máximo (curarse del todo):       { "tipo": "vida", "operacion": "maximo" }
 //   todo   → lo pierde entero (te lo quitan todo):         { "tipo": "comida", "operacion": "todo" }
+//   tope   → lo baja a ese valor si tiene más (nunca sube): { "tipo": "tripulacion", "operacion": "tope", "cantidad": 5 }
 // mitad, maximo y todo dependen de cuánto tienes, así que los resuelve aplicarEfectos (Sprint 4).
-export const OPERACIONES = ['sumar', 'fijar', 'mitad', 'maximo', 'todo'] as const;
+export const OPERACIONES = ['sumar', 'fijar', 'mitad', 'maximo', 'todo', 'tope'] as const;
 export type Operacion = (typeof OPERACIONES)[number];
 
 // Los únicos recursos que tienen máximo (y por tanto admiten "maximo").
@@ -42,6 +43,7 @@ export type FinDePartida = (typeof FINES_DE_PARTIDA)[number];
 
 // Efectos que no son números del jugador: objetos, condiciones, turnos perdidos y banderas.
 //   { "tipo": "ganar_objeto", "objeto": "mano_de_mono" }
+//   { "tipo": "ganar_objeto", "objeto": "al_azar", "entre": ["ron", "biblia"] }   (uno de la lista, al azar)
 //   { "tipo": "perder_objeto", "objeto": "idolo_dorado" }
 //   { "tipo": "poner_condicion", "condicion": "tormenta", "turnos": 2 }   (turnos opcional: sin él, dura hasta que algo la quite)
 //   { "tipo": "poner_condicion", "condicion": "amuleto_maldito", "partes": ["fuerza_letal", "hambre_insaciable"] }
@@ -57,6 +59,7 @@ export type FinDePartida = (typeof FINES_DE_PARTIDA)[number];
 // Aquí solo se describen; quien los aplica al estado es aplicarEfectos.
 // Lo que se escribe en "seguidor" para que el tipo salga al azar entre todos los del catálogo.
 export const SEGUIDOR_AL_AZAR = 'al_azar';
+export const OBJETO_AL_AZAR = 'al_azar';
 
 export const OTROS_EFECTOS = [
   'ganar_objeto',
@@ -87,7 +90,7 @@ type EfectoSinDados =
   | { tipo: FinDePartida }
   // tirar NO se escribe en el JSON: lo añade el juego cuando el objeto no cabe y el jugador elige
   // qué tira para hacerle sitio (posiciones en el inventario; pueden ser varias: el ídolo ocupa 4).
-  | { tipo: 'ganar_objeto'; objeto: string; tirar?: number[] }
+  | { tipo: 'ganar_objeto'; objeto: string; entre?: string[]; tirar?: number[] }
   | { tipo: 'perder_objeto'; objeto: string }
   | { tipo: 'quitar_condicion'; condicion: string }
   | { tipo: 'quitar_condicion'; categoria: CategoriaCondicion }
@@ -102,7 +105,7 @@ type EfectoSinDados =
 export type EfectoDefinicion =
   | EfectoSinDados
   | { tipo: TipoRecurso; operacion: 'mitad' | 'maximo' | 'todo'; destino?: Destino; siNoHay?: EfectoDefinicion[] }
-  | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: CantidadDefinicion; destino?: Destino; siNoHay?: EfectoDefinicion[] }
+  | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar' | 'tope'; cantidad: CantidadDefinicion; destino?: Destino; siNoHay?: EfectoDefinicion[] }
   | { tipo: 'poner_condicion'; condicion: string; turnos?: CantidadDefinicion; partes?: string[] }
   | { tipo: 'perder_turnos'; cantidad: CantidadDefinicion };
 
@@ -117,6 +120,6 @@ export type Efecto =
   | { tipo: 'herir_seguidor'; seguidor: string; cantidad: number }
   | { tipo: 'victoria_normal' }
   | { tipo: TipoRecurso; operacion: 'mitad' | 'maximo' | 'todo'; destino?: Destino; siNoHay?: Efecto[] }
-  | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar'; cantidad: number; destino?: Destino; siNoHay?: Efecto[] }
+  | { tipo: TipoRecurso; operacion?: 'sumar' | 'fijar' | 'tope'; cantidad: number; destino?: Destino; siNoHay?: Efecto[] }
   | { tipo: 'poner_condicion'; condicion: string; turnos?: number; partes?: string[] }
   | { tipo: 'perder_turnos'; cantidad: number };

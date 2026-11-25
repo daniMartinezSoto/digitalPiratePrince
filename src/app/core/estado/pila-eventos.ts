@@ -47,7 +47,7 @@ export interface Lectura {
  */
 export type Siguiente =
   | { tipo: 'paso'; paso: string; pausa?: boolean }
-  | { tipo: 'evento'; evento: string }
+  | { tipo: 'evento'; evento: string; tiradaOculta?: boolean }
   | { tipo: 'llamar'; eventos: string[]; despues: Siguiente }
   | { tipo: 'repetir' }
   | { tipo: 'fin' };
@@ -80,6 +80,10 @@ export interface MarcoEvento {
   // Se ha usado el amuleto del destino en la tirada de este paso (ya gastado): el jugador ve los
   // resultados de la tabla y tiene que elegir uno. Va en el estado para que recargar no sirva de escape.
   eligiendoResultado?: boolean;
+
+  // true = la primera tirada de este evento se tira sola, sin enseñarla (el 2 del tesoro mágico: "pensabas
+  // que era mágico, pero no" → un tesoro normal, sin otra tirada que ver). Se borra al usarla.
+  tiradaOculta?: boolean;
 
   // La cantidad del evento (el soborno del guardia), si algún paso la ha tirado. Dura lo que dure el evento.
   cantidad?: number;

@@ -9,7 +9,7 @@ import { crearPersonaje } from '../personaje/crear-personaje';
 // Versión actual de la estructura del estado. Se sube cuando cambie su formato (y se escribe su
 // adaptador en core/guardado/adaptadores.ts).
 //   1 → 2 (Sprint 9): mapaId, posicion y posicionBarco siempre rellenos.
-export const VERSION_ESTADO = 2;
+export const VERSION_ESTADO = 3;
 
 /**
  * El mapa con el que empiezan las partidas. Hoy solo hay uno; cuando haya 2 o 3 se elegirá (con un

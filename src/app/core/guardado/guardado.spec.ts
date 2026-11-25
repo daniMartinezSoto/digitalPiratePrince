@@ -196,12 +196,25 @@ describe('adaptadores por versión', () => {
 
     expect(resultado.ok).toBe(true);
     if (!resultado.ok) return;
-    expect(resultado.estado.version).toBe(2);
+    expect(resultado.estado.version).toBe(VERSION_ESTADO); // pasa por todos los adaptadores
     expect(resultado.estado.mundo.mapaId).toBe('primer-mapa-prueba');
     expect(resultado.estado.mundo.posicion).toEqual({ col: 6, fila: 0 });
     expect(resultado.estado.mundo.posicionBarco).toEqual(crearPartida(1, 'X').estado.mundo.posicionBarco);
     expect(resultado.estado.mundo.dia).toBe(9); // lo demás, igual
     expect(resultado.estado.jugador.oro).toBe(77);
+  });
+
+  // Sprint 12: el inventario pasa de 5 a 6 huecos.
+  it('2 → 3: una partida con 5 huecos en el inventario se abre con 6', () => {
+    const vieja = JSON.parse(guardarPartida(crearPartida(123, 'Marta').estado));
+    vieja.version = 2;
+    vieja.jugador.capacidadInventario = 5;
+
+    const resultado = leerPartida(JSON.stringify(vieja));
+
+    expect(resultado.ok).toBe(true);
+    if (!resultado.ok) return;
+    expect(resultado.estado.jugador.capacidadInventario).toBe(6);
   });
 
   it('el juego tiene un adaptador para cada versión entre la 1 y la actual (no falta ningún eslabón)', () => {

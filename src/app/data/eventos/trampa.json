@@ -1,0 +1,71 @@
+{
+  "id": "trampa",
+  "titulo": "Trampa",
+  "libro": "E029",
+  "pasos": {
+    "inicio": {
+      "texto": "Un clic sutil pero ominoso te avisa de que has activado una trampa.",
+      "tirada": {
+        "dado": "1d6",
+        "boton": "¡Agáchate!",
+        "filas": [
+          {
+            "min": 1,
+            "max": 1,
+            "texto": "Una nube negra sale de la trampa y te envuelve...",
+            "evento": "maldicion"
+          },
+          {
+            "min": 2,
+            "max": 2,
+            "texto": "Esquivas un pequeño y letal dardo... pero si te acompaña algún seguidor, el dardo le alcanza a él y muere irremediablemente.",
+            "efectos": [
+              {
+                "tipo": "vida",
+                "operacion": "todo",
+                "destino": "seguidor_azar"
+              }
+            ]
+          },
+          {
+            "min": 3,
+            "max": 3,
+            "texto": "Un gas venenoso te enferma y te deja varios días tirado.",
+            "efectos": [
+              {
+                "tipo": "vida",
+                "cantidad": -3
+              },
+              {
+                "tipo": "comida",
+                "cantidad": -3
+              }
+            ]
+          },
+          {
+            "min": 4,
+            "max": 5,
+            "texto": "Una gran cuchilla te hiere en la mano.",
+            "efectos": [
+              {
+                "tipo": "vida",
+                "cantidad": -2
+              }
+            ]
+          },
+          {
+            "min": 6,
+            "max": 6,
+            "texto": "La trampa está defectuosa y solo te causa un rasguño.",
+            "efectos": [
+              {
+                "tipo": "vida",
+                "cantidad": -1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

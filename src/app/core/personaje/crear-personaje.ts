@@ -4,6 +4,8 @@ import type { Retrato } from './retrato';
 import type { Seguidor } from '../estado/seguidor';
 import { TIPOS_SEGUIDOR } from '../catalogos/cargar-seguidores';
 import { crearSeguidor } from '../seguidores/crear-seguidor';
+import { OBJETOS } from '../catalogos/cargar-objetos';
+import type { ObjetoLlevado } from '../estado/objeto-llevado';
 import sobrenombres from '../../data/personaje/sobrenombres.json';
 import caracteristicas from '../../data/personaje/caracteristicas.json';
 
@@ -19,6 +21,20 @@ const SOBRENOMBRE_HERMANO = 'el_hermano';
 function seguidorDelHermano(dados: Dados): Seguidor {
   const tipo = TIPOS_SEGUIDOR[dados.entero(0, TIPOS_SEGUIDOR.length - 1)];
   return crearSeguidor(tipo.id, [], dados, { inseparable: true, vital: true });
+}
+
+/** El objeto con el que empieza el sobrenombre, si tiene lista (gasta un número del generador). */
+function objetoInicial(sobrenombre: { objetoInicialEntre?: string[] }, dados: Dados): ObjetoLlevado[] {
+  const lista = sobrenombre.objetoInicialEntre;
+  if (!lista || lista.length === 0) {
+    return [];
+  }
+  const id = lista[dados.entero(0, lista.length - 1)];
+  const ficha = OBJETOS.find(o => o.id === id);
+  if (!ficha) {
+    throw new Error(`crearPersonaje: no existe el objeto inicial "${id}" en el catálogo`);
+  }
+  return [ficha.usosMaximos === undefined ? { id } : { id, usosRestantes: ficha.usosMaximos }];
 }
 
 export function crearPersonaje(
@@ -37,6 +53,11 @@ export function crearPersonaje(
 
   // "El hermano" empieza acompañado (ver seguidorDelHermano). Los demás, solos.
   const seguidores = sobrenombre.id === SOBRENOMBRE_HERMANO ? [seguidorDelHermano(dados)] : [];
+
+  // "El heredero" empieza con un objeto mágico al azar de su lista ("objetoInicialEntre" en
+  // sobrenombres.json: los del tesoro mágico menos el ídolo antediluviano, el amuleto maldito, el
+  // anillo de los deseos y la lira, decidido por el autor el 25-nov). Sin el +1 de fama: se empieza con 0.
+  const inventario = objetoInicial(sobrenombre, dados);
 
   // Construir el jugador con sus valores iniciales.
   const jugador: Jugador = {
@@ -58,8 +79,8 @@ export function crearPersonaje(
 
     diasSinComer: 0,
 
-    inventario: [],
-    capacidadInventario: 5 + (sobrenombre.ajustes.capacidadInventario ?? 0),
+    inventario,
+    capacidadInventario: 6 + (sobrenombre.ajustes.capacidadInventario ?? 0),
 
     seguidores,
 

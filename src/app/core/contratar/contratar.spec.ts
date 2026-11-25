@@ -24,13 +24,14 @@ import {
 // CONTRATAR (paso 7 del Sprint 6): dar un discurso, contratar marineros y buscar un seguidor.
 // Semillas comprobadas (el primer dado que se tira):
 //   discurso: 7 → multa (fila 1), 9 → nadie te hace caso (fila 2-3), 4 → discurso memorable (6).
-//   seguidor: 3 → forzudo (25 de oro), 4 → cartógrafo (evento), 7 → pirata anciano (gratis).
+//   seguidor: 3 → forzudo (25 de oro), 4 → cartógrafo (40), 7 → diplomático (45), 12 → pirata anciano (gratis).
 const DISCURSO_MULTA = 7;
 const DISCURSO_NADA = 9;
 const DISCURSO_MEMORABLE = 4;
 const SALE_FORZUDO = 3;
 const SALE_CARTOGRAFO = 4;
-const SALE_ANCIANO = 7;
+const SALE_DIPLOMATICO = 7;
+const SALE_ANCIANO = 12;
 
 const EN_PUERTO: Sitio = { lugar: 'puerto' };
 
@@ -204,7 +205,7 @@ describe('buscar un seguidor', () => {
   it('la tabla tiene todos los seguidores contratables, y todos tienen precio', () => {
     const ids = obtenerTabla('contratar_seguidor').filas.flatMap(f => (f.efectos ?? []).flatMap(e => (e.tipo === 'ganar_seguidor' ? [e.seguidor] : [])));
 
-    expect(ids).toEqual(['pirata_anciano', 'pescador', 'nativo', 'forzudo', 'artista', 'barbero_cirujano', 'navegante', 'mono', 'pirata_experto']);
+    expect(ids).toEqual(['diplomatico', 'pirata_anciano', 'pescador', 'nativo', 'forzudo', 'artista', 'cartografo', 'barbero_cirujano', 'navegante', 'mono', 'pirata_experto']);
     expect(ids.every(id => TIPOS_SEGUIDOR.find(t => t.id === id)?.precio !== undefined)).toBe(true);
   });
 
@@ -237,12 +238,17 @@ describe('buscar un seguidor', () => {
     expect(estado.jugador.seguidores[0].nombre).toBeTruthy();
   });
 
-  it('si sale el cartógrafo, la acción termina y el evento queda pendiente', () => {
-    const { estado, eventos } = buscarSeguidor(estadoCon(), EN_PUERTO, new Dados(SALE_CARTOGRAFO));
+  it('con un 8 sale el cartógrafo (40 de oro) y con un 2 el diplomático (45)', () => {
+    const cartografo = buscarSeguidor(estadoCon(), EN_PUERTO, new Dados(SALE_CARTOGRAFO)).estado;
+    expect(cartografo.mundo.accionEnCurso).toMatchObject({ tipo: 'seguidor', seguidor: 'cartografo', precio: 40 });
 
-    expect(eventos).toEqual(['cartografo']);
-    expect(estado.mundo.accionEnCurso).toBeNull();
-    expect(estado.mundo.fase).toBe('comida');
+    const diplomatico = buscarSeguidor(estadoCon(), EN_PUERTO, new Dados(SALE_DIPLOMATICO)).estado;
+    expect(diplomatico.mundo.accionEnCurso).toMatchObject({ tipo: 'seguidor', seguidor: 'diplomatico', precio: 45 });
+  });
+
+  it('con los ropajes de pirata profesional, el seguidor cuesta 10 de oro menos', () => {
+    const { estado } = buscarSeguidor(estadoCon({ inventario: [{ id: 'ropajes_de_pirata' }] }), EN_PUERTO, new Dados(SALE_FORZUDO));
+    expect(estado.mundo.accionEnCurso).toMatchObject({ seguidor: 'forzudo', precio: 15 });
   });
 
   it('paso 2: contratarlo le une al grupo, cobra su precio y toca comer', () => {

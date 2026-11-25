@@ -1,3 +1,4 @@
+import type { IdTirada } from '../modificadores/id-tirada';
 import type { Caracteristica } from '../chequeos/chequeo';
 import type { EnemigoPedido, OpcionesDeCombate } from '../combate/combate';
 import type { EfectoDefinicion } from '../tablas/efecto';
@@ -53,11 +54,19 @@ export interface Rama {
   // Efectos, escritos como en las tablas: [{ "tipo": "oro", "cantidad": "1d6x10" }].
   efectos?: EfectoDefinicion[];
 
+  // true = recibes un amuleto maldito (E027), después de los efectos: tira bendición y maldición
+  // (recibirAmuletoMaldito). Si ya llevas uno, no pasa nada. Si sale el deseo, se resuelve antes de seguir.
+  amuletoMaldito?: boolean;
+
   // Continuar en este paso del mismo evento.
   paso?: string;
 
   // Saltar a otro evento sin volver (el evento actual termina y lo sustituye el nuevo).
   evento?: string;
+
+  // Solo con "evento": la primera tirada de ese evento se tira sola y no se enseña; se ve directamente
+  // lo que toca (el 2 del tesoro mágico → un tesoro normal, decidido por el autor el 25-nov).
+  tiradaOculta?: boolean;
 
   // Resolver otro evento y volver: al volver se sigue en "paso" o, sin "paso", se termina.
   llamar?: string;
@@ -146,6 +155,14 @@ export interface TiradaDeEvento {
   // Número fijo que se suma ("+1 si vienes de la visión de la isla" se escribirá en su rama).
   modificador?: number;
 
+  // Nombre de la tirada (los de IDS_TIRADA): suma además los bonificadores del jugador para esa tirada
+  // (sobrenombre, objetos, seguidores, condiciones). El tesoro: "tesoro" (la muy mala suerte, −3).
+  idTirada?: IdTirada;
+
+  // Lo que pasa si, con los bonificadores, el total queda por debajo de 1 (0 o negativo). Sin él,
+  // cuenta la primera fila. El tesoro con muy mala suerte: { "evento": "trampa" } (E029).
+  siSaleMenosDe1?: Rama;
+
   // Las filas, como en las tablas: sin huecos ni solapes y cubriendo lo que saca el dado.
   // Si el resultado se sale (con bonificadores), cuenta la primera o la última fila.
   filas: FilaDeEvento[];
@@ -158,6 +175,11 @@ export interface FilaDeEvento extends Rama {
 
   // "Vuelve a tirar": tras enseñar esta fila (y aplicar sus efectos), se tira otra vez en la misma tirada.
   volverATirar?: boolean;
+
+  // Id de una condición o de un objeto: si el jugador YA lo tiene, esta fila no cuenta y pasa a la
+  // siguiente (y así hasta una que valga; si es la última, a la anterior). La maldición (E022): si ya
+  // tienes el maleficio del pirata y sale el 1, cuenta el 2. El tesoro mágico: el ídolo y la lira, uno solo.
+  saltarSiTiene?: string;
 }
 
 /** Chequeo: 1d6 (+ modificador) ≤ la característica actual. */

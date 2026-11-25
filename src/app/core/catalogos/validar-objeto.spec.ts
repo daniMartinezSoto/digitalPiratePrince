@@ -92,8 +92,9 @@ describe('validarObjetos', () => {
   });
 
   describe('espacios, precio y mágico', () => {
-    it('detecta espacios en 0 o con decimales', () => {
-      expect(erroresDe({ ...idoloDorado(), espacios: 0 })).toMatch(/espacios/);
+    it('detecta espacios negativos o con decimales (0 sí vale: la mochila sin fondo no ocupa)', () => {
+      expect(erroresDe({ ...idoloDorado(), espacios: -1 })).toMatch(/espacios/);
+      expect(erroresDe({ ...idoloDorado(), espacios: 0 })).toBe('');
       expect(erroresDe({ ...idoloDorado(), espacios: 2.5 })).toMatch(/espacios/);
     });
 
@@ -126,7 +127,7 @@ describe('validarObjetos', () => {
   });
 
   it('enseña todos los errores a la vez, no solo el primero', () => {
-    const mal = { ...idoloDorado(), nombre: '', espacios: 0, precioVenta: 0 };
+    const mal = { ...idoloDorado(), nombre: '', espacios: -1, precioVenta: 0 };
     expect(validarObjetos([mal as Objeto])).toHaveLength(3);
   });
 

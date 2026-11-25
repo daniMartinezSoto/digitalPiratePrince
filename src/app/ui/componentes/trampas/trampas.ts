@@ -26,7 +26,7 @@ export class Trampas {
   /** El número fijado para la próxima tirada de un evento (Sprint 10). */
   protected readonly trampasDeEventos = inject(TrampasDeEventos);
 
-  protected readonly objetos = OBJETOS.map(o => ({ id: o.id, nombre: o.nombre }));
+  protected readonly objetos = OBJETOS.map(o => ({ id: o.id, nombre: o.nombre, descripcion: o.descripcion }));
   protected readonly condiciones = CONDICIONES.map(c => ({ id: c.id, nombre: `${c.nombre} (${c.categoria})` }));
   protected readonly seguidores = TIPOS_SEGUIDOR.map(t => ({ id: t.id, nombre: t.nombre }));
 

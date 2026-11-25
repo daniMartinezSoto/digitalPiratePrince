@@ -9,7 +9,7 @@ import { JuegoStore } from '../../../store/juego.store';
 import { Luchar, RITMO_DEL_COMBATE, type RondaJugada } from '../../servicios/luchar';
 import type { AnimacionDeCarta, PasoDelGuion } from './guion-de-ronda';
 import { NOMBRE_DE_HABILIDAD_DE_ENEMIGO, TEXTO_NO_HUIR, TEXTO_NO_USAR_OBJETO } from '../../textos/textos-de-combate';
-import { nombreDeObjeto } from '../../textos/textos';
+import { descripcionDeObjeto, nombreDeObjeto } from '../../textos/textos';
 
 // LA VENTANA DE COMBATE (Sprint 11, paso 4): el combate normal, encima del mapa (como la ventana de
 // eventos, pero más grande). Tu bando a la izquierda y los enemigos a la derecha, cada uno en una
@@ -258,6 +258,7 @@ export class VentanaDeCombate {
   protected readonly textoNoHuir = TEXTO_NO_HUIR;
   protected readonly textoNoUsar = TEXTO_NO_USAR_OBJETO;
   protected readonly nombreDeObjeto = nombreDeObjeto;
+  protected readonly descripcionDeObjeto = descripcionDeObjeto;
 
   protected readonly textoDelResultado: Record<string, string> = {
     victoria: '¡VICTORIA!',

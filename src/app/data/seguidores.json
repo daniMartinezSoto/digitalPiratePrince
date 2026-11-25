@@ -107,5 +107,27 @@
     "nombres": [
       "mujeres"
     ]
+  },
+  {
+    "id": "diplomatico",
+    "nombre": "Diplomático",
+    "descripcion": "Un caballero de buenos modales que sabe qué decir a gobernadores, jefes y carceleros.",
+    "ataque": 1,
+    "resistencia": 8,
+    "habilidades": [
+      "diplomacia"
+    ],
+    "precio": 45
+  },
+  {
+    "id": "cartografo",
+    "nombre": "Cartógrafo",
+    "descripcion": "Ha recorrido más costas que nadie y las lleva todas en la cabeza. Con él sabes qué hay al final de cada mapa misterioso.",
+    "ataque": 1,
+    "resistencia": 8,
+    "habilidades": [
+      "cartografia"
+    ],
+    "precio": 40
   }
 ]

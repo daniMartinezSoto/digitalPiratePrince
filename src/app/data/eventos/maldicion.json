@@ -1,0 +1,94 @@
+{
+  "id": "maldicion",
+  "titulo": "¡Maldición!",
+  "libro": "E022",
+  "pasos": {
+    "inicio": {
+      "texto": "Una nube negra te rodea mientras una antigua maldición despierta. (Las maldiciones que duran se pueden anular en un monasterio, con una bruja vudú o con algún objeto o evento.)",
+      "tirada": {
+        "dado": "1d6",
+        "boton": "Aguantar la respiración",
+        "filas": [
+          {
+            "min": 1,
+            "max": 1,
+            "saltarSiTiene": "maleficio_del_pirata",
+            "texto": "Maleficio del pirata: −1 al daño de tus ataques mientras dure la maldición. Pero hace crecer tu leyenda.",
+            "efectos": [
+              {
+                "tipo": "poner_condicion",
+                "condicion": "maleficio_del_pirata"
+              },
+              {
+                "tipo": "fama",
+                "cantidad": 2
+              }
+            ]
+          },
+          {
+            "min": 2,
+            "max": 2,
+            "texto": "Maleficio del oro: todo tu oro se convierte en ceniza.",
+            "efectos": [
+              {
+                "tipo": "oro",
+                "operacion": "todo"
+              }
+            ]
+          },
+          {
+            "min": 3,
+            "max": 3,
+            "texto": "Maleficio de pesadilla: las pesadillas minan la moral de la tripulación y algunos piratas se tiran por la borda.",
+            "efectos": [
+              {
+                "tipo": "fama",
+                "cantidad": -1
+              },
+              {
+                "tipo": "tripulacion",
+                "cantidad": "-1d6"
+              }
+            ]
+          },
+          {
+            "min": 4,
+            "max": 4,
+            "texto": "Maleficio de la peste: te quedas con 5 de tripulación como mucho.",
+            "efectos": [
+              {
+                "tipo": "tripulacion",
+                "operacion": "tope",
+                "cantidad": 5
+              }
+            ]
+          },
+          {
+            "min": 5,
+            "max": 5,
+            "saltarSiTiene": "maleficio_del_tonto",
+            "texto": "Maleficio del tonto: −1 de ingenio mientras dure la maldición.",
+            "efectos": [
+              {
+                "tipo": "poner_condicion",
+                "condicion": "maleficio_del_tonto"
+              }
+            ]
+          },
+          {
+            "min": 6,
+            "max": 6,
+            "texto": "Maleficio de la muerte: pierdes todos tus puntos de vida menos 1.",
+            "efectos": [
+              {
+                "tipo": "vida",
+                "operacion": "tope",
+                "cantidad": 1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -2,12 +2,12 @@ import { Dados } from '../dados/dados';
 import { distancia } from '../mapa/hexagonos';
 import { vasABordo } from '../mapa/donde-estas';
 import { crearPersonaje } from '../personaje/crear-personaje';
-import { crearPartida } from './crear-partida';
+import { crearPartida, VERSION_ESTADO } from './crear-partida';
 
 describe('crearPartida', () => {
   it('crea un estado inicial completo', () => {
     const { estado } = crearPartida(123, 'Marta');
-    expect(estado.version).toBe(2);
+    expect(estado.version).toBe(VERSION_ESTADO);
     expect(estado.jugador.nombre).toBe('Marta');
     expect(estado.jugador.oro).toBe(50);
     expect(estado.jugador.comida).toBe(5);

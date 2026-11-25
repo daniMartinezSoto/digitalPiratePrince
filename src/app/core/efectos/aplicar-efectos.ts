@@ -11,10 +11,10 @@ import type { Estado } from '../estado/estado';
 import type { FinPartida } from '../estado/fin-partida';
 import type { Jugador } from '../estado/jugador';
 import type { Seguidor } from '../estado/seguidor';
-import { espaciosOcupados } from '../objetos/consultas';
+import { capacidadInventarioActual, espaciosOcupados } from '../objetos/consultas';
 import { crearSeguidor } from '../seguidores/crear-seguidor';
 import { LISTAS_DE_NOMBRES } from '../seguidores/nombres';
-import { CARACTERISTICAS, SEGUIDOR_AL_AZAR, type Efecto, type TipoRecurso } from '../tablas/efecto';
+import { CARACTERISTICAS, OBJETO_AL_AZAR, SEGUIDOR_AL_AZAR, type Efecto, type TipoRecurso } from '../tablas/efecto';
 import type { Cambio, MotivoDeRecurso } from './cambio';
 
 /** Catálogos en los que buscar las fichas. Por defecto, los del juego; los tests pueden pasar otros. */
@@ -101,22 +101,27 @@ function aplicarUno(estado: Estado, efecto: Efecto, dados: Dados, catalogos: Cat
   const jugador = estado.jugador;
 
   switch (efecto.tipo) {
-    case 'ganar_objeto':
-      ganarObjeto(jugador, efecto.objeto, efecto.tirar, catalogos, cambios);
+    case 'ganar_objeto': {
+      // "al_azar": uno de la lista "entre" (gasta un número del generador).
+      const lista = efecto.entre ?? [];
+      const id = efecto.objeto === OBJETO_AL_AZAR ? lista[dados.entero(0, lista.length - 1)] : efecto.objeto;
+      ganarObjeto(jugador, id, efecto.tirar, catalogos, cambios);
       ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
       return;
+    }
     case 'gastar_uso':
-      gastarUso(jugador, efecto.posicion, catalogos.objetos, cambios);
+      famaAlSoltar(jugador, gastarUso(jugador, efecto.posicion, catalogos.objetos, cambios), catalogos, cambios);
       ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
       return;
     case 'tirar_objeto':
-      tirarObjeto(jugador, efecto.posicion, cambios);
+      famaAlSoltar(jugador, tirarObjeto(jugador, efecto.posicion, cambios), catalogos, cambios);
       ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
       return;
     case 'vender_objeto': {
       comprobarPosiciones(jugador, [efecto.posicion]);
       const [vendido] = jugador.inventario.splice(efecto.posicion, 1);
       cambios.push({ tipo: 'objeto_vendido', objeto: vendido.id });
+      famaAlSoltar(jugador, vendido.id, catalogos, cambios);
       ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
       return;
     }
@@ -130,7 +135,7 @@ function aplicarUno(estado: Estado, efecto: Efecto, dados: Dados, catalogos: Cat
       return;
     }
     case 'perder_objeto':
-      perderObjeto(jugador, efecto.objeto, cambios);
+      famaAlSoltar(jugador, perderObjeto(jugador, efecto.objeto, cambios), catalogos, cambios);
       ajustarALosTopes(jugador, dados, catalogos.condiciones, cambios);
       return;
     case 'poner_condicion':
@@ -301,6 +306,8 @@ function nuevoValor(actual: number, efecto: EfectoDeRecurso, maximo: number): nu
       return maximo;
     case 'todo':
       return 0;
+    case 'tope':
+      return Math.min(actual, efecto.cantidad); // "quédate con 5": si tienes 3, sigues con 3
     default:
       return actual + efecto.cantidad; // sumar (también con cantidad negativa = perder)
   }
@@ -354,7 +361,7 @@ function ganarObjeto(
   const objetos = catalogos.objetos;
   const ficha = buscarFicha(objetos, idObjeto, 'objeto');
   const espacios = ficha.espacios ?? 1;
-  const libres = jugador.capacidadInventario - espaciosOcupados(jugador, objetos);
+  const libres = capacidadInventarioActual(jugador, objetos) - espaciosOcupados(jugador, objetos);
 
   if (espacios > libres) {
     const posiciones = comprobarPosiciones(jugador, tirar ?? []);
@@ -365,7 +372,7 @@ function ganarObjeto(
     }
     // De la última posición a la primera, para que al quitar uno no se muevan los demás.
     for (const posicion of [...posiciones].sort((a, b) => b - a)) {
-      tirarObjeto(jugador, posicion, cambios);
+      famaAlSoltar(jugador, tirarObjeto(jugador, posicion, cambios), catalogos, cambios);
     }
   }
 
@@ -376,26 +383,42 @@ function ganarObjeto(
   if (ficha.magico) {
     apuntarRecurso(jugador, 'fama', jugador.fama + 1, catalogos.condiciones, cambios, 'objeto_magico');
   }
-}
-
-function perderObjeto(jugador: Jugador, idObjeto: string, cambios: Cambio[]): void {
-  // Si lleva varios iguales, se pierde uno. Si no lleva ninguno, no pasa nada.
-  const posicion = jugador.inventario.findIndex(o => o.id === idObjeto);
-  if (posicion !== -1) {
-    jugador.inventario.splice(posicion, 1);
-    cambios.push({ tipo: 'objeto_perdido', objeto: idObjeto });
+  // La fama que da mientras lo llevas (el loro parlante).
+  if (ficha.fama) {
+    apuntarRecurso(jugador, 'fama', jugador.fama + ficha.fama, catalogos.condiciones, cambios, 'objeto_famoso');
   }
 }
 
-/** El jugador tira el objeto de esa posición del inventario. */
-function tirarObjeto(jugador: Jugador, posicion: number, cambios: Cambio[]): void {
+/** Al soltar un objeto (venderlo, tirarlo, perderlo, gastarlo), se pierde la fama que daba mientras lo llevabas. */
+function famaAlSoltar(jugador: Jugador, idObjeto: string | undefined, catalogos: CatalogosEfectos, cambios: Cambio[]): void {
+  const fama = idObjeto === undefined ? undefined : buscarFicha(catalogos.objetos, idObjeto, 'objeto').fama;
+  if (fama) {
+    apuntarRecurso(jugador, 'fama', jugador.fama - fama, catalogos.condiciones, cambios, 'objeto_famoso');
+  }
+}
+
+/** Pierde uno de esos objetos. Devuelve su id si lo llevaba (si no, no pasa nada). */
+function perderObjeto(jugador: Jugador, idObjeto: string, cambios: Cambio[]): string | undefined {
+  // Si lleva varios iguales, se pierde uno. Si no lleva ninguno, no pasa nada.
+  const posicion = jugador.inventario.findIndex(o => o.id === idObjeto);
+  if (posicion === -1) {
+    return undefined;
+  }
+  jugador.inventario.splice(posicion, 1);
+  cambios.push({ tipo: 'objeto_perdido', objeto: idObjeto });
+  return idObjeto;
+}
+
+/** El jugador tira el objeto de esa posición del inventario. Devuelve su id. */
+function tirarObjeto(jugador: Jugador, posicion: number, cambios: Cambio[]): string {
   comprobarPosiciones(jugador, [posicion]);
   const [tirado] = jugador.inventario.splice(posicion, 1);
   cambios.push({ tipo: 'objeto_tirado', objeto: tirado.id });
+  return tirado.id;
 }
 
-/** Gasta un uso del objeto de esa posición. Si se queda sin usos, se tira solo (se ha agotado). */
-function gastarUso(jugador: Jugador, posicion: number, objetos: readonly Objeto[], cambios: Cambio[]): void {
+/** Gasta un uso del objeto de esa posición. Si se queda sin usos, se tira solo (se ha agotado): entonces devuelve su id. */
+function gastarUso(jugador: Jugador, posicion: number, objetos: readonly Objeto[], cambios: Cambio[]): string | undefined {
   comprobarPosiciones(jugador, [posicion]);
   const llevado = jugador.inventario[posicion];
   if (llevado.usosRestantes === undefined) {
@@ -407,9 +430,10 @@ function gastarUso(jugador: Jugador, posicion: number, objetos: readonly Objeto[
   if (quedan <= 0) {
     jugador.inventario.splice(posicion, 1);
     cambios.push({ tipo: 'objeto_agotado', objeto: llevado.id });
-  } else {
-    llevado.usosRestantes = quedan;
+    return llevado.id;
   }
+  llevado.usosRestantes = quedan;
+  return undefined;
 }
 
 /** Las posiciones tienen que existir en el inventario y no repetirse. Si no, es un fallo del programa: error. */

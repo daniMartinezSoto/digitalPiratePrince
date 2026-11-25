@@ -1,0 +1,141 @@
+{
+  "id": "tesoro_magico",
+  "titulo": "Tesoro mágico",
+  "libro": "E037",
+  "pasos": {
+    "inicio": {
+      "texto": "¡Has encontrado un tesoro mágico!",
+      "tirada": {
+        "dado": "2d6",
+        "idTirada": "tesoro_magico",
+        "boton": "Tocar el objeto que brilla",
+        "siSaleMenosDe1": {
+          "texto": "Tu mala suerte no falla: al meter la mano, algo hace clic...",
+          "evento": "trampa"
+        },
+        "filas": [
+          {
+            "min": 2,
+            "max": 2,
+            "texto": "Uy... pensabas que era un objeto mágico, pero no. Aun así, algo de valor hay.",
+            "evento": "tesoro",
+            "tiradaOculta": true
+          },
+          {
+            "min": 3,
+            "max": 3,
+            "saltarSiTiene": "idolo_antediluviano",
+            "texto": "Un ídolo antediluviano: antiguo y de una civilización desconocida. No sabes para qué sirve. De momento...",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "idolo_antediluviano"
+              }
+            ]
+          },
+          {
+            "min": 4,
+            "max": 4,
+            "texto": "Una poción mágica.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "pocion_magica"
+              }
+            ]
+          },
+          {
+            "min": 5,
+            "max": 5,
+            "texto": "Un amuleto de aspecto inofensivo... hasta que un fulgor misterioso empieza a brillar en su interior.",
+            "efectos": [
+              {
+                "tipo": "fama",
+                "cantidad": 1
+              }
+            ],
+            "amuletoMaldito": true
+          },
+          {
+            "min": 6,
+            "max": 6,
+            "texto": "Una mochila sin fondo.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "mochila_sin_fondo"
+              }
+            ]
+          },
+          {
+            "min": 7,
+            "max": 7,
+            "texto": "Una brújula mágica.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "brujula_magica"
+              }
+            ]
+          },
+          {
+            "min": 8,
+            "max": 8,
+            "texto": "Una mano de mono con dos deseos.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "mano_de_mono"
+              }
+            ]
+          },
+          {
+            "min": 9,
+            "max": 9,
+            "texto": "Un amuleto del destino.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "amuleto_del_destino"
+              }
+            ]
+          },
+          {
+            "min": 10,
+            "max": 10,
+            "texto": "Una hogaza mágica.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "hogaza_magica"
+              }
+            ]
+          },
+          {
+            "min": 11,
+            "max": 11,
+            "texto": "Un anillo de los deseos.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "anillo_de_los_deseos"
+              }
+            ]
+          },
+          {
+            "min": 12,
+            "max": 12,
+            "saltarSiTiene": "lira_de_las_sirenas",
+            "texto": "¡La lira de las sirenas! Un tesoro mítico que se creía una leyenda.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "lira_de_las_sirenas"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

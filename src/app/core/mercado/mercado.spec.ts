@@ -33,7 +33,8 @@ const BRUJULA_HOY: Rastrillo = { objetos: [{ objeto: 'brujula_magica', peso: 1, 
 /** Partida del influyente en la fase de acción, con lo que se le cambie. */
 function estadoCon(cambios: Partial<Jugador> = {}): Estado {
   const { estado } = crearPartida(1, 'Prueba');
-  return { ...estado, jugador: { ...estado.jugador, ...cambios }, mundo: { ...estado.mundo, fase: 'accion' } };
+  // Estas pruebas se escribieron con 5 huecos (hoy son 6): se fijan en 5 para que sigan valiendo.
+  return { ...estado, jugador: { ...estado.jugador, capacidadInventario: 5, ...cambios }, mundo: { ...estado.mundo, fase: 'accion' } };
 }
 
 /** Ya dentro del mercado, con la brújula en el rastrillo. */

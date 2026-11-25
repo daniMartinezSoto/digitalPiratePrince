@@ -1,6 +1,7 @@
 import { EFECTOS_EN_COMBATE } from './objeto';
 import { rangoDeTirada } from '../dados/tirada';
 import { validarOtorga } from '../condiciones/validar-otorga';
+import { CATEGORIAS_CONDICION } from './condicion';
 import { validarModificadores } from '../modificadores/validar-modificadores';
 import { validarEfecto } from '../tablas/rangos/validar-tabla';
 import { MOMENTOS_DE_USO, type Objeto } from './objeto';
@@ -83,8 +84,23 @@ function validarObjeto(objeto: Objeto): string[] {
     errores.push(`${nombre}: el tipo "${String(o['tipo'])}" no existe (válidos: pasivo, activo).`);
   }
 
-  if (o['espacios'] !== undefined && !esEnteroDesde(o['espacios'], 1)) {
-    errores.push(`${nombre}: los espacios deben ser un número entero de 1 o más.`);
+  if (o['espacios'] !== undefined && !esEnteroDesde(o['espacios'], 0)) {
+    errores.push(`${nombre}: los espacios deben ser un número entero de 0 o más.`);
+  }
+  if (o['huecosExtra'] !== undefined && !esEnteroDesde(o['huecosExtra'], 1)) {
+    errores.push(`${nombre}: "huecosExtra" debe ser un número entero de 1 o más.`);
+  }
+  if (o['fama'] !== undefined && !esEnteroDesde(o['fama'], 1)) {
+    errores.push(`${nombre}: "fama" debe ser un número entero de 1 o más.`);
+  }
+  if (o['soloConCategoria'] !== undefined && (!(CATEGORIAS_CONDICION as readonly unknown[]).includes(o['soloConCategoria']) || o['tipo'] !== 'activo')) {
+    errores.push(`${nombre}: "soloConCategoria" debe ser una categoría de condición (${CATEGORIAS_CONDICION.join(', ')}) y solo vale en objetos activos.`);
+  }
+  if (o['soloSiHerido'] !== undefined && (o['soloSiHerido'] !== true || o['tipo'] !== 'activo')) {
+    errores.push(`${nombre}: "soloSiHerido" solo puede ser true y solo vale en objetos activos.`);
+  }
+  if (o['alUsarEvento'] !== undefined && (typeof o['alUsarEvento'] !== 'string' || o['cuandoSeUsa'] !== 'accion')) {
+    errores.push(`${nombre}: "alUsarEvento" es el id de un evento y solo vale en objetos que se usan en la acción.`);
   }
   if (!esEnteroDesde(o['precioVenta'], 1)) {
     errores.push(`${nombre}: le falta el precio de venta ("precioVenta", un número entero de 1 o más). Todos los objetos se pueden vender.`);

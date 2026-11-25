@@ -18,7 +18,7 @@
     <p>No llevas nada que vender.</p>
   }
   @for (v of o.venderObjetos; track v.posicion) {
-    <p><button type="button" (click)="vender(v.posicion, v.objeto)">Vender {{ nombreDeObjeto(v.objeto) }} ({{ v.precio }})</button></p>
+    <p><button type="button" [title]="descripcionDeObjeto(v.objeto)" [disabled]="v.motivo" (click)="vender(v.posicion, v.objeto)">Vender {{ nombreDeObjeto(v.objeto) }} ({{ v.precio }})</button>@if (v.motivo) { <small> Sin ella no te cabe lo demás</small> }</p>
   }
 
   <h4>Rastrillo de hoy</h4>
@@ -26,14 +26,14 @@
     @if (r.espaciosQueFaltan > 0) {
       <p>No te cabe: te faltan {{ r.espaciosQueFaltan }} hueco(s). Marca qué tiras para hacerle sitio:</p>
       @for (objeto of inventario(); track objeto.posicion) {
-        <label>
+        <label [title]="objeto.descripcion">
           <input type="checkbox" [name]="'tirar-' + objeto.posicion" (change)="marcar(objeto.posicion, $any($event.target).checked)" />
           {{ objeto.nombre }}
         </label>
       }
     }
     <p>
-      <button type="button" [disabled]="!r.disponible" (click)="comprarEnRastrillo(r.objeto)">
+      <button type="button" [disabled]="!r.disponible" [title]="descripcionDeObjeto(r.objeto)" (click)="comprarEnRastrillo(r.objeto)">
         Comprar {{ nombreDeObjeto(r.objeto) }} ({{ r.precio }})
       </button>
       @if (r.motivo; as m) { <small> {{ motivo[m] }}</small> }

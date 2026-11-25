@@ -2,7 +2,7 @@
   <h3>Tus objetos</h3>
   <ul>
     @for (o of objetos(); track o.posicion) {
-      <li>
+      <li [title]="o.descripcion">
         {{ o.nombre }}@if (o.usos !== undefined) { ({{ o.usos }} usos) }
         <button type="button" [name]="'usar-' + o.posicion" [disabled]="!o.usable" (click)="usar(o.posicion, o.nombre)">Usar</button>
         @if (confirmandoTirar() === o.posicion) {

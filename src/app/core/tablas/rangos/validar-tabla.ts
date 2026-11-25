@@ -27,7 +27,7 @@ const CARACTERISTICAS_TEXTO: readonly string[] = CARACTERISTICAS;
 const CATEGORIAS_TEXTO: readonly string[] = CATEGORIAS_CONDICION;
 const TIPOS_EFECTO: readonly string[] = [...RECURSOS, ...FINES_DE_PARTIDA, ...OTROS_EFECTOS];
 // Operaciones que llevan cantidad; las demás (mitad, maximo, todo) no.
-const OPERACIONES_CON_CANTIDAD = ['sumar', 'fijar'];
+const OPERACIONES_CON_CANTIDAD = ['sumar', 'fijar', 'tope'];
 
 /**
  * Revisa una tabla y devuelve la lista de errores encontrados, explicados en castellano.
@@ -138,6 +138,15 @@ export function validarEfecto(efecto: unknown, donde: string): string[] {
     case 'perder_partida':
       return soloEstosCampos(e, [], donde);
     case 'ganar_objeto':
+      if (e['objeto'] === 'al_azar') {
+        return [
+          ...soloEstosCampos(e, ['objeto', 'entre'], donde),
+          ...(Array.isArray(e['entre']) && e['entre'].length >= 2
+            ? e['entre'].flatMap(id => validarIdObjeto(id, donde))
+            : [`${donde}: con "objeto": "al_azar" hace falta "entre", una lista de 2 o más ids de objetos.`]),
+        ];
+      }
+      return [...soloEstosCampos(e, ['objeto'], donde), ...validarIdObjeto(e['objeto'], donde)];
     case 'perder_objeto':
       // "tirar" no se escribe en el JSON (lo elige el jugador cuando no cabe): aquí sobra.
       return [...soloEstosCampos(e, ['objeto'], donde), ...validarIdObjeto(e['objeto'], donde)];
@@ -185,7 +194,7 @@ function validarEfectoDeRecurso(e: Record<string, unknown> & { tipo: string }, d
       (typeof e['cantidad'] === 'string' && FORMATO_CANTIDAD.test(e['cantidad']));
     if (!cantidadValida) {
       errores.push(`${donde}: la cantidad de "${e.tipo}" no es válida (ejemplos: 8, -1, "2d6", "1d6+1", "-1d6").`);
-    } else if (operacion === 'fijar' && esNegativa(e['cantidad'])) {
+    } else if ((operacion === 'fijar' || operacion === 'tope') && esNegativa(e['cantidad'])) {
       errores.push(`${donde}: no se puede fijar "${e.tipo}" en un número negativo (ningún recurso baja de 0).`);
     } else if (operacion === 'fijar' && esCaracteristica && e['cantidad'] === 0) {
       errores.push(`${donde}: no se puede fijar "${e.tipo}" en 0 (las características nunca bajan de 1).`);

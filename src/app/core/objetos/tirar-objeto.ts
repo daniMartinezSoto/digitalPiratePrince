@@ -3,6 +3,7 @@ import { aplicarEfectos, type CatalogosEfectos, type ResultadoEfectos } from '..
 import type { Estado } from '../estado/estado';
 import { hayCombate } from '../combate/hay-combate';
 import { hayEventoEnCurso } from '../eventos/una-vez';
+import { motivoParaNoSoltar } from './consultas';
 
 /**
  * El jugador tira el objeto de esa posición del inventario. Se puede en cualquier momento,
@@ -20,6 +21,9 @@ export function tirarObjeto(estado: Estado, posicion: number, dados: Dados, cata
   }
   if (hayEventoEnCurso(estado)) {
     throw new Error('tirarObjeto: hay un evento en curso; primero hay que terminarlo');
+  }
+  if (motivoParaNoSoltar(estado.jugador, posicion, catalogos?.objetos)) {
+    throw new Error('tirarObjeto: sin la mochila sin fondo no te cabe lo que llevas; primero tira otras cosas');
   }
   return aplicarEfectos(estado, [{ tipo: 'tirar_objeto', posicion }], dados, catalogos);
 }

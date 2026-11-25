@@ -5,7 +5,7 @@ import { TIPOS_SEGUIDOR } from '../catalogos/cargar-seguidores';
 import { condicionesVigentes } from '../condiciones/condiciones-vigentes';
 import { tripulacionMaxActual, famaObjetivoActual, fuerzaActual, ingenioActual, vidaMaxActual } from '../condiciones/consultas';
 import type { Jugador } from '../estado/jugador';
-import { espaciosOcupados } from '../objetos/consultas';
+import { capacidadInventarioActual, espaciosOcupados } from '../objetos/consultas';
 import sobrenombresJson from '../../data/personaje/sobrenombres.json';
 
 // LA HOJA DE PERSONAJE, LISTA PARA ENSEÑAR (pantalla de pruebas, tras el Sprint 8).
@@ -73,7 +73,7 @@ export function hojaDePersonaje(jugador: Jugador): HojaDePersonaje {
     fama: jugador.fama,
     famaObjetivo: famaObjetivoActual(jugador),
     diasSinComer: jugador.diasSinComer,
-    espacios: { ocupados: espaciosOcupados(jugador), total: jugador.capacidadInventario },
+    espacios: { ocupados: espaciosOcupados(jugador), total: capacidadInventarioActual(jugador) },
     inventario: jugador.inventario.map(llevado => ({
       id: llevado.id,
       nombre: OBJETOS.find(o => o.id === llevado.id)?.nombre ?? llevado.id,

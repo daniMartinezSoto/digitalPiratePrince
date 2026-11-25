@@ -62,9 +62,9 @@ describe('conSusEventos: la puerta de los eventos', () => {
   });
 
   it('una mezcla: los programados a la pila y los otros a pendientes, en orden', () => {
-    const r = conSusEventos({ estado: estadoCon(), eventos: ['tesoro', 'deseo'] }, new Dados(1));
+    const r = conSusEventos({ estado: estadoCon(), eventos: ['taberna_clandestina', 'deseo'] }, new Dados(1));
 
-    expect(r.pendientes).toEqual(['tesoro']);
+    expect(r.pendientes).toEqual(['taberna_clandestina']);
     expect(vistaDelEvento(r.estado)!.titulo).toBe('Deseo');
   });
 
@@ -113,7 +113,7 @@ describe('mientras hay un evento, no se puede hacer nada más', () => {
   });
 
   it('ni usar ni tirar objetos', () => {
-    const conUnguento = estadoCon('accion', { inventario: [{ id: 'unguento', usosRestantes: 1 }] });
+    const conUnguento = estadoCon('accion', { vida: 5, inventario: [{ id: 'unguento', usosRestantes: 1 }] });
     expect(objetosUsablesAhora(conUnguento)).toEqual([0]);
 
     const conEvento = conElDeseoAbierto(conUnguento);

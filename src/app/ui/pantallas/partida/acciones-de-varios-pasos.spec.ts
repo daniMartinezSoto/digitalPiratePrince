@@ -61,7 +61,7 @@ describe('pantalla Partida: acciones de varios pasos', () => {
 
   it('mercado: con el inventario lleno, se marca qué tirar y se compra lo del rastrillo', async () => {
     const store = prepararJuego();
-    const lleno: Efecto[] = Array.from({ length: 5 }, () => ({ tipo: 'ganar_objeto', objeto: 'unguento' }) as Efecto);
+    const lleno: Efecto[] = Array.from({ length: 6 }, () => ({ tipo: 'ganar_objeto', objeto: 'unguento' }) as Efecto);
     const harness = await enLaAccion(store, 'puerto', [{ tipo: 'oro', cantidad: 500 }, ...lleno]);
     await pulsarYEsperar(harness, 'Ir al mercado');
     const pantalla = harness.routeNativeElement!;

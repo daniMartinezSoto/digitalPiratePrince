@@ -14,7 +14,7 @@ import type { Efecto } from '../tablas/efecto';
 import { obtenerTabla } from '../tablas/rangos/cargar-tablas';
 import { resolverTabla } from '../tablas/rangos/resolver-tabla';
 import type { ResultadoTabla } from '../tablas/rangos/resultado-tabla';
-import { tripulacionMaxActual, maximoSeguidoresActual } from '../condiciones/consultas';
+import { ajustePrecioSeguidores, tripulacionMaxActual, maximoSeguidoresActual } from '../condiciones/consultas';
 import { esPuerto } from '../turno/lugar';
 
 // CONTRATAR (solo en puertos). Tres formas, y cada una es una ACCIÓN distinta (cada día, solo una):
@@ -149,7 +149,7 @@ export function buscarSeguidor(estado: Estado, sitio: Sitio, dados: Dados): Resu
 
   // El nombre se sortea ya (gasta un número), para enseñarlo antes de contratarlo.
   const nombre = sortearNombreDeSeguidor(sale.seguidor, estado.jugador.seguidores, dados);
-  const enCurso: SeguidorEnEspera = { tipo: 'seguidor', seguidor: sale.seguidor, precio: precioDe(sale.seguidor), nombre };
+  const enCurso: SeguidorEnEspera = { tipo: 'seguidor', seguidor: sale.seguidor, precio: Math.max(0, precioDe(sale.seguidor) + ajustePrecioSeguidores(estado.jugador)), nombre };
   return { estado: conAccionEnCurso(estado, enCurso, dados), cambios: [], tirada: paraEnsenar(tirada), eventos: [] };
 }
 

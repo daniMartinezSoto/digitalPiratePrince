@@ -5,15 +5,16 @@
 ## 0. Estado y siguiente paso
 
 - **Hecho:** Sprints 0-11 (núcleo, turno, acciones, combate normal y naval, guardado, mapa, motor de eventos, combate bonito provisional) + Voz de mando y Amigo de la aldea (23-nov).
-- **Ahora:** Sprint 12, eventos del libro, 1.ª mitad. Plan por bloques (propuesto el 25-nov, **pendiente de decidir el alcance**): 1 tesoros (E021, E036, E037, E029, E022, lista de objetos de E017; heredero y −3 de muy mala suerte) · 2 mar con tablas (E005-7, E011, E012, E014-16, E020, E026, E031, E035, E018/E033/E034) · 3 E008 barco · 4 mar con mapa (E009, E010, E028, E013, E002) · 5 pendientes de aldea y ruinas (tabú, cacería, historias, barco maldito, restos, esqueletos, E078, ciudad pirata, E079) · 6 audiencias (E042-E045) · 7 cárcel y guarida (E023, E032, E038).
-- **Dudas abiertas del Sprint 12:** ¿la cárcel y la guarida ahora (la sección 9 antigua las ponía en el 13) y los pendientes de puerto (E017 tienda, E081, E066, E082-E084, "hogar de alguien") al 13? ¿Motín (E019) y mapa misterioso (E024) ahora o en el 13? "Tira en la tabla de reclutar": ¿tabla de contratar o al azar entre todos? ¿Fichas para diplomático, cartógrafo y monje o quitar sus referencias?
+- **Ahora:** Sprint 12, eventos del libro, 1.ª mitad. Bloques: 1 tesoros (**hecho 25-nov**: E021, E022, E027, E029, E036, E037 2d6, objetos de Bob y mágicos, diplomático, cartógrafo, inventario 6, acción Reparar) · 2 mar con tablas (E005-7, E011, E012, E014-16, E020, E026, E031, E035, E018/E033/E034) · 3 E008 barco · 4 mar con mapa (E009, E010, E028, E013, E002, **E024 `mapa_misterioso`**: ni objeto ni condición, una marca en el mapa (X roja); al entrar en ese hex salta lo que señala y la X desaparece; con cartógrafo ves qué hay en el destino, sin él solo la X · acción "Dibujar mapa" del cartógrafo, 30 oro) · 5 pendientes de aldea y ruinas · 6 audiencias (E042-E045) · 7 cárcel, guarida y motín (E023, E032, E038, E019; botón "usar diplomático" en el guardia: −1d6 al soborno; bigote falso).
+- **Decidido 25-nov:** pendientes de puerto (E017 tienda, E081, E066, E082-E084, "hogar de alguien") → Sprint 13. "Tira en la tabla de reclutar" = `ganar_seguidor` `al_azar`. Monje: sin ficha. Diplomático y cartógrafo = seguidores 1/8 (45 y 40 de oro), en contratar (2 y 8) y en el sorteo al azar.
 - **Tests:** 1735 en 106 archivos (`ng test --watch=false`).
 
 ## 1. Cómo trabajar con el autor
 
 - Daniel, programador web junior (Angular, PHP). Español. Quiere **entender cada pieza**: explicar sencillo, con ejemplos del juego, sin jerga; si no se entiende, reformular más simple.
 - **Ritual:** plan → visto bueno → cambios → el autor lanza `ng test --watch=false` → siguiente. Un paso cada vez; no adelantar sprints. Si una regla del libro es ambigua o parece errata, **preguntar**, no decidir en silencio.
-- **Eventos:** antes de cada evento (o de un grupo pequeño), enseñar sus erratas y dudas para que decida el autor.
+- **Eventos: de uno en uno** (pedido por el autor el 25-nov): dudas de ese evento → visto bueno → cambios → tests → el siguiente. Nunca varios a la vez.
+- **Dados: solo de 6 caras** (1d6, 2d6, 3d6): la mesa de dados solo dibuja cubos.
 - Claude **edita los archivos en el PC del autor** (`C:\DigitalPiratePrince\digital-pirate-prince`) pero **nunca hace commits ni push**, y **nada de Claude en el repositorio** (ni coautoría). El autor hace commit al cerrar cada bloque.
 - **Ahorro de tokens:** ver sección 10.
 - Código y carpetas en español (`pescar`, `estado`); lo propio de Angular en inglés.
@@ -45,8 +46,8 @@ src/app/
 
 ## 4. Estado (`core/estado/`)
 
-`Estado { version (VERSION_ESTADO = 2), jugador, mundo }`.
-- **Jugador:** nombre, sobrenombre (id), retrato (`hombre`|`mujer`), vida/vidaMax, fuerza, ingenio, oro, tripulacion/tripulacionMax, comida, fama/famaObjetivo, diasSinComer, `inventario: {id, usosRestantes?}[]` (5 huecos; un objeto puede ocupar varios), `seguidores` (máx. 2, 3 con carisma; `inseparable?`, `vital?`), `condiciones: {id, turnosRestantes?, partes?}[]`, fasesAccionPerdidas.
+`Estado { version (VERSION_ESTADO = 3), jugador, mundo }`.
+- **Jugador:** nombre, sobrenombre (id), retrato (`hombre`|`mujer`), vida/vidaMax, fuerza, ingenio, oro, tripulacion/tripulacionMax, comida, fama/famaObjetivo, diasSinComer, `inventario: {id, usosRestantes?, listoElDia?}[]` (6 huecos, cuadrícula 2×3 que se coloca sola en el Sprint 14; mochila sin fondo +4; `capacidadInventarioActual`), `seguidores` (máx. 2, 3 con carisma; `inseparable?`, `vital?`), `condiciones: {id, turnosRestantes?, partes?}[]`, fasesAccionPerdidas.
 - **Mundo:** mapaId, `posicion`, `posicionBarco` (misma casilla = a bordo), dia, fase, `banderas`, `marcas` (por casilla, con `tipo`), `pilaEventos`, puertosVisitados, semilla, estadoDados, finPartida (`{resultado, motivo, causa?}`), accionEnCurso, combate, combateNaval, nochePagada, comidaGratis, ultimaBusquedaInformacion, diaDeEmbarque?
 - **Los valores con condiciones se calculan, no se guardan:** usar `fuerzaActual`, `ingenioActual`, `vidaMaxActual`, `tripulacionMaxActual`, `maximoSeguidoresActual`, `famaObjetivoActual`, `comidaPorDia` (`core/condiciones/consultas.ts`) y `condicionesVigentes`/`tieneCondicion` (apuntadas + partes + otorgadas). Fuerza e ingenio, **máximo 5**.
 - **Partidas viejas:** subir `VERSION_ESTADO` exige un adaptador en `core/guardado/adaptadores.ts`. Campos opcionales nuevos no lo necesitan.
@@ -54,8 +55,8 @@ src/app/
 ## 5. Efectos y tablas
 
 **Efectos** (`core/tablas/efecto.ts`, se escriben en JSON):
-- Recursos `oro, comida, tripulacion, vida, fama, fuerza, ingenio, vidaMax` con `cantidad` (`8`, `-1`, `"2d6"`, `"1d6x10+5"`, `"-1d6"`; **perder = signo menos**) y `operacion` `sumar` (defecto) | `fijar` | `mitad` | `maximo` | `todo`. `destino` (solo vida): `jugador` | `todos` | `seguidor_azar` (con `siNoHay`) | `seguidor_elegido` (**hoy da error**).
-- `ganar_objeto` / `perder_objeto` (`objeto`), `poner_condicion` (`condicion`, `turnos?`, `partes?`), `quitar_condicion` (`condicion` o `categoria`), `perder_turnos`, `bandera`, `ganar_seguidor` (`seguidor`: id o `"al_azar"`, `inseparable?`), `ganar_partida` / `perder_partida`.
+- Recursos `oro, comida, tripulacion, vida, fama, fuerza, ingenio, vidaMax` con `cantidad` (`8`, `-1`, `"2d6"`, `"1d6x10+5"`, `"-1d6"`; **perder = signo menos**) y `operacion` `sumar` (defecto) | `fijar` | `mitad` | `maximo` | `todo` | `tope` (baja a ese valor si tienes más). `destino` (solo vida): `jugador` | `todos` | `seguidor_azar` (con `siNoHay`) | `seguidor_elegido` (**hoy da error**).
+- `ganar_objeto` / `perder_objeto` (`objeto`; ganar admite `"al_azar"` + `entre: [...]`), `poner_condicion` (`condicion`, `turnos?`, `partes?`), `quitar_condicion` (`condicion` o `categoria`), `perder_turnos`, `bandera`, `ganar_seguidor` (`seguidor`: id o `"al_azar"`, `inseparable?`), `ganar_partida` / `perder_partida`.
 - Topes: ningún recurso baja de 0; características nunca de 1; comida ≤ `AJUSTES.comidaMaxima` (12). Objetos mágicos dan +1 fama. Condiciones no se duplican. El contable gana +1d6 al ganar oro.
 - Devuelven `{ estado, cambios }`: `Cambio` = lista de cambios reales (datos; la ui los convierte en frases).
 
@@ -63,17 +64,17 @@ src/app/
 
 **Condiciones** (`data/condiciones.json`): `categoria` (`maldicion`, `bendicion`, `enfermedad`, `clima`, `mejora`, `otra`), `modificadores`, `prohibe` (`viajar`, `enterrar_tesoro`, `nuevos_seguidores`), `ajustes` (famaObjetivo, comidaPorDia, fuerza, ingenio, vidaMax, tripulacionMax, maximoSeguidores, reduccionDano, reduccionDanoNaval), `cadaTurno` (efectos/tabla al amanecer), `alLlegar` (lugar `tierra|puerto|aldea|naufragio`: se quita y puede dar efectos/evento), `imagen`. `otorga` en objetos, sobrenombres y habilidades = condiciones calculadas mientras se tenga la fuente.
 
-**Objetos** (`data/objetos.json`): `tipo` pasivo|activo, `usosMaximos`, `espacios`, `cuandoSeUsa` (`accion`|`evento`|`combate`), `alUsar`, `enCombate` (`bonificador`, `dado_extra`, `huida`, `derrota_a_todos`), `precioVenta` (obligatorio), `magico`, `modificadores`, `otorga`, `banderaAlVender`, `textoAlAgotarse`.
+**Objetos** (`data/objetos.json`): `tipo` pasivo|activo, `usosMaximos`, `espacios`, `cuandoSeUsa` (`accion`|`evento`|`combate`), `alUsar`, `enCombate` (`bonificador`, `dado_extra`, `huida`, `derrota_a_todos`), `precioVenta` (obligatorio), `magico`, `modificadores`, `otorga`, `banderaAlVender`, `textoAlAgotarse`, `espacios` (0 = no ocupa), `huecosExtra`, `fama` (mientras lo llevas), `alUsarEvento`.
 
 ## 6. Motor de eventos (`core/eventos/`) — lo que se usa al escribir eventos
 
 **Para añadir un evento:** `data/eventos/<id>.json` + una línea de import en `cargar-eventos.ts`. El test `todos-los-eventos.spec.ts` lo juega solo al azar (no hay que escribirle nada); los eventos complicados llevan además su `<id>.spec.ts` a mano. Ejemplos completos: `deseo.json`, `guardia.json`, `borracho.json`, `piratas_hostiles.json`.
 
 - **Evento:** `id`, `titulo`, `imagen?` (ruta en `public/`), `unaVez?`, `muerte?`, `pasos` (empieza en `inicio`), `libro?`.
-- **Rama** (lo que hay en cada salida): `texto?`, `efectos?`, `muerte?`, `pausa?` (fuerza un "Continuar") y cómo sigue: `paso` | `evento` (salta sin volver) | `llamar` (otro evento y vuelve a `paso`); nada = fin.
+- **Rama** (lo que hay en cada salida): `texto?`, `efectos?`, `amuletoMaldito?` (E027), `tiradaOculta?` (con `evento`: su tirada se tira sola, sin enseñarla), `muerte?`, `pausa?` (fuerza un "Continuar") y cómo sigue: `paso` | `evento` (salta sin volver) | `llamar` (otro evento y vuelve a `paso`); nada = fin.
 - **Paso** = una rama que además pide **una** cosa:
   - `opciones`: `[{ texto, requiere?, ...rama }]`. Requisitos: `sinObjeto`, `puedeGanarSeguidor`, `puedeSubir` (`fuerza`|`ingenio`), `oro` (número o `"cantidad"`). Las no disponibles salen desactivadas con motivo.
-  - `tirada`: `{ dado, modificador?, boton (OBLIGATORIO, con sabor), filas: [{ min, max, volverATirar?, ...rama }] }`. Vale el amuleto del destino (eliges fila) y la trampa de fijar tirada.
+  - `tirada`: `{ dado, modificador?, idTirada? (suma los bonos del jugador), siSaleMenosDe1? (rama), boton (OBLIGATORIO, con sabor), filas: [{ min, max, volverATirar?, saltarSiTiene? (condición), ...rama }] }`. Vale el amuleto del destino (eliges fila) y la trampa de fijar tirada.
   - `chequeo`: `{ caracteristica, modificador?, boton?, exito, fallo }` (1d6 ≤ característica; **un 6 natural falla siempre**).
   - `combate`: `{ enemigos | encuentro, puedeHuir?, noMortal?, sorpresa?, boton?, botonDelEncuentro?, victoria, huida, derrota (solo si noMortal) }`. `enemigos` = `[{ enemigo, cantidad?, ataque?, resistencia?, recompensa? }]`. `encuentro` = tablita de `data/encuentros.json` (p. ej. `piratas_hostiles`).
   - `combateNaval`: `{ barco, victoria, huida }`.
@@ -85,13 +86,13 @@ src/app/
 
 ## 7. Reglas vigentes (resumen; detalle en el código y en el historial)
 
-- **Personaje:** sobrenombre 1d11 (11 en `sobrenombres.json`, con nombre femenino); características 1d3 (fuerte 4/2, equilibrado 3/3, inteligente 2/4). Vida 18, oro 50, tripulación 40, comida 5, fama 0. **El heredero aún no tiene objeto** (espera a E037; sin el ídolo antediluviano, que en el libro es el 2: el CLAUDE antiguo decía "el 12", confirmar).
-- **Amuleto maldito** = una condición maldición con dos partes (bendición + maldición, 1d6 cada una, `data/amuleto-maldito.json`). Bendiciones: fuerza letal, súper cerebro, gran fortaleza, piel de piedra, carisma, **voz de mando** (+10 tripulación máx.). Maldiciones: hambre insaciable, **muy mala suerte (−3 en tablas de objetos; si sale negativo, trampa E029: falta programar)**, ambición desmedida, avaricioso, hedor nauseabundo, manos torpes. Quitar una maldición se lo lleva entero. Si ya llevas uno, no recibes otro.
+- **Personaje:** sobrenombre 1d11 (11 en `sobrenombres.json`, con nombre femenino); características 1d3 (fuerte 4/2, equilibrado 3/3, inteligente 2/4). Vida 18, oro 50, tripulación 40, comida 5, fama 0. El heredero empieza con un objeto mágico de `objetoInicialEntre` (sin ídolo, amuleto, anillo ni lira; sin fama).
+- **Amuleto maldito** = una condición maldición con dos partes (bendición + maldición, 1d6 cada una, `data/amuleto-maldito.json`). Bendiciones: fuerza letal, súper cerebro, gran fortaleza, piel de piedra, carisma, **voz de mando** (+10 tripulación máx.). Maldiciones: hambre insaciable, **muy mala suerte (−3 en `tesoro` y `tesoro_magico`; total < 1 → trampa)**, ambición desmedida, avaricioso, hedor nauseabundo, manos torpes. Quitar una maldición se lo lleva entero. Si ya llevas uno, no recibes otro.
 - **Combate normal:** jugador 1 falla, 2-5 daño, 6 = 6 y **elige** volver a tirar (un 1 lo anula); enemigos y seguidores 1-2 fallan, 3-5 su ataque, 6 ataque+1. Emparejamiento al azar (siempre un enemigo va a por el jugador). Hambre −1 por día (tope −3). Golpe de gracia, afortunado (1 vez), huir con 4+ tras la 1.ª ronda. Habilidades de enemigos: `curarse`, `revivir_debilitado` (máx. 3), `revivir_una_vez`, `ataca_dos_veces`, `piel_de_piedra`, `acierta_con_5`, `maldice_con_6`. Usar objetos en combate es gratis.
 - **Combate naval:** 1d6+bonos contra 1d6; pierdes = −daño de tripulación; abordar a mitad de resistencia (combate sin huida); huir 3-6 desde la 2.ª ronda → E006. 8 barcos en `barcos.json` (Bob y Pit no se atacan). Mejoras: cañones buenos, casco reforzado, velas nuevas.
 - **Comida:** 1 reserva para todo el grupo (o taberna 4 de oro en puerto; en aldea solo con vínculo nativo). Hambre: pierdes tantos PV como días; seguidores se marchan (10+10×días %); motín pendiente (`motin`).
 - **Descanso:** posada/monasterio/barco = 50 % de dormir genial (+1 PV); intemperie con evento nocturno (25 % jungla y playa, 35 % jungla profunda; −10 con tienda); aldea: vínculo nativo o chequeo de Ingenio (fallar = te echan y aldea bloqueada; 2.ª vez convencidos = aldea amiga).
-- **Acciones:** pescar, cazar, reposar, mercado (comida 5/2, vender objetos, rastrillo), discurso, marineros, buscar seguidor, buscar información (cada 2 días; puertos con sobornos, aldeas con su tabla, guaridas +1/2 fama), audiencia (una concedida por sitio), monasterio (rezar quita todas las maldiciones; descansar 20+5/seguidor), enterrar tesoro (100 oro = +1 fama), naufragio, ruinas, dados y pulso (guarida), mendigar (artista). `accionesDisponibles` las da todas, las imposibles desactivadas **con motivo** (regla de la interfaz).
+- **Acciones:** pescar, cazar, reposar, mercado (comida 5/2, vender objetos, rastrillo), discurso, marineros, buscar seguidor, buscar información (cada 2 días; puertos con sobornos, aldeas con su tabla, guaridas +1/2 fama), audiencia (una concedida por sitio), monasterio (rezar quita todas las maldiciones; descansar 20+5/seguidor), enterrar tesoro (100 oro = +1 fama), naufragio, ruinas, dados y pulso (guarida), mendigar (artista), reparar (kit: +1d6 tripulación, cada 3 días; `listoElDia` en el kit). `accionesDisponibles` las da todas, las imposibles desactivadas **con motivo** (regla de la interfaz).
 - **Mapa:** `data/mapas/<id>.json` desde `.wxx` (`npm run convertir-mapa`). Hex de punta plana, direcciones N, NE, SE, S, SO, NO (libro: 1 SE · 2 S · 3 NE · 4 SO · 5 NO · 6 N; **"E" y "O" del libro son erratas**). Viajar 1 casilla (navegante por mar y superviviente en jungla profunda, 2); 50 % de evento de la lista del terreno; zona de barcos → `barco` (E008); guarida sin explorar → `guarida_pirata`. Desembarcar/embarcar gratis, una vez por turno, en cualquier tierra menos jungla profunda. Marcas: `casilla_bloqueada`, `rasgo_cambiado`, `echado_de_la_aldea`, `audiencia_vetada`... Mover: `moverA`, `echarAVecinaAlAzar`, `desviar` (`core/viaje/mover.ts`).
 - **Guardado:** roguelike, una partida, autoguardado en cada cambio, crónica ordenada por fama y oro.
 
@@ -102,7 +103,7 @@ src/app/
 
 ## 9. Siguientes sprints
 
-12 eventos 1.ª mitad (arriba) · 13 eventos 2.ª mitad (tierra, nocturnos, grandes: Bob, motín, victorias alternativas) · 14 interfaz pulida (pantalla definitiva, ventana de eventos bonita, combate definitivo, tutoriales, traducción al inglés al final) · 15 cierre (más mapas, minijuego naval que solo da +1, equilibrio).
+12 eventos 1.ª mitad (arriba) · 13 eventos 2.ª mitad (tierra, nocturnos, grandes: Bob, motín, victorias alternativas) · 14 interfaz pulida (pantalla definitiva, ventana de eventos bonita, combate definitivo, inventario en cuadrícula 2×3 que se coloca solo, iconos con descripción al pasar el ratón, dados más ágiles: más rápidos / tiradas en cadena con un clic / las poco importantes solas, tutoriales, traducción al inglés al final) · 15 cierre (más mapas, minijuego naval que solo da +1, equilibrio).
 
 **Pendiente del autor (sin prisa):** comida máxima definitiva; capacidad de carga con hambre; influyente en aldeas; precios provisionales; seguidores quizá demasiado fuertes (opciones a/b sin decidir); revisar tiranosaurio, cangrejo y guardián con la vara de los jefes; dónde se consiguen las mejoras del barco; iconos de abundancia y casilla de barco; `tree23`; logos de los 4 puertos.
 

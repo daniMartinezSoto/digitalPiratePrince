@@ -89,6 +89,7 @@ describe('dónde se puede cada acción', () => {
       { accion: 'investigar_naufragio', disponible: false, motivo: 'sin_naufragio' },
       { accion: 'registrar_ruinas', disponible: false, motivo: 'sin_ruinas' },
       { accion: 'mendigar', disponible: false, motivo: 'sin_artista' },
+      { accion: 'reparar', disponible: false, motivo: 'sin_kit' },
     ]);
   });
 
@@ -111,6 +112,7 @@ describe('dónde se puede cada acción', () => {
       { accion: 'investigar_naufragio', disponible: false, motivo: 'sin_naufragio' },
       { accion: 'registrar_ruinas', disponible: false, motivo: 'sin_ruinas' },
       { accion: 'mendigar', disponible: false, motivo: 'sin_artista' },
+      { accion: 'reparar', disponible: false, motivo: 'sin_kit' },
     ]);
   });
 

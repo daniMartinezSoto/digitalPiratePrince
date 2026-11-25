@@ -131,8 +131,9 @@
     "id": "muy_mala_suerte",
     "imagen": "iconosCondiciones/malaSuerte.svg",
     "nombre": "Muy mala suerte",
-    "descripcion": "−3 en las tablas de objetos y de objetos mágicos.",
-    "categoria": "maldicion"
+    "descripcion": "−3 en las tablas de tesoros y de tesoros mágicos (si queda por debajo de 1, salta una trampa).",
+    "categoria": "maldicion",
+    "modificadores": { "tesoro": -3, "tesoro_magico": -3 }
   },
   {
     "id": "ambicion_desmedida",
@@ -189,5 +190,26 @@
     "descripcion": "Mejora del barco: +1 al dado cuando intentas huir de un combate naval.",
     "categoria": "mejora",
     "modificadores": { "huida_naval": 1 }
+  },
+  {
+    "id": "maleficio_del_tonto",
+    "nombre": "Maleficio del tonto",
+    "descripcion": "Estás maldito: −1 de ingenio mientras dure la maldición.",
+    "categoria": "maldicion",
+    "ajustes": { "ingenio": -1 }
+  },
+  {
+    "id": "hogaza_magica",
+    "nombre": "Hogaza mágica",
+    "descripcion": "Mientras lleves la hogaza mágica, tu grupo no necesita comer.",
+    "categoria": "otra",
+    "ajustes": { "comidaPorDia": -10 }
+  },
+  {
+    "id": "ropajes_de_pirata",
+    "nombre": "Ropajes de pirata profesional",
+    "descripcion": "Con esa pinta, los seguidores te cobran 10 monedas de oro menos al contratarlos.",
+    "categoria": "otra",
+    "ajustes": { "precioSeguidores": -10 }
   }
 ]

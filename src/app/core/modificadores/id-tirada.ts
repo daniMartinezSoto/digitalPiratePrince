@@ -18,6 +18,8 @@ export const IDS_TIRADA = [
   'ataque_no_humano', // además de "ataque", contra enemigos que no son humanos (la lanza kalinago)
   'disparo_naval', // tu dado en el duelo de cañones del combate naval (las mejoras del barco; el minijuego)
   'huida_naval', // huir de un combate naval (1d6, con 3-6 huyes)
+  'tesoro', // la tirada del tesoro (E036): muy mala suerte, −3
+  'tesoro_magico', // la tirada del tesoro mágico (E037): muy mala suerte, −3
 ] as const;
 
 export type IdTirada = (typeof IDS_TIRADA)[number];

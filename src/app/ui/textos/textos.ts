@@ -42,6 +42,7 @@ export const NOMBRE_DE_ACCION: Record<IdAccion, string> = {
   investigar_naufragio: 'Investigar naufragio',
   registrar_ruinas: 'Registrar ruinas',
   mendigar: 'Mendigar',
+  reparar: 'Reparar el barco',
 };
 
 export const NOMBRE_DE_LUGAR: Record<Lugar, string> = {
@@ -176,6 +177,8 @@ const TEXTO_DE_MOTIVO: Record<MotivoNoDisponible, string> = {
   sin_ruinas: 'Aquí no hay ruinas',
   ya_explorado: 'Ya lo has explorado',
   sin_artista: 'Necesitas un artista en el grupo',
+  sin_kit: 'Necesitas el kit de cabos, tablones y herramientas',
+  solo_a_bordo: 'Solo a bordo de tu barco',
   no_es_momento: 'No es el momento',
   combate_en_curso: 'Hay un combate en curso',
   evento_en_curso: 'Hay un evento en curso',
@@ -216,6 +219,11 @@ export function nombreDeHabilidad(id: string): string {
 
 export function nombreDeObjeto(id: string): string {
   return OBJETOS.find(o => o.id === id)?.nombre ?? id;
+}
+
+/** Lo que hace un objeto (su descripción del catálogo): sale al pasar el ratón por encima. */
+export function descripcionDeObjeto(id: string): string {
+  return OBJETOS.find(o => o.id === id)?.descripcion ?? '';
 }
 
 export function nombreDeCondicion(id: string): string {
@@ -269,7 +277,7 @@ export function describirCambio(cambio: Cambio, nombres: NombresDeSeguidores = {
   const deDespues = (id: string) => nombres.despues[id] ?? nombres.antes[id] ?? id;
   switch (cambio.tipo) {
     case 'recurso': {
-      const motivo = cambio.motivo === 'contable' ? ' (el contable)' : cambio.motivo === 'objeto_magico' ? ' (objeto mágico)' : '';
+      const motivo = cambio.motivo === 'contable' ? ' (el contable)' : cambio.motivo === 'objeto_magico' ? ' (objeto mágico)' : cambio.motivo === 'objeto_famoso' ? ' (objeto)' : '';
       return `${conSigno(cambio.despues - cambio.antes)} ${NOMBRE_DE_RECURSO[cambio.recurso]} (de ${cambio.antes} a ${cambio.despues})${motivo}`;
     }
     case 'resistencia_seguidor':

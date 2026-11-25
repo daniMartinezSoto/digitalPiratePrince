@@ -3,6 +3,8 @@ import { cerrarCombateNaval, iniciarCombateNaval } from '../combate-naval/combat
 import { chequeo } from '../chequeos/chequeo';
 import { AJUSTES } from '../ajustes/ajustes';
 import { estaProhibido, fuerzaActual, ingenioActual } from '../condiciones/consultas';
+import { tieneCondicion } from '../condiciones/condiciones-vigentes';
+import { calcularModificador } from '../modificadores/calcular-modificador';
 import type { Dados } from '../dados/dados';
 import { rangoDeTirada } from '../dados/tirada';
 import { aplicarEfectos } from '../efectos/aplicar-efectos';
@@ -21,7 +23,8 @@ import { banderaDeEventoOcurrido, eventoYaOcurrido } from './una-vez';
 import { sitioActual } from '../mapa/sitio-actual';
 import { esPuerto } from '../turno/lugar';
 import { conCausaDeMuerte } from '../efectos/causa-de-muerte';
-import { CANTIDAD_DEL_EVENTO, PASO_INICIAL, type Evento, type FilaDeEvento, type Opcion, type Paso, type Rama } from './evento';
+import { recibirAmuletoMaldito } from '../amuleto-maldito/recibir-amuleto-maldito';
+import { CANTIDAD_DEL_EVENTO, PASO_INICIAL, type Evento, type FilaDeEvento, type Opcion, type Paso, type Rama, type TiradaDeEvento } from './evento';
 
 // EL MOTOR DE EVENTOS (Sprint 10, paso 2). Solo reglas: no sabe nada de la pantalla.
 //
@@ -206,7 +209,7 @@ export function vistaDelEvento(estado: Estado, eventos: readonly Evento[] = EVEN
       texto,
       tirada: {
         dado: paso.tirada.dado,
-        modificador: paso.tirada.modificador ?? 0,
+        modificador: modificadorDeTirada(estado, paso.tirada),
         minimo: rango.min,
         maximo: rango.max,
         puedeElegir: usosDe(estado, OBJETO_ELEGIR_RESULTADO) > 0,
@@ -322,7 +325,7 @@ export function tirarDadosDelEvento(
     }
   }
 
-  const modificador = tirada.modificador ?? 0;
+  const modificador = modificadorDeTirada(t.estado, tirada);
   // Si la fila lleva a un evento de una sola vez que ya ocurrió, se vuelve a tirar (con un tope).
   // Con el resultado elegido no: el jugador ha elegido esa fila.
   let sacados: number[] = [];
@@ -333,7 +336,11 @@ export function tirarDadosDelEvento(
     const suma = elegido !== undefined ? elegido : sacados.reduce((a, b) => a + b, 0);
     // Con el amuleto del destino se elige la FILA: sale esa, sin sumar el bonificador.
     total = opciones.resultadoElegido !== undefined ? suma : suma + modificador;
-    fila = filaDe(tirada.filas, total);
+    // Por debajo de 1 con los bonificadores (la muy mala suerte en el tesoro): su rama, si la tiene.
+    // Con el amuleto del destino no: se elige una fila de verdad.
+    fila = total < 1 && tirada.siSaleMenosDe1 && opciones.resultadoElegido === undefined
+      ? { min: total, max: total, ...tirada.siSaleMenosDe1 }
+      : saltarFilasQueYaTiene(t.estado, tirada.filas, filaDe(tirada.filas, total));
     if (elegido !== undefined || intento >= 20 || !llevaAEventoYaOcurrido(t, fila)) break;
   }
 
@@ -341,6 +348,25 @@ export function tirarDadosDelEvento(
   const tiradaLeida = { dados: sacados, modificador: opciones.resultadoElegido !== undefined ? 0 : modificador, total, ...marca };
   llegarARama(t, fila, dados, { tirada: tiradaLeida }, fila.volverATirar ? { tipo: 'repetir' } : undefined);
   return avanzar(t, dados);
+}
+
+/** Lo que se suma a una tirada: su número fijo y, si tiene nombre, los bonificadores del jugador para ella. */
+function modificadorDeTirada(estado: Estado, tirada: TiradaDeEvento): number {
+  return (tirada.modificador ?? 0) + (tirada.idTirada !== undefined ? calcularModificador(estado.jugador, tirada.idTirada) : 0);
+}
+
+/**
+ * Filas con "saltarSiTiene": si el jugador ya tiene esa condición o ese objeto, cuenta la fila siguiente
+ * (y así hasta una que valga). Si no queda ninguna por delante, se busca hacia atrás.
+ */
+function saltarFilasQueYaTiene(estado: Estado, filas: readonly FilaDeEvento[], fila: FilaDeEvento): FilaDeEvento {
+  const yaLaTiene = (f: FilaDeEvento): boolean =>
+    f.saltarSiTiene !== undefined &&
+    (tieneCondicion(estado.jugador, f.saltarSiTiene) || estado.jugador.inventario.some(o => o.id === f.saltarSiTiene));
+  const inicio = filas.indexOf(fila);
+  for (let i = inicio; i < filas.length; i++) if (!yaLaTiene(filas[i])) return filas[i];
+  for (let i = inicio - 1; i >= 0; i--) if (!yaLaTiene(filas[i])) return filas[i];
+  return fila;
 }
 
 /**
@@ -587,7 +613,7 @@ function seguir(t: Trabajo, marco: MarcoEvento, siguiente: Siguiente, dados: Dad
       // Este evento termina y lo sustituye el nuevo (la pila no crece).
       t.pila.pop();
       const [nuevo] = filtrarEventos(t, [siguiente.evento]);
-      if (nuevo) apilar(t, { evento: nuevo, paso: PASO_INICIAL, porEmpezar: true, lectura: null, siguiente: null });
+      if (nuevo) apilar(t, { evento: nuevo, paso: PASO_INICIAL, porEmpezar: true, lectura: null, siguiente: null, ...(siguiente.tiradaOculta ? { tiradaOculta: true } : {}) });
       return;
     }
     case 'llamar': {
@@ -621,22 +647,57 @@ function entrarEnPaso(t: Trabajo, marco: MarcoEvento, nombre: string, dados: Dad
   const paso = pasoDe(buscarEvento(t.eventos, marco.evento), nombre);
   // La cantidad del evento se tira al entrar en el paso que la define (antes de sus efectos y su texto).
   if (paso.cantidad !== undefined) marco.cantidad = dados.tirar(paso.cantidad).total;
-  const cambios = aplicar(t, paso.efectos, dados, paso.muerte);
+  const { cambios, llamarAntes } = aplicarConAmuleto(t, paso, dados, paso.muerte);
   const texto = conCantidad(paso.texto, marco.cantidad);
 
   if (paso.segun) {
     // Según dónde estés: se sigue solo por la rama que toque (la que no está escrita = termina).
     // Se lee el texto del paso y el de la rama, juntos.
     const rama: Rama = paso.segun[dondeEstas(t.estado)] ?? {};
-    const cambiosDeLaRama = aplicar(t, rama.efectos, dados, rama.muerte ?? paso.muerte);
+    const deLaRama = aplicarConAmuleto(t, rama, dados, rama.muerte ?? paso.muerte);
     const textos = [texto, conCantidad(rama.texto, marco.cantidad)].filter((x): x is string => x !== undefined);
-    marco.lectura = { ...(textos.length > 0 ? { texto: textos.join('\n\n') } : {}), cambios: [...cambios, ...cambiosDeLaRama] };
-    marco.siguiente = siguienteDe(rama);
+    marco.lectura = { ...(textos.length > 0 ? { texto: textos.join('\n\n') } : {}), cambios: [...cambios, ...deLaRama.cambios] };
+    marco.siguiente = conLlamadas([...llamarAntes, ...deLaRama.llamarAntes], siguienteDe(rama));
     return;
   }
 
   marco.lectura = { ...(texto !== undefined ? { texto } : {}), cambios };
-  marco.siguiente = esperaAlJugador(paso) ? null : siguienteDe(paso);
+  // (Un paso que espera al jugador no lleva amuleto: lo impide el revisor.)
+  marco.siguiente = esperaAlJugador(paso) ? null : conLlamadas(llamarAntes, siguienteDe(paso));
+
+  // Tirada oculta: se tira ya, sin botón ni dados a la vista, y se llega a la fila que toque.
+  if (marco.tiradaOculta && paso.tirada) {
+    delete marco.tiradaOculta;
+    tirarAOcultas(t, paso.tirada, dados);
+  }
+}
+
+/** La tirada oculta: los dados (con los bonificadores) deciden la fila, pero no se enseñan. */
+function tirarAOcultas(t: Trabajo, tirada: TiradaDeEvento, dados: Dados): void {
+  const total = dados.tirar(tirada.dado).total + modificadorDeTirada(t.estado, tirada);
+  const fila: FilaDeEvento = total < 1 && tirada.siSaleMenosDe1
+    ? { min: total, max: total, ...tirada.siSaleMenosDe1 }
+    : saltarFilasQueYaTiene(t.estado, tirada.filas, filaDe(tirada.filas, total));
+  llegarARama(t, fila, dados, {}, fila.volverATirar ? { tipo: 'repetir' } : undefined);
+}
+
+/** Si hay eventos que llamar antes (el deseo del amuleto), se llaman y luego se sigue por "despues". */
+function conLlamadas(eventos: string[], despues: Siguiente): Siguiente {
+  return eventos.length > 0 ? { tipo: 'llamar', eventos, despues } : despues;
+}
+
+/**
+ * Aplica los efectos de una rama (o de un paso) y, si lleva "amuletoMaldito", da el amuleto (E027):
+ * sus dos tiradas. Si sale el deseo, lo devuelve en "llamarAntes" para resolverlo antes de seguir.
+ */
+function aplicarConAmuleto(t: Trabajo, rama: Rama, dados: Dados, muerte?: string): { cambios: Cambio[]; llamarAntes: string[] } {
+  const cambios = aplicar(t, rama.efectos, dados, muerte);
+  if (!rama.amuletoMaldito || t.estado.mundo.finPartida) {
+    return { cambios, llamarAntes: [] };
+  }
+  const amuleto = recibirAmuletoMaldito(t.estado, dados);
+  t.estado = amuleto.estado;
+  return { cambios: [...cambios, ...amuleto.cambios], llamarAntes: amuleto.eventos };
 }
 
 /** Para los pasos "segun": a bordo de tu barco, en un puerto (o la guarida) o en otro sitio. */
@@ -668,16 +729,16 @@ function llegarARama(
   antes: string[] = [],
 ): void {
   const marco = cima(t);
-  const cambios = [...(extra.cambios ?? []), ...aplicar(t, rama.efectos, dados, rama.muerte)];
+  const aplicado = aplicarConAmuleto(t, rama, dados, rama.muerte);
+  const cambios = [...(extra.cambios ?? []), ...aplicado.cambios];
   const texto = conCantidad(rama.texto, marco.cantidad);
   marco.lectura = { ...extra, ...(texto !== undefined ? { texto } : {}), cambios };
-  const despues = forzado ?? siguienteDe(rama);
-  marco.siguiente = antes.length > 0 ? { tipo: 'llamar', eventos: antes, despues } : despues;
+  marco.siguiente = conLlamadas([...antes, ...aplicado.llamarAntes], forzado ?? siguienteDe(rama));
 }
 
 /** Por dónde se sigue después de una rama (o de un paso que no espera al jugador). */
 function siguienteDe(rama: Rama): Siguiente {
-  if (rama.evento !== undefined) return { tipo: 'evento', evento: rama.evento };
+  if (rama.evento !== undefined) return { tipo: 'evento', evento: rama.evento, ...(rama.tiradaOculta ? { tiradaOculta: true } : {}) };
   const despues: Siguiente = rama.paso !== undefined ? { tipo: 'paso', paso: rama.paso, ...(rama.pausa ? { pausa: true } : {}) } : { tipo: 'fin' };
   if (rama.llamar !== undefined) return { tipo: 'llamar', eventos: [rama.llamar], despues };
   return despues;

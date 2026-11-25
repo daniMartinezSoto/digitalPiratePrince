@@ -43,8 +43,18 @@ function adaptador1a2(datos: DatosDePartida): DatosDePartida {
   return { ...datos, mundo };
 }
 
+/**
+ * 2 → 3 (Sprint 12): el inventario pasa de 5 a 6 huecos (decidido por el autor el 25-nov, para
+ * pintarlo en una cuadrícula de 2×3). A las partidas guardadas se les da el hueco de más.
+ */
+function adaptador2a3(datos: DatosDePartida): DatosDePartida {
+  const jugador = { ...(datos['jugador'] as Record<string, unknown>) };
+  jugador['capacidadInventario'] = (jugador['capacidadInventario'] as number) + 1;
+  return { ...datos, jugador };
+}
+
 /** Los adaptadores del juego (la clave es la versión DE ORIGEN). */
-export const ADAPTADORES: Readonly<Record<number, Adaptador>> = { 1: adaptador1a2 };
+export const ADAPTADORES: Readonly<Record<number, Adaptador>> = { 1: adaptador1a2, 2: adaptador2a3 };
 
 /**
  * Lleva una partida de su versión a versionActual pasando por los adaptadores, en orden.

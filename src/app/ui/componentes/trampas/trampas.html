@@ -11,7 +11,7 @@
   </p>
   <p>
     <select name="trampa-objeto" (change)="objeto.set($any($event.target).value)">
-      @for (o of objetos; track o.id) { <option [value]="o.id">{{ o.nombre }}</option> }
+      @for (o of objetos; track o.id) { <option [value]="o.id" [title]="o.descripcion">{{ o.nombre }}</option> }
     </select>
     <button type="button" (click)="darObjeto()">Darme el objeto</button>
   </p>

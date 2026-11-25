@@ -151,7 +151,7 @@
                 <button
                   type="button"
                   [disabled]="!obj.disponible"
-                  [title]="obj.motivo ? textoNoUsar[obj.motivo] : ''"
+                  [title]="obj.motivo ? textoNoUsar[obj.motivo] : descripcionDeObjeto(obj.objeto)"
                   (click)="luchar.usar(obj.posicion, obj.objeto)"
                 >
                   Usar {{ nombreDeObjeto(obj.objeto) }}

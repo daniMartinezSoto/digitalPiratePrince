@@ -1,0 +1,11 @@
+{
+  "id": "amuleto_maldito",
+  "titulo": "Amuleto maldito",
+  "libro": "E027",
+  "pasos": {
+    "inicio": {
+      "texto": "Has conseguido un amuleto aparentemente inofensivo. Cuando lo coges, un fulgor misterioso empieza a brillar en su interior. Ya no puedes quitártelo: te dará una bendición y una maldición.",
+      "amuletoMaldito": true
+    }
+  }
+}

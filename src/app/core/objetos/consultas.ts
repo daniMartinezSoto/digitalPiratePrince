@@ -1,4 +1,6 @@
 import { OBJETOS } from '../catalogos/cargar-objetos';
+import { CONDICIONES } from '../catalogos/cargar-condiciones';
+import { vidaMaxActual } from '../condiciones/consultas';
 import type { Objeto } from '../catalogos/objeto';
 import type { Estado } from '../estado/estado';
 import type { Jugador } from '../estado/jugador';
@@ -15,9 +17,18 @@ export function espaciosOcupados(jugador: Jugador, objetos: readonly Objeto[] = 
   return jugador.inventario.reduce((total, llevado) => total + (fichaDe(llevado.id, objetos).espacios ?? 1), 0);
 }
 
+/**
+ * Huecos que tiene ahora: los suyos (6; el sobrenombre puede dar más) y los que dan los objetos que
+ * lleva (la mochila sin fondo, +4). Dos objetos iguales no suman dos veces.
+ */
+export function capacidadInventarioActual(jugador: Jugador, objetos: readonly Objeto[] = OBJETOS): number {
+  const distintos = [...new Set(jugador.inventario.map(llevado => llevado.id))];
+  return jugador.capacidadInventario + distintos.reduce((total, id) => total + (fichaDe(id, objetos).huecosExtra ?? 0), 0);
+}
+
 /** Huecos libres que le quedan. */
 export function espaciosLibres(jugador: Jugador, objetos: readonly Objeto[] = OBJETOS): number {
-  return Math.max(0, jugador.capacidadInventario - espaciosOcupados(jugador, objetos));
+  return Math.max(0, capacidadInventarioActual(jugador, objetos) - espaciosOcupados(jugador, objetos));
 }
 
 /**
@@ -42,7 +53,33 @@ export function objetosUsablesAhora(estado: Estado, objetos: readonly Objeto[] =
   if (estado.mundo.finPartida || hayCombate(estado) || hayEventoEnCurso(estado) || estado.mundo.fase !== 'accion' || estado.mundo.accionEnCurso) {
     return [];
   }
-  return estado.jugador.inventario.flatMap((llevado, posicion) => (fichaDe(llevado.id, objetos).cuandoSeUsa === 'accion' ? [posicion] : []));
+  return estado.jugador.inventario.flatMap((llevado, posicion) => {
+    const ficha = fichaDe(llevado.id, objetos);
+    return ficha.cuandoSeUsa === 'accion' && tieneLoQuePide(estado.jugador, ficha) ? [posicion] : [];
+  });
+}
+
+/**
+ * ¿Tiene lo que el objeto pide para usarse? La biblia: alguna maldición (de las apuntadas, que son las
+ * que se pueden quitar). La medicina y el ungüento: que le falte vida.
+ */
+export function tieneLoQuePide(jugador: Jugador, ficha: Objeto): boolean {
+  const categoria = ficha.soloConCategoria;
+  if (categoria !== undefined && !jugador.condiciones.some(c => CONDICIONES.find(f => f.id === c.id)?.categoria === categoria)) {
+    return false;
+  }
+  return !ficha.soloSiHerido || jugador.vida < vidaMaxActual(jugador);
+}
+
+/**
+ * Por qué no puede soltar (tirar o vender) el objeto de esa posición: la mochila sin fondo, si sin
+ * ella no le cabe lo que lleva ("vacía antes la mochila"). undefined = puede.
+ */
+export function motivoParaNoSoltar(jugador: Jugador, posicion: number, objetos: readonly Objeto[] = OBJETOS): 'mochila_llena' | undefined {
+  const llevado = jugador.inventario[posicion];
+  if (!llevado) return undefined;
+  const sin = { ...jugador, inventario: jugador.inventario.filter((_, i) => i !== posicion) };
+  return espaciosOcupados(sin, objetos) > capacidadInventarioActual(sin, objetos) ? 'mochila_llena' : undefined;
 }
 
 function fichaDe(id: string, objetos: readonly Objeto[]): Objeto {

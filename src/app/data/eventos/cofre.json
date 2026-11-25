@@ -1,0 +1,50 @@
+{
+  "id": "cofre",
+  "titulo": "Cofre",
+  "libro": "E021",
+  "pasos": {
+    "inicio": {
+      "texto": "Has encontrado un arcón de aspecto prometedor, cerrado a cal y canto.",
+      "tirada": {
+        "dado": "1d6",
+        "boton": "Forzar la cerradura",
+        "filas": [
+          {
+            "min": 1,
+            "max": 1,
+            "texto": "Al levantar la tapa oyes un clic sospechoso...",
+            "evento": "trampa"
+          },
+          {
+            "min": 2,
+            "max": 2,
+            "texto": "Abres el arcón... pero está vacío."
+          },
+          {
+            "min": 3,
+            "max": 4,
+            "texto": "Dentro brillan unas cuantas monedas de oro.",
+            "efectos": [
+              {
+                "tipo": "oro",
+                "cantidad": "1d6x10"
+              }
+            ]
+          },
+          {
+            "min": 5,
+            "max": 5,
+            "texto": "Dentro hay algo de valor.",
+            "evento": "tesoro"
+          },
+          {
+            "min": 6,
+            "max": 6,
+            "texto": "Dentro hay algo que brilla con una luz extraña...",
+            "evento": "tesoro_magico"
+          }
+        ]
+      }
+    }
+  }
+}

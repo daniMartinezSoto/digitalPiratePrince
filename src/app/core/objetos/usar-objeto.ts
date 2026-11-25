@@ -6,6 +6,7 @@ import type { Efecto } from '../tablas/efecto';
 import { resolverEfecto } from '../tablas/rangos/resolver-tabla';
 import { hayCombate } from '../combate/hay-combate';
 import { hayEventoEnCurso } from '../eventos/una-vez';
+import { tieneLoQuePide } from './consultas';
 
 /**
  * El jugador usa un objeto en la fase de acción, ANTES de elegir qué hace ese día
@@ -18,7 +19,7 @@ import { hayEventoEnCurso } from '../eventos/una-vez';
  *   2. Gasta un uso (a 0 se tira solo) y aplica sus efectos de "alUsar", con sus dados ya tirados.
  * Todo pasa por aplicarEfectos: no toca el estado recibido. Apunta por dónde van los dados.
  */
-export function usarObjeto(estado: Estado, posicion: number, dados: Dados, catalogos?: CatalogosEfectos): ResultadoEfectos {
+export function usarObjeto(estado: Estado, posicion: number, dados: Dados, catalogos?: CatalogosEfectos): ResultadoEfectos & { eventos?: string[] } {
   if (estado.mundo.finPartida) {
     throw new Error('usarObjeto: la partida ya ha terminado');
   }
@@ -46,9 +47,14 @@ export function usarObjeto(estado: Estado, posicion: number, dados: Dados, catal
     throw new Error(`usarObjeto: "${ficha.id}" no se usa en la fase de acción (${ficha.cuandoSeUsa ? `se usa en: ${ficha.cuandoSeUsa}` : 'es pasivo'})`);
   }
 
+  if (!tieneLoQuePide(estado.jugador, ficha)) {
+    throw new Error(`usarObjeto: "${ficha.id}" ahora no se puede usar (${ficha.soloConCategoria ? `pide una condición de tipo "${ficha.soloConCategoria}"` : 'tienes la vida llena'})`);
+  }
   // Un activo sin usos es permanente: se usa sin gastarse.
   const gasto: Efecto[] = llevado.usosRestantes === undefined ? [] : [{ tipo: 'gastar_uso', posicion }];
   const efectos: Efecto[] = [...gasto, ...(ficha.alUsar ?? []).map(definicion => resolverEfecto(definicion, dados))];
   const resultado = aplicarEfectos(estado, efectos, dados, catalogos);
-  return { ...resultado, estado: { ...resultado.estado, mundo: { ...resultado.estado.mundo, estadoDados: dados.obtenerEstado() } } };
+  const estadoFinal = { ...resultado.estado, mundo: { ...resultado.estado.mundo, estadoDados: dados.obtenerEstado() } };
+  // El evento del objeto (el anillo de los deseos → "deseo"): lo lanza quien llama (Jugar.hacer → conSusEventos).
+  return { ...resultado, estado: estadoFinal, ...(ficha.alUsarEvento !== undefined ? { eventos: [ficha.alUsarEvento] } : {}) };
 }

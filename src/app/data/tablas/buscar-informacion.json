@@ -13,7 +13,7 @@
     { "min": 14, "max": 14, "texto": "Un mercado de esclavos.", "evento": "mercado_de_esclavos", "libro": "E082" },
     { "min": 15, "max": 15, "texto": "Un contrabandista.", "evento": "contrabandista", "libro": "E083" },
     { "min": 16, "max": 16, "texto": "Una subasta secreta.", "evento": "subasta_secreta", "libro": "E084" },
-    { "min": 17, "max": 17, "texto": "Oyes rumores sobre un lugar.", "evento": "rumores", "libro": "E024" },
+    { "min": 17, "max": 17, "texto": "Oyes rumores sobre un lugar.", "evento": "mapa_misterioso", "libro": "E024" },
     { "min": 18, "max": 18, "texto": "Un alguacil te ofrece una audiencia con el gobernador.", "evento": "audiencia_gobernador", "libro": "E042" }
   ]
 }

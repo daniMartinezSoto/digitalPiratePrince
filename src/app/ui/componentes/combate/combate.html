@@ -36,7 +36,7 @@
     @if (o.huir.motivo; as m) { <small> {{ textoNoHuir[m] }}</small> }
     @for (obj of o.objetos; track obj.posicion) {
       <p>
-        <button type="button" [disabled]="!obj.disponible" (click)="luchar.usar(obj.posicion, obj.objeto)">Usar {{ nombreDeObjeto(obj.objeto) }}</button>
+        <button type="button" [disabled]="!obj.disponible" [title]="descripcionDeObjeto(obj.objeto)" (click)="luchar.usar(obj.posicion, obj.objeto)">Usar {{ nombreDeObjeto(obj.objeto) }}</button>
         @if (obj.motivo; as m) { <small> {{ textoNoUsar[m] }}</small> }
       </p>
     }

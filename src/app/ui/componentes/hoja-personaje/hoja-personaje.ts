@@ -1,5 +1,6 @@
 import { Component, input } from '@angular/core';
 import type { HojaDePersonaje } from '../../../core/personaje/hoja-de-personaje';
+import { descripcionDeObjeto } from '../../textos/textos';
 
 // LA HOJA DE PERSONAJE (pantalla de pruebas). Solo pinta: recibe la hoja ya calculada por
 // core/ (hojaDePersonaje) y la semilla. No tiene reglas ni cambia nada.
@@ -11,4 +12,5 @@ import type { HojaDePersonaje } from '../../../core/personaje/hoja-de-personaje'
 export class HojaPersonaje {
   readonly hoja = input.required<HojaDePersonaje>();
   readonly semilla = input.required<number>();
+  protected readonly descripcionDeObjeto = descripcionDeObjeto;
 }

@@ -4,7 +4,8 @@ import type { TipoRecurso } from '../tablas/efecto';
 // Por qué cambia un recurso, cuando no es por el efecto en sí:
 //   contable:       el contable gana 1d6 de oro más cada vez que gana oro.
 //   objeto_magico:  +1 de fama al conseguir un objeto mágico.
-export type MotivoDeRecurso = 'contable' | 'objeto_magico';
+//   objeto_famoso:  la fama de un objeto que la da mientras lo llevas (el loro): se gana y se pierde con él.
+export type MotivoDeRecurso = 'contable' | 'objeto_magico' | 'objeto_famoso';
 
 /**
  * Un cambio REAL que ha hecho aplicarEfectos: el "chivato" para avisar al jugador.

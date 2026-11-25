@@ -1,3 +1,5 @@
+import { CONDICIONES } from '../catalogos/cargar-condiciones';
+import { IDS_TIRADA } from '../modificadores/id-tirada';
 import { BARCOS } from '../catalogos/cargar-barcos';
 import { OBJETOS } from '../catalogos/cargar-objetos';
 import { validarPedidosDeEnemigos } from '../catalogos/validar-barco';
@@ -26,7 +28,7 @@ const FORMATO_ID = /^[a-z][a-z0-9_]*$/;
 const FORMATO_LIBRO = /^E\d{3}$/;
 
 const CAMPOS_EVENTO = ['id', 'titulo', 'imagen', 'unaVez', 'pasos', 'libro', 'muerte'];
-const CAMPOS_RAMA = ['texto', 'efectos', 'paso', 'evento', 'llamar', 'muerte', 'pausa'];
+const CAMPOS_RAMA = ['texto', 'efectos', 'amuletoMaldito', 'paso', 'evento', 'tiradaOculta', 'llamar', 'muerte', 'pausa'];
 // Las formas de seguir que llevan dentro sus propias salidas ("segun" no espera al jugador, pero
 // también lleva dentro por dónde se sigue).
 const SALIDAS_CON_ELECCION = ['opciones', 'tirada', 'chequeo', 'combate', 'combateNaval', 'segun'];
@@ -34,8 +36,8 @@ const CAMPOS_PASO = [...CAMPOS_RAMA, ...SALIDAS_CON_ELECCION, 'cantidad'];
 const LUGARES_DE_SEGUN = ['barco', 'puerto', 'otro'];
 const MARCA_DE_CANTIDAD = `{${CANTIDAD_DEL_EVENTO}}`;
 const CAMPOS_OPCION = ['texto', 'requiere', 'efectos', 'paso', 'evento', 'llamar', 'muerte', 'pausa'];
-const CAMPOS_TIRADA = ['dado', 'boton', 'modificador', 'filas'];
-const CAMPOS_FILA = ['min', 'max', 'volverATirar', ...CAMPOS_RAMA];
+const CAMPOS_TIRADA = ['dado', 'boton', 'modificador', 'idTirada', 'siSaleMenosDe1', 'filas'];
+const CAMPOS_FILA = ['min', 'max', 'volverATirar', 'saltarSiTiene', ...CAMPOS_RAMA];
 const CAMPOS_CHEQUEO = ['caracteristica', 'boton', 'modificador', 'exito', 'fallo'];
 const CAMPOS_COMBATE = ['enemigos', 'encuentro', 'boton', 'botonDelEncuentro', 'puedeHuir', 'noMortal', 'sorpresa', 'victoria', 'huida', 'derrota'];
 const CAMPOS_COMBATE_NAVAL = ['barco', 'boton', 'victoria', 'huida'];
@@ -165,6 +167,10 @@ function validarPaso(paso: unknown, donde: string, contexto: Contexto): string[]
     return [`${donde}: debe ser un objeto con texto, efectos y por dónde se sigue.`];
   }
   const errores: string[] = [...camposQueSobran(paso, CAMPOS_PASO, donde)];
+  const pide = ['opciones', 'tirada', 'chequeo', 'combate', 'combateNaval'].some(campo => paso[campo] !== undefined);
+  if (paso['amuletoMaldito'] !== undefined && (paso['amuletoMaldito'] !== true || pide)) {
+    errores.push(`${donde}: "amuletoMaldito" solo puede ser true, y no en un paso que pide algo al jugador (ponlo en la rama).`);
+  }
 
   const conEleccion = SALIDAS_CON_ELECCION.filter(campo => paso[campo] !== undefined);
   if (conEleccion.length > 1) {
@@ -221,6 +227,9 @@ function validarSegun(segun: unknown, donde: string, contexto: Contexto): string
 function validarRama(rama: Objeto, donde: string, contexto: Contexto, conCampos: boolean): string[] {
   const errores: string[] = conCampos ? camposQueSobran(rama, CAMPOS_RAMA, donde) : [];
 
+  if (rama['tiradaOculta'] !== undefined && (rama['tiradaOculta'] !== true || rama['evento'] === undefined)) {
+    errores.push(`${donde}: "tiradaOculta" solo puede ser true y solo sirve con "evento" (la tirada de ese evento se tira sola).`);
+  }
   if (rama['pausa'] !== undefined && (rama['pausa'] !== true || rama['paso'] === undefined)) {
     errores.push(`${donde}: "pausa" solo puede ser true y solo sirve con "paso" (para parar en "Continuar" antes del paso siguiente).`);
   }
@@ -341,6 +350,17 @@ function validarTirada(tirada: unknown, donde: string, contexto: Contexto): stri
   if (tirada['modificador'] !== undefined && !Number.isInteger(tirada['modificador'])) {
     errores.push(`${donde}: el modificador debe ser un número entero.`);
   }
+  if (tirada['idTirada'] !== undefined && !(IDS_TIRADA as readonly unknown[]).includes(tirada['idTirada'])) {
+    errores.push(`${donde}: "idTirada" debe ser uno de los nombres de tirada (core/modificadores/id-tirada.ts).`);
+  }
+  if (tirada['siSaleMenosDe1'] !== undefined) {
+    if (!esObjeto(tirada['siSaleMenosDe1'])) {
+      errores.push(`${donde}: "siSaleMenosDe1" debe ser una rama (texto, efectos, evento...).`);
+    } else {
+      errores.push(...camposQueSobran(tirada['siSaleMenosDe1'], CAMPOS_RAMA, `${donde}, si sale menos de 1`));
+      errores.push(...validarRama(tirada['siSaleMenosDe1'], `${donde}, si sale menos de 1`, contexto, false));
+    }
+  }
 
   const filas = tirada['filas'];
   if (!Array.isArray(filas) || filas.length === 0) {
@@ -372,6 +392,9 @@ function validarTirada(tirada: unknown, donde: string, contexto: Contexto): stri
       } else if (fila['paso'] !== undefined || fila['evento'] !== undefined || fila['llamar'] !== undefined) {
         errores.push(`${dondeFila}: si se vuelve a tirar, no puede saltar a otro sitio ("paso", "evento" o "llamar").`);
       }
+    }
+    if (fila['saltarSiTiene'] !== undefined && !CONDICIONES.some(c => c.id === fila['saltarSiTiene']) && !OBJETOS.some(o => o.id === fila['saltarSiTiene'])) {
+      errores.push(`${dondeFila}: "saltarSiTiene" debe ser el id de una condición o de un objeto del catálogo.`);
     }
     errores.push(...validarRama(fila, dondeFila, contexto, false));
   }

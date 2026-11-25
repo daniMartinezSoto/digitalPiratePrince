@@ -110,13 +110,15 @@ export function describirEfectoDefinicion(efecto: EfectoDefinicion): string {
         return `pierdes todo ${recurso}`;
       case 'fijar':
         return `${recurso} a ${String(e['cantidad'])}`;
+      case 'tope':
+        return `${recurso} a ${String(e['cantidad'])} como mucho`;
       default: {
         const cantidad = String(e['cantidad']);
         return `${cantidad.startsWith('-') ? cantidad : '+' + cantidad} ${recurso}`;
       }
     }
   }
-  if (tipo === 'ganar_objeto') return `Ganas: ${nombreDeObjeto(String(e['objeto']))}`;
+  if (tipo === 'ganar_objeto') return e['objeto'] === 'al_azar' ? 'Ganas un objeto al azar' : `Ganas: ${nombreDeObjeto(String(e['objeto']))}`;
   if (tipo === 'perder_objeto') return `Pierdes: ${nombreDeObjeto(String(e['objeto']))}`;
   return tipo.replaceAll('_', ' ');
 }

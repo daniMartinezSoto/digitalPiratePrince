@@ -10,6 +10,7 @@ import { motivoParaNoBuscar } from './buscar-informacion';
 import { motivoParaNoEnterrar } from './enterrar-tesoro';
 import { motivoParaNoExplorar } from './explorar';
 import { motivoParaNoMendigar } from './mendigar';
+import { motivoParaNoReparar } from './reparar';
 import { esPuerto } from '../turno/lugar';
 import type { IdAccion, Sitio } from './accion';
 import { hayCombate } from '../combate/hay-combate';
@@ -39,6 +40,8 @@ import { hayEventoEnCurso } from '../eventos/una-vez';
 //   sin_naufragio, sin_ruinas: aquí no hay naufragio / ruinas.
 //   ya_explorado:  este naufragio o estas ruinas ya se exploraron ("Ya has registrado estas ruinas").
 //   sin_artista:   mendigar necesita un artista en el grupo.
+//   sin_kit:       reparar el barco necesita el kit de cabos, tablones y herramientas.
+//   solo_a_bordo:  reparar el barco, solo estando en él.
 //   no_es_momento: no es la fase de acción (o la partida ha terminado): ninguna acción se puede.
 //   accion_a_medias: ya hay una acción empezada (mercado, mesa de dados...): primero hay que terminarla.
 //   debes_salir:   estás en una aldea ofendida (te echaron u ofendiste al jefe): solo puedes viajar (Sprint 9).
@@ -64,6 +67,8 @@ export type MotivoNoDisponible =
   | 'sin_ruinas'
   | 'ya_explorado'
   | 'sin_artista'
+  | 'sin_kit'
+  | 'solo_a_bordo'
   | 'no_es_momento'
   | 'combate_en_curso'
   | 'evento_en_curso'
@@ -140,7 +145,17 @@ function accionesSegunElSitio(estado: Estado, sitio: Sitio): AccionDisponible[] 
     disponibleONo('investigar_naufragio', motivoParaNoExplorar(estado, sitio, 'investigar_naufragio')),
     disponibleONo('registrar_ruinas', motivoParaNoExplorar(estado, sitio, 'registrar_ruinas')),
     disponibleONo('mendigar', motivoParaNoMendigar(estado, sitio)),
+    disponibilidadDeReparar(estado, sitio),
   ];
+}
+
+/** Reparar el barco: con el kit, si no espera su recarga ("espera", con los días que faltan) y si falta tripulación. */
+function disponibilidadDeReparar(estado: Estado, sitio: Sitio): AccionDisponible {
+  const noSePuede = motivoParaNoReparar(estado, sitio);
+  if (!noSePuede) return { accion: 'reparar', disponible: true };
+  return noSePuede.motivo === 'espera'
+    ? { accion: 'reparar', disponible: false, motivo: 'espera', faltanDias: noSePuede.faltanDias }
+    : { accion: 'reparar', disponible: false, motivo: noSePuede.motivo };
 }
 
 /** Contratar marineros: no si ya tiene toda la tripulación o no le llega ni para uno. */

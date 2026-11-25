@@ -1,4 +1,5 @@
 import type { Modificadores } from '../modificadores/id-tirada';
+import type { CategoriaCondicion } from './condicion';
 import type { EfectoDefinicion } from '../tablas/efecto';
 
 // Cuándo se puede usar un objeto activo:
@@ -59,8 +60,28 @@ export interface Objeto {
   // Solo en los de "cuandoSeUsa": "combate" (y en ellos, obligatorio): qué hacen en el combate.
   enCombate?: EnCombate;
 
-  // Huecos del inventario que ocupa. Sin él = 1 (p. ej. el ídolo dorado ocupa 4).
+  // Huecos del inventario que ocupa. Sin él = 1 (p. ej. el ídolo dorado ocupa 4). 0 = no ocupa
+  // (la mochila sin fondo).
   espacios?: number;
+
+  // Huecos de más que da mientras lo llevas (la mochila sin fondo: 4, de 6 a 10). Dos iguales no suman.
+  huecosExtra?: number;
+
+  // Fama que da MIENTRAS lo llevas: se gana al conseguirlo y se pierde al soltarlo (venderlo,
+  // tirarlo, perderlo, gastarlo). El loro parlante: 1. Se suma al +1 de los mágicos (la lira: 1 + 1).
+  fama?: number;
+
+  // Solo en los de "cuandoSeUsa": "accion": evento que se lanza al usarlo (el anillo de los deseos:
+  // "deseo"). Se puede juntar con "alUsar" (primero los efectos, luego el evento).
+  alUsarEvento?: string;
+
+  // Solo en los activos: solo se puede usar si tienes alguna condición de esa categoría (la biblia:
+  // "maldicion"; sin maldiciones, el botón "Usar" sale desactivado y no se gasta).
+  soloConCategoria?: CategoriaCondicion;
+
+  // Solo en los activos: solo se puede usar si te falta vida (la medicina, el ungüento: con la vida
+  // llena no se gastan para nada).
+  soloSiHerido?: boolean;
 
   // Oro que se obtiene al venderlo (en el mercado de un puerto). Todos los objetos lo tienen,
   // mágicos incluidos. Venderlo no quita la fama que dio al conseguirlo.

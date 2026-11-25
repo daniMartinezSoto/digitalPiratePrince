@@ -100,6 +100,7 @@
     "nombre": "El heredero",
     "nombreFemenino": "La heredera",
     "descripcion": "Comienza con un objeto mágico.",
+    "objetoInicialEntre": ["pocion_magica", "mochila_sin_fondo", "brujula_magica", "mano_de_mono", "amuleto_del_destino", "hogaza_magica"],
     "ajustes": {},
     "modificadores": {}
   }

@@ -4,6 +4,12 @@ import deseo from '../../data/eventos/deseo.json';
 import piratasHostiles from '../../data/eventos/piratas_hostiles.json';
 import guardia from '../../data/eventos/guardia.json';
 import borracho from '../../data/eventos/borracho.json';
+import cofre from '../../data/eventos/cofre.json';
+import tesoro from '../../data/eventos/tesoro.json';
+import tesoroMagico from '../../data/eventos/tesoro_magico.json';
+import trampa from '../../data/eventos/trampa.json';
+import maldicion from '../../data/eventos/maldicion.json';
+import amuletoMaldito from '../../data/eventos/amuleto_maldito.json';
 
 // Los JSON llegan sin tipos. Aquí, y solo aquí, le decimos que son eventos.
 // El test del cargador comprueba con el revisor que de verdad lo sean.
@@ -16,7 +22,11 @@ import borracho from '../../data/eventos/borracho.json';
  * Nada más: el test del cargador lo revisa automáticamente. Mientras un evento no esté aquí,
  * el juego lo enseña como "pendiente".
  */
-export const EVENTOS: readonly Evento[] = [deseo as Evento, piratasHostiles as Evento, guardia as Evento, borracho as Evento];
+export const EVENTOS: readonly Evento[] = [
+  deseo as Evento, piratasHostiles as Evento, guardia as Evento, borracho as Evento,
+  // Sprint 12, bloque 1 (tesoros)
+  cofre as Evento, tesoro as Evento, tesoroMagico as Evento, trampa as Evento, maldicion as Evento, amuletoMaldito as Evento,
+];
 
 /** ¿Está programado este evento? (Si no, el juego lo enseña como pendiente.) */
 export function existeEvento(id: string): boolean {

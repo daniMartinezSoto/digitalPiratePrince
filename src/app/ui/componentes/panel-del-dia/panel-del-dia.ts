@@ -7,6 +7,7 @@ import { cazar } from '../../../core/acciones/cazar';
 import { enterrarTesoro } from '../../../core/acciones/enterrar-tesoro';
 import { investigarNaufragio, registrarRuinas } from '../../../core/acciones/explorar';
 import { mendigar } from '../../../core/acciones/mendigar';
+import { reparar } from '../../../core/acciones/reparar';
 import { pescar } from '../../../core/acciones/pescar';
 import { reposar } from '../../../core/acciones/reposar';
 import { buscarSeguidor, contratarMarineros, darDiscurso } from '../../../core/contratar/contratar';
@@ -67,6 +68,7 @@ const ACCIONES_DE_UN_CLIC: Partial<Record<IdAccion, AccionDeUnClic>> = {
   investigar_naufragio: investigarNaufragio,
   registrar_ruinas: registrarRuinas,
   mendigar,
+  reparar,
 };
 
 /** Acciones que antes de hacerse piden elegir algo aquí mismo: la apuesta del pulso o los sobornos. */

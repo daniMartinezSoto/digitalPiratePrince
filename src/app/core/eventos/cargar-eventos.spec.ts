@@ -19,12 +19,13 @@ describe('cargar eventos', () => {
 
   it('existeEvento distingue los programados de los pendientes', () => {
     expect(existeEvento('deseo')).toBe(true);
-    expect(existeEvento('tesoro_magico')).toBe(false);
+    expect(existeEvento('tesoro_magico')).toBe(true);
+    expect(existeEvento('mapa_misterioso')).toBe(false);
   });
 
   // No es un error (salen como "pendiente"), pero así se ve qué falta por escribir.
   it('los eventos a los que se salta y aún no existen son los esperados', () => {
-    expect(eventosQueFaltan(EVENTOS)).toEqual(['arrestado', 'tesoro_magico']);
+    expect(eventosQueFaltan(EVENTOS)).toEqual(['arrestado', 'mapa_misterioso']);
   });
 
   describe('el deseo (E041)', () => {

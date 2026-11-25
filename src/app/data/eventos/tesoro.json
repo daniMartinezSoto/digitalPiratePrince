@@ -1,0 +1,128 @@
+{
+  "id": "tesoro",
+  "titulo": "Tesoro",
+  "libro": "E036",
+  "pasos": {
+    "inicio": {
+      "texto": "¡Has encontrado un tesoro!",
+      "tirada": {
+        "dado": "2d6",
+        "idTirada": "tesoro",
+        "boton": "¿Qué habrá dentro?",
+        "siSaleMenosDe1": {
+          "texto": "Tu mala suerte no falla: al meter la mano, algo hace clic...",
+          "evento": "trampa"
+        },
+        "filas": [
+          {
+            "min": 2,
+            "max": 2,
+            "texto": "Un cargamento de comida.",
+            "efectos": [
+              {
+                "tipo": "comida",
+                "cantidad": "1d6x3"
+              }
+            ]
+          },
+          {
+            "min": 3,
+            "max": 3,
+            "texto": "Unas 20 monedas de oro y un mapa viejo.",
+            "efectos": [
+              {
+                "tipo": "oro",
+                "cantidad": 20
+              }
+            ],
+            "evento": "mapa_misterioso"
+          },
+          {
+            "min": 4,
+            "max": 4,
+            "texto": "¡Un arcón lleno de oro!",
+            "efectos": [
+              {
+                "tipo": "oro",
+                "cantidad": "2d6x10"
+              }
+            ]
+          },
+          {
+            "min": 5,
+            "max": 5,
+            "texto": "Una bomba de humo.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "bomba_de_humo"
+              }
+            ]
+          },
+          {
+            "min": 6,
+            "max": 6,
+            "texto": "Un amuleto kalinago.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "amuleto_kalinago"
+              }
+            ]
+          },
+          {
+            "min": 7,
+            "max": 7,
+            "texto": "Un estoque de calidad suprema.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "estoque"
+              }
+            ]
+          },
+          {
+            "min": 8,
+            "max": 8,
+            "texto": "Una pistola de chispa.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "pistola_de_chispa"
+              }
+            ]
+          },
+          {
+            "min": 9,
+            "max": 10,
+            "texto": "Mercancía de la buena, de la que vende Bob en su emporio.",
+            "efectos": [
+              {
+                "tipo": "ganar_objeto",
+                "objeto": "al_azar",
+                "entre": [
+                  "medicina",
+                  "bigote_falso",
+                  "loro_parlante",
+                  "ron",
+                  "kit_de_reparaciones",
+                  "ropajes_caros",
+                  "ropajes_de_pirata",
+                  "biblia",
+                  "red_de_pesca",
+                  "perfume"
+                ]
+              }
+            ]
+          },
+          {
+            "min": 11,
+            "max": 12,
+            "texto": "Entre las monedas, algo brilla con una luz extraña...",
+            "evento": "tesoro_magico"
+          }
+        ]
+      }
+    }
+  }
+}

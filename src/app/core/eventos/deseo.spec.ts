@@ -90,10 +90,10 @@ describe('el deseo (E041)', () => {
     expect(pedirDeseo(4).estado.jugador.ingenio).toBe(4);
   });
 
-  it('6. poder: el tesoro mágico aún no existe, así que termina y sale como pendiente', () => {
+  it('6. poder: salta al tesoro mágico', () => {
     const r = pedirDeseo(5);
-    expect(r.pendientes).toEqual(['tesoro_magico']);
-    expect(r.terminado).toBe(true);
+    expect(r.pendientes).toEqual([]);
+    expect(vistaDelEvento(r.estado)!.titulo).toBe('Tesoro mágico');
   });
 
   describe('7. conocimiento prohibido', () => {

@@ -1,12 +1,12 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { objetosUsablesAhora } from '../../../core/objetos/consultas';
+import { motivoParaNoSoltar, objetosUsablesAhora } from '../../../core/objetos/consultas';
 import { tirarObjeto } from '../../../core/objetos/tirar-objeto';
 import { usarObjeto } from '../../../core/objetos/usar-objeto';
 import { hayCombate } from '../../../core/combate/hay-combate';
 import { JuegoStore } from '../../../store/juego.store';
 import { Jugar } from '../../servicios/jugar';
 import { lineasSimples } from '../../textos/lineas-del-registro';
-import { nombreDeObjeto } from '../../textos/textos';
+import { descripcionDeObjeto, nombreDeObjeto } from '../../textos/textos';
 
 // TUS OBJETOS (pantalla de pruebas): "Usar" los que se usan en la fase de acción (sin gastarla:
 // el ungüento...) y "Tirar" cualquiera (pide confirmación: no se recupera). Los de combate se usan
@@ -30,9 +30,10 @@ export class Objetos {
     return estado.jugador.inventario.map((o, posicion) => ({
       posicion,
       nombre: nombreDeObjeto(o.id),
+      descripcion: descripcionDeObjeto(o.id),
       usos: o.usosRestantes,
       usable: usables.includes(posicion),
-      sePuedeTirar,
+      sePuedeTirar: sePuedeTirar && !motivoParaNoSoltar(estado.jugador, posicion),
     }));
   });
 

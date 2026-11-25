@@ -64,14 +64,14 @@ describe('ventana de eventos', () => {
     expect(ídolo.disabled).toBe(true);
   });
 
-  it('una opción que lleva a un evento sin programar: se cierra y se apunta como pendiente', async () => {
+  // (Lo de "evento sin programar → pendiente" lo prueba enganche.spec.ts: el deseo ya no lleva a ninguno.)
+  it('una opción que lleva a otro evento: la ventana pasa a ese evento', async () => {
     const store = prepararJuego();
     const harness = await conElDeseo(store);
 
     await pulsarYEsperar(harness, 'Deseo de poder. Consigues un objeto mágico');
 
-    expect(ventana(harness)).toBeNull();
-    expect(harness.routeNativeElement!.querySelector('app-registro')!.textContent).toContain('Evento pendiente: tesoro magico');
+    expect(ventana(harness)!.textContent).toContain('Tesoro mágico');
   });
 
   it('se puede plegar para mirar el mapa y volver a abrir (sin cerrar el evento)', async () => {

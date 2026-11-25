@@ -4,7 +4,7 @@ import { vidaMaxActual } from '../../../core/condiciones/consultas';
 import { JuegoStore } from '../../../store/juego.store';
 import { Luchar } from '../../servicios/luchar';
 import { NOMBRE_DE_HABILIDAD_DE_ENEMIGO, nombresDeLuchadores, TEXTO_NO_HUIR, TEXTO_NO_USAR_OBJETO } from '../../textos/textos-de-combate';
-import { nombreDeObjeto } from '../../textos/textos';
+import { descripcionDeObjeto, nombreDeObjeto } from '../../textos/textos';
 
 // EL COMBATE DE TEXTO (pantalla de pruebas): los dos bandos, quién ataca a quién y los botones (Atacar,
 // Huir, objetos de combate y, con un 6, Tirar otra vez / Quedarme así). Desde el Sprint 11 el combate
@@ -56,4 +56,5 @@ export class Combate {
   protected readonly textoNoHuir = TEXTO_NO_HUIR;
   protected readonly textoNoUsar = TEXTO_NO_USAR_OBJETO;
   protected readonly nombreDeObjeto = nombreDeObjeto;
+  protected readonly descripcionDeObjeto = descripcionDeObjeto;
 }

@@ -45,7 +45,8 @@ const CATALOGOS: CatalogosEfectos = { objetos: OBJETOS_PRUEBA, condiciones: COND
 /** Partida del influyente (sin nada), en la fase de acción, con lo que se le cambie. */
 function estadoCon(cambios: Partial<Jugador> = {}, fase: Estado['mundo']['fase'] = 'accion'): Estado {
   const { estado } = crearPartida(1, 'Prueba');
-  return { ...estado, jugador: { ...estado.jugador, ...cambios }, mundo: { ...estado.mundo, fase } };
+  // Estas pruebas se escribieron con 5 huecos (hoy son 6): se fijan en 5 para que sigan valiendo.
+  return { ...estado, jugador: { ...estado.jugador, capacidadInventario: 5, ...cambios }, mundo: { ...estado.mundo, fase } };
 }
 
 function inventario(...ids: string[]): ObjetoLlevado[] {

@@ -30,7 +30,7 @@ describe('crearPersonaje', () => {
       diasSinComer: 0,
 
       inventario: [],
-      capacidadInventario: 5,
+      capacidadInventario: 6,
 
       seguidores: [],
 
@@ -60,7 +60,7 @@ describe('crearPersonaje', () => {
     expect(jugador.sobrenombre).toBe('el_fuerte');
     expect(jugador.fuerza).toBe(5);
     expect(jugador.ingenio).toBe(2);
-    expect(jugador.capacidadInventario).toBe(7);
+    expect(jugador.capacidadInventario).toBe(8);
   });
 
   it('debe aplicar los ajustes de El conformista', () => {

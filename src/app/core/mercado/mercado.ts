@@ -7,7 +7,7 @@ import { aplicarEfectos, type CatalogosEfectos } from '../efectos/aplicar-efecto
 import type { Cambio } from '../efectos/cambio';
 import type { Estado } from '../estado/estado';
 import type { VisitaMercado } from '../estado/mundo';
-import { espaciosQueFaltan } from '../objetos/consultas';
+import { espaciosQueFaltan, motivoParaNoSoltar } from '../objetos/consultas';
 import type { Efecto } from '../tablas/efecto';
 import { esPuerto } from '../turno/lugar';
 import { RASTRILLO } from './cargar-rastrillo';
@@ -73,6 +73,9 @@ export function venderObjeto(estado: Estado, posicion: number, dados: Dados, cat
   const llevado = estado.jugador.inventario[posicion];
   if (!llevado) {
     throw new Error(`venderObjeto: no hay ningún objeto en la posición ${posicion} del inventario`);
+  }
+  if (motivoParaNoSoltar(estado.jugador, posicion, catalogos.objetos)) {
+    throw new Error('venderObjeto: sin la mochila sin fondo no te cabe lo que llevas; primero vende o tira otras cosas');
   }
   const ficha = fichaDe(llevado.id, catalogos);
   const efectos: Efecto[] = [{ tipo: 'vender_objeto', posicion }, { tipo: 'oro', cantidad: ficha.precioVenta }];
@@ -142,7 +145,8 @@ export interface OpcionesMercado {
   comprarComida: BotonMercado;
   venderComida: BotonMercado;
   // Lo que puede vender: cada objeto del inventario con su posición y su precio.
-  venderObjetos: { posicion: number; objeto: string; precio: number }[];
+  // motivo "mochila_llena": es la mochila sin fondo y sin ella no te cabe lo demás (sale desactivado).
+  venderObjetos: { posicion: number; objeto: string; precio: number; motivo?: 'mochila_llena' }[];
   // Lo de hoy en el rastrillo. espaciosQueFaltan > 0 = no cabe: hay que preguntar qué tira.
   // null si el rastrillo está vacío desde el principio.
   rastrillo: (BotonMercado & { objeto: string; espaciosQueFaltan: number }) | null;
@@ -157,11 +161,10 @@ export function opcionesDelMercado(estado: Estado, catalogos: CatalogosEfectos =
   return {
     comprarComida: boton(AJUSTES.precioComprarComida, motivoComprar),
     venderComida: boton(AJUSTES.precioVenderComida, jugador.comida < 1 ? 'sin_comida' : undefined),
-    venderObjetos: jugador.inventario.map((llevado, posicion) => ({
-      posicion,
-      objeto: llevado.id,
-      precio: fichaDe(llevado.id, catalogos).precioVenta,
-    })),
+    venderObjetos: jugador.inventario.map((llevado, posicion) => {
+      const motivo = motivoParaNoSoltar(jugador, posicion, catalogos.objetos);
+      return { posicion, objeto: llevado.id, precio: fichaDe(llevado.id, catalogos).precioVenta, ...(motivo ? { motivo } : {}) };
+    }),
     rastrillo: rastrilloParaLaInterfaz(estado, visita, catalogos),
   };
 }

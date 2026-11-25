@@ -7,4 +7,7 @@ export interface ObjetoLlevado {
 
   // Usos que le quedan. Sin él = objeto permanente.
   usosRestantes?: number;
+
+  // Solo el kit de reparaciones: día desde el que se puede volver a reparar (core/acciones/reparar.ts). Sin él = listo.
+  listoElDia?: number;
 }

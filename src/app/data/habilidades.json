@@ -4,15 +4,23 @@
     "nombre": "Pesca abundante",
     "descripcion": "Cada vez que consigues pescar algo, ganas 1 reserva de comida más. Si no pescas nada, no da nada.",
     "tipo": "pasiva",
-    "ajustes": { "reservasAlPescar": 1 }
+    "ajustes": {
+      "reservasAlPescar": 1
+    }
   },
   {
     "id": "guia_nativo",
     "nombre": "Guía nativo",
     "descripcion": "Las aldeas te tratan como a uno de los suyos: +1 al solicitar audiencia y al buscar información en aldeas. Conoce a los espíritus: +1 contra el mal que se esconde a bordo.",
     "tipo": "pasiva",
-    "modificadores": { "audiencia_aldea": 1, "buscar_info_aldea": 1, "el_mal": 1 },
-    "otorga": ["vinculo_nativo"]
+    "modificadores": {
+      "audiencia_aldea": 1,
+      "buscar_info_aldea": 1,
+      "el_mal": 1
+    },
+    "otorga": [
+      "vinculo_nativo"
+    ]
   },
   {
     "id": "mendigar",
@@ -25,8 +33,14 @@
     "nombre": "Cirujano",
     "descripcion": "+1 al solicitar cualquier audiencia. Con la acción Reposar, el grupo recupera 1 punto de vida más.",
     "tipo": "pasiva",
-    "ajustes": { "curaAlReposar": 1 },
-    "modificadores": { "audiencia_puerto": 1, "audiencia_aldea": 1, "audiencia_guarida": 1 }
+    "ajustes": {
+      "curaAlReposar": 1
+    },
+    "modificadores": {
+      "audiencia_puerto": 1,
+      "audiencia_aldea": 1,
+      "audiencia_guarida": 1
+    }
   },
   {
     "id": "navegacion",
@@ -45,6 +59,25 @@
     "nombre": "Magia vudú",
     "descripcion": "Conoce a los espíritus: +1 contra el mal que se esconde a bordo.",
     "tipo": "pasiva",
-    "modificadores": { "el_mal": 1 }
+    "modificadores": {
+      "el_mal": 1
+    }
+  },
+  {
+    "id": "diplomacia",
+    "nombre": "Diplomacia",
+    "descripcion": "+1 al solicitar cualquier audiencia. En la cárcel, +2 a la tirada del juicio, y puede rebajar 1d6 de oro el soborno de un guardia (llega con el bloque de la cárcel).",
+    "tipo": "pasiva",
+    "modificadores": {
+      "audiencia_puerto": 1,
+      "audiencia_aldea": 1,
+      "audiencia_guarida": 1
+    }
+  },
+  {
+    "id": "cartografia",
+    "nombre": "Cartografía",
+    "descripcion": "Sabe leer los mapas misteriosos: con él ves qué te espera en el destino de cada mapa (sin él, solo ves la X). Nueva acción, Dibujar mapa: por 30 monedas de oro te dibuja un mapa misterioso. +1 cuando estás perdido en la niebla.",
+    "tipo": "activa"
   }
 ]
