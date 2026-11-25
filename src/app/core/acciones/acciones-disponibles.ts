@@ -1,6 +1,6 @@
 import { aldeaOfendida } from '../mapa/sitio-actual';
 import { AJUSTES } from '../ajustes/ajustes';
-import { condicionesQueProhiben, maximoSeguidoresActual } from '../condiciones/consultas';
+import { tripulacionMaxActual, condicionesQueProhiben, maximoSeguidoresActual } from '../condiciones/consultas';
 import type { Estado } from '../estado/estado';
 import { motivoParaNoDescansarEnMonasterio, motivoParaNoRezar } from '../monasterio/monasterio';
 import { motivoParaNoJugarALosDados } from '../guarida/dados';
@@ -145,7 +145,7 @@ function accionesSegunElSitio(estado: Estado, sitio: Sitio): AccionDisponible[] 
 
 /** Contratar marineros: no si ya tiene toda la tripulación o no le llega ni para uno. */
 export function motivoParaNoContratarMarineros(estado: Estado): MotivoNoDisponible | undefined {
-  if (estado.jugador.tripulacion >= estado.jugador.tripulacionMax) {
+  if (estado.jugador.tripulacion >= tripulacionMaxActual(estado.jugador)) {
     return 'tripulacion_al_maximo';
   }
   if (estado.jugador.oro < AJUSTES.precioMarinero) {

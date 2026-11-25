@@ -5,7 +5,7 @@ import { TIPOS_SEGUIDOR } from '../catalogos/cargar-seguidores';
 import type { Condicion } from '../catalogos/condicion';
 import type { Objeto } from '../catalogos/objeto';
 import type { TipoSeguidor } from '../catalogos/tipo-seguidor';
-import { estaProhibido, maximoSeguidoresActual, vidaMaxActual } from '../condiciones/consultas';
+import { tripulacionMaxActual, estaProhibido, maximoSeguidoresActual, vidaMaxActual } from '../condiciones/consultas';
 import type { Dados } from '../dados/dados';
 import type { Estado } from '../estado/estado';
 import type { FinPartida } from '../estado/fin-partida';
@@ -318,7 +318,7 @@ function limitesDe(jugador: Jugador, tipo: TipoRecurso, condiciones: readonly Co
     case 'vida':
       return { minimo, maximo: vidaMaxActual(jugador, condiciones) };
     case 'tripulacion':
-      return { minimo, maximo: jugador.tripulacionMax };
+      return { minimo, maximo: tripulacionMaxActual(jugador, condiciones) };
     case 'comida':
       return { minimo, maximo: AJUSTES.comidaMaxima };
     case 'fuerza':
@@ -501,6 +501,7 @@ function quitarCondicion(jugador: Jugador, posicion: number, cambios: Cambio[]):
  */
 function ajustarALosTopes(jugador: Jugador, dados: Dados, condiciones: readonly Condicion[], cambios: Cambio[]): void {
   apuntarRecurso(jugador, 'vida', jugador.vida, condiciones, cambios); // recorta al tope si hace falta
+  apuntarRecurso(jugador, 'tripulacion', jugador.tripulacion, condiciones, cambios); // sin voz de mando, los que sobran se marchan
 
   while (jugador.seguidores.length > maximoSeguidoresActual(jugador, condiciones)) {
     const candidatos = jugador.seguidores.filter(s => !s.inseparable);

@@ -111,12 +111,11 @@ describe('JuegoStore: partida nueva', () => {
     expect(store.estado()).toEqual(crearPartida(482913, 'Marta', 'hombre').estado);
   });
 
-  it('los eventos del principio entran en la pila ("el maldito" de la semilla 7 tiene el deseo)', () => {
+  it('"el maldito" ya no empieza con el deseo (desde el 23-nov el amuleto da voz de mando): pila vacía', () => {
     const store = abrirJuego(new AlmacenEnMemoria());
-    expect(crearPartida(7, 'Marta').eventos).toEqual(['deseo']);
-    // El deseo está programado: no sale como pendiente, sino en la pila del motor (Sprint 10).
+    expect(crearPartida(7, 'Marta').eventos).toEqual([]);
     expect(store.nuevaPartida('Marta', 'hombre', 7)).toEqual([]);
-    expect(store.estado()!.mundo.pilaEventos.map(m => m.evento)).toEqual(['deseo']);
+    expect(store.estado()!.mundo.pilaEventos).toEqual([]);
   });
 
   it.each([-1, SEMILLA_MAXIMA + 1, 1.5])('la semilla %s no vale', semilla => {

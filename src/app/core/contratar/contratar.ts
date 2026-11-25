@@ -14,7 +14,7 @@ import type { Efecto } from '../tablas/efecto';
 import { obtenerTabla } from '../tablas/rangos/cargar-tablas';
 import { resolverTabla } from '../tablas/rangos/resolver-tabla';
 import type { ResultadoTabla } from '../tablas/rangos/resultado-tabla';
-import { maximoSeguidoresActual } from '../condiciones/consultas';
+import { tripulacionMaxActual, maximoSeguidoresActual } from '../condiciones/consultas';
 import { esPuerto } from '../turno/lugar';
 
 // CONTRATAR (solo en puertos). Tres formas, y cada una es una ACCIÓN distinta (cada día, solo una):
@@ -96,7 +96,7 @@ export function opcionesDeMarineros(estado: Estado): OpcionesMarineros {
   const jugador = estado.jugador;
   const maximo = Math.max(
     0,
-    Math.min(disponibles, Math.floor(jugador.oro / AJUSTES.precioMarinero), jugador.tripulacionMax - jugador.tripulacion),
+    Math.min(disponibles, Math.floor(jugador.oro / AJUSTES.precioMarinero), tripulacionMaxActual(jugador) - jugador.tripulacion),
   );
   return { disponibles, precio: AJUSTES.precioMarinero, maximo };
 }

@@ -82,16 +82,16 @@ describe('pantalla Partida: el día con botones', () => {
     expect(boton(pantalla, 'Enterrar tesoro').disabled).toBe(false);
   });
 
-  it('el registro apunta el inicio de la partida y su evento (el deseo), que abre la ventana', async () => {
+  it('el registro apunta el inicio de la partida (el maldito de la semilla 7 ya no empieza con el deseo)', async () => {
     prepararJuego();
     const harness = await abrir('/nueva-partida');
     escribir(harness.routeNativeElement!, 'input[name=nombre]', 'Marta');
-    escribir(harness.routeNativeElement!, 'input[name=semilla]', '7'); // el maldito con el deseo
+    escribir(harness.routeNativeElement!, 'input[name=semilla]', '7'); // el maldito (voz de mando + hedor)
     pulsar(harness.routeNativeElement!, 'Empezar');
     await harness.fixture.whenStable();
     const texto = harness.routeNativeElement!.textContent!;
     expect(texto).toContain('Empieza la partida (semilla 7)');
-    expect(texto).toContain('Evento: Deseo');
-    expect(harness.routeNativeElement!.querySelector('app-ventana-de-evento')!.textContent).toContain('djinn');
+    expect(texto).not.toContain('Evento: Deseo');
+    expect(harness.routeNativeElement!.querySelector('.ventana')).toBeNull();
   });
 });

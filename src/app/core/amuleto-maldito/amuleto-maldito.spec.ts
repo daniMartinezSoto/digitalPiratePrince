@@ -1,6 +1,6 @@
 import { CONDICIONES } from '../catalogos/cargar-condiciones';
 import type { Condicion } from '../catalogos/condicion';
-import { comidaPorDia, estaProhibido, famaObjetivoActual, fuerzaActual, ingenioActual, maximoSeguidoresActual, vidaMaxActual } from '../condiciones/consultas';
+import { comidaPorDia, estaProhibido, famaObjetivoActual, fuerzaActual, ingenioActual, maximoSeguidoresActual, tripulacionMaxActual, vidaMaxActual } from '../condiciones/consultas';
 import { Dados } from '../dados/dados';
 import { aplicarEfectos } from '../efectos/aplicar-efectos';
 import type { Estado } from '../estado/estado';
@@ -18,7 +18,7 @@ import { validarAmuletoMaldito } from './validar-amuleto-maldito';
 // (la hoja del personaje no cambia), qué pasa al quitárselo, cómo se recibe y "el maldito".
 
 // Semillas de crearPartida que dan "el maldito" (comprobadas): con cada una sale un amuleto distinto.
-const MALDITO_DESEO_Y_HEDOR = 7;
+const MALDITO_VOZ_Y_HEDOR = 7; // antes daba el deseo; desde el 23-nov el 6 de las bendiciones es voz de mando
 const MALDITO_FORTALEZA_Y_AVARICIA = 87; // gran fortaleza + avaricioso
 const MALDITO_CARISMA_Y_AMBICION = 45;
 
@@ -424,11 +424,23 @@ describe('"el maldito" empieza con su amuleto', () => {
     expect(famaObjetivoActual(estado.jugador)).toBe(12);
   });
 
-  it('si le toca el deseo, sale como evento pendiente al empezar', () => {
-    const partida = crearPartida(MALDITO_DESEO_Y_HEDOR, 'Marta');
+  it('el 6 de las bendiciones es voz de mando (el deseo ya no sale del amuleto): tripulación máxima 50', () => {
+    const partida = crearPartida(MALDITO_VOZ_Y_HEDOR, 'Marta');
 
-    expect(partida.eventos).toEqual(['deseo']);
-    expect(partida.estado.jugador.condiciones).toEqual([{ id: 'amuleto_maldito', partes: ['hedor_nauseabundo'] }]);
+    expect(partida.eventos).toEqual([]);
+    expect(partida.estado.jugador.condiciones).toEqual([{ id: 'amuleto_maldito', partes: ['voz_de_mando', 'hedor_nauseabundo'] }]);
+    expect(tripulacionMaxActual(partida.estado.jugador)).toBe(50);
+  });
+
+  it('voz de mando: se puede llegar a 50 marineros y, al perder el amuleto, los que sobran se marchan (te quedas en 40)', () => {
+    const { estado } = crearPartida(MALDITO_VOZ_Y_HEDOR, 'Marta');
+    const lleno = aplicarEfectos(estado, [{ tipo: 'tripulacion', cantidad: 30 }], new Dados(1)).estado;
+    expect(lleno.jugador.tripulacion).toBe(50);
+
+    const sinAmuleto = aplicarEfectos(lleno, [{ tipo: 'quitar_condicion', categoria: 'maldicion' }], new Dados(1));
+    expect(tripulacionMaxActual(sinAmuleto.estado.jugador)).toBe(40);
+    expect(sinAmuleto.estado.jugador.tripulacion).toBe(40);
+    expect(sinAmuleto.cambios).toContainEqual(expect.objectContaining({ tipo: 'recurso', recurso: 'tripulacion' }));
   });
 
   it('los demás sobrenombres empiezan sin amuleto y sin eventos pendientes', () => {

@@ -5,7 +5,7 @@
     { "condicion": "gran_fortaleza", "alRecibir": [{ "tipo": "vida", "operacion": "maximo" }] },
     { "condicion": "piel_de_piedra" },
     { "condicion": "carisma" },
-    { "evento": "deseo" }
+    { "condicion": "voz_de_mando" }
   ],
   "maldiciones": [
     { "condicion": "hambre_insaciable" },

@@ -47,6 +47,9 @@ const CATALOGOS_DEL_JUEGO: CatalogosDescanso = {
 //               SOLO esta noche. Si lo supera: como bajo techo (todo el grupo, gratis, puede dormir genial,
 //               sin eventos). Si falla: le echan (marca "echado_de_la_aldea": no puede volver a intentarlo
 //               en esa aldea) y duerme a la intemperie, con su posible evento nocturno.
+//               AMIGO DE LA ALDEA (regla especial del autor, 23-nov): la SEGUNDA vez que convences a los
+//               nativos de la misma aldea, te haces su amigo (marca "aldea_amiga"): desde entonces en esa
+//               aldea se ofrece dormir allí gratis y sin chequeo, como con el vínculo nativo.
 // "Dormir genial" no es seguro: pasa con AJUSTES.probabilidadDormirGenial (una tirada para todo el grupo).
 // Para curarse seguro está la ACCIÓN "Reposar" (core/acciones/reposar.ts), que gasta el día.
 export const ELECCIONES_DE_DESCANSO = ['a_bordo', 'techo_solo', 'techo_todos', 'intemperie', 'tienda', 'convencer_nativos'] as const;
@@ -75,6 +78,8 @@ export interface ResultadoDescanso {
   echado?: boolean;
   // Si le echaron: la casilla vecina donde ha acabado (Sprint 9).
   expulsadoA?: { col: number; fila: number };
+  // true = con este chequeo ha convencido a los nativos por segunda vez: ya es amigo de la aldea.
+  amigoDeLaAldea?: boolean;
 }
 
 /**
@@ -115,9 +120,10 @@ export function opcionesDeDescanso(estado: Estado, lugar: Lugar, hex?: { col: nu
     opciones.push(opcion('tienda', 0));
   }
   if (lugar === 'aldea' && !hayMarca(estado, 'echado_de_la_aldea', hex) && !hayMarca(estado, 'audiencia_vetada', hex)) {
-    // Con vínculo nativo, los nativos os acogen sin más: dormir en la aldea, gratis y sin chequeo.
-    // Sin él, hay que convencerlos (chequeo de Ingenio).
-    opciones.push(tieneVinculoNativo(estado.jugador) ? opcion('techo_todos', 0) : opcion('convencer_nativos', 0));
+    // Con vínculo nativo, o si ya eres amigo de esta aldea, os acogen sin más: dormir en la aldea, gratis
+    // y sin chequeo. Si no, hay que convencerlos (chequeo de Ingenio).
+    const acogido = tieneVinculoNativo(estado.jugador) || hayMarca(estado, 'aldea_amiga', hex);
+    opciones.push(acogido ? opcion('techo_todos', 0) : opcion('convencer_nativos', 0));
   }
   return opciones;
 }
@@ -194,6 +200,16 @@ export function descansar(
   const resultado = aplicarEfectos(estado, efectos, dados, catalogos);
   const echado = chequeoNativos !== undefined && !chequeoNativos.superado;
   let trasLaNoche = echado ? conMarca(resultado.estado, 'echado_de_la_aldea', hex) : resultado.estado;
+  // Convencidos: la primera vez se apunta; la segunda, amigo de la aldea para siempre.
+  let amigoDeLaAldea = false;
+  if (chequeoNativos?.superado && hex) {
+    if (hayMarca(trasLaNoche, 'nativos_convencidos', hex)) {
+      trasLaNoche = conMarca(trasLaNoche, 'aldea_amiga', hex);
+      amigoDeLaAldea = true;
+    } else {
+      trasLaNoche = conMarca(trasLaNoche, 'nativos_convencidos', hex);
+    }
+  }
   const cambios = [...resultado.cambios];
 
   // 1b. Si le echan de la aldea (Sprint 9): la aldea queda bloqueada y aparece en una casilla de
@@ -241,5 +257,6 @@ export function descansar(
     eventos,
     ...(chequeoNativos ? { chequeo: chequeoNativos, echado } : {}),
     ...(expulsadoA ? { expulsadoA } : {}),
+    ...(amigoDeLaAldea ? { amigoDeLaAldea } : {}),
   };
 }

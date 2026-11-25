@@ -113,6 +113,13 @@
     "ajustes": { "maximoSeguidores": 1 }
   },
   {
+    "id": "voz_de_mando",
+    "nombre": "Voz de mando",
+    "descripcion": "Tu barco admite 10 marineros más (tripulación máxima 50).",
+    "categoria": "bendicion",
+    "ajustes": { "tripulacionMax": 10 }
+  },
+  {
     "id": "hambre_insaciable",
     "imagen": "iconosCondiciones/insaciable.svg",
     "nombre": "Hambre insaciable",

@@ -62,6 +62,9 @@ export type AccionEnCurso = VisitaMercado | MarinerosDisponibles | SeguidorEnEsp
 //   guarida_neutral:     la guarida de esta casilla es neutral (lo decidió E038 al entrar): funciona como un
 //                        puerto pirata (lugar "guarida").
 //   casilla_bloqueada:   no se puede entrar (camino bloqueado de E047, guarida hostil...). En el mapa, una roca.
+//   nativos_convencidos: ya convenciste una vez a los nativos de esta aldea para dormir allí.
+//   aldea_amiga:         los convenciste dos veces: eres amigo de la aldea y duermes allí siempre que quieras
+//                        (gratis y sin chequeo, como con el vínculo nativo). Regla especial del autor (23-nov).
 export const TIPOS_DE_MARCA = [
   'evento',
   'tesoro_enterrado',
@@ -77,6 +80,8 @@ export const TIPOS_DE_MARCA = [
   'rasgo_cambiado',
   'guarida_neutral',
   'casilla_bloqueada',
+  'nativos_convencidos',
+  'aldea_amiga',
 ] as const;
 export type TipoDeMarca = (typeof TIPOS_DE_MARCA)[number];
 

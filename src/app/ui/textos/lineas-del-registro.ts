@@ -65,6 +65,9 @@ export function lineasDeDescanso(nombreDeLaEleccion: string, resultado: Resultad
     const donde = resultado.expulsadoA ? ` en ${resultado.expulsadoA.col},${resultado.expulsadoA.fila}` : '';
     lineas.push(`  Te echan de la aldea: duermes al raso${donde}.`);
   }
+  if (resultado.amigoDeLaAldea) {
+    lineas.push('  Te has hecho amigo de esta aldea: a partir de ahora podrás descansar aquí siempre que quieras.');
+  }
   if (resultado.haDormidoGenial === true) {
     lineas.push('  Has dormido genial.');
   }

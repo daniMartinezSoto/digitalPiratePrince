@@ -3,7 +3,7 @@ import { CONDICIONES } from '../catalogos/cargar-condiciones';
 import { OBJETOS } from '../catalogos/cargar-objetos';
 import { TIPOS_SEGUIDOR } from '../catalogos/cargar-seguidores';
 import { condicionesVigentes } from '../condiciones/condiciones-vigentes';
-import { famaObjetivoActual, fuerzaActual, ingenioActual, vidaMaxActual } from '../condiciones/consultas';
+import { tripulacionMaxActual, famaObjetivoActual, fuerzaActual, ingenioActual, vidaMaxActual } from '../condiciones/consultas';
 import type { Jugador } from '../estado/jugador';
 import { espaciosOcupados } from '../objetos/consultas';
 import sobrenombresJson from '../../data/personaje/sobrenombres.json';
@@ -69,7 +69,7 @@ export function hojaDePersonaje(jugador: Jugador): HojaDePersonaje {
     comida: jugador.comida,
     comidaMaxima: AJUSTES.comidaMaxima,
     tripulacion: jugador.tripulacion,
-    tripulacionMax: jugador.tripulacionMax,
+    tripulacionMax: tripulacionMaxActual(jugador),
     fama: jugador.fama,
     famaObjetivo: famaObjetivoActual(jugador),
     diasSinComer: jugador.diasSinComer,

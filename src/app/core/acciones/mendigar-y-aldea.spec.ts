@@ -38,7 +38,27 @@ describe('dormir en la aldea: convencer a los nativos', () => {
     expect(noche.chequeo).toMatchObject({ caracteristica: 'ingenio', dado: 1, superado: true });
     expect(noche.echado).toBe(false);
     expect(noche.haDormidoGenial).toBeDefined();
-    expect(noche.estado.mundo.marcas).toEqual([]);
+    expect(noche.estado.mundo.marcas).toEqual([{ col: 10, fila: 10, tipo: 'nativos_convencidos' }]);
+    expect(noche.amigoDeLaAldea).toBeUndefined();
+  });
+
+  it('si los convences por segunda vez en la misma aldea, te haces su amigo: desde entonces duermes allí gratis y sin chequeo', () => {
+    const primera = descansar(deNoche(), 'convencer_nativos', 'aldea', new Dados(7), undefined, ALDEA);
+    const segundaNoche: Estado = { ...primera.estado, mundo: { ...primera.estado.mundo, fase: 'descanso' } };
+    const segunda = descansar(segundaNoche, 'convencer_nativos', 'aldea', new Dados(7), undefined, ALDEA);
+
+    expect(segunda.amigoDeLaAldea).toBe(true);
+    expect(segunda.estado.mundo.marcas).toContainEqual({ col: 10, fila: 10, tipo: 'aldea_amiga' });
+
+    const tercera: Estado = { ...segunda.estado, mundo: { ...segunda.estado.mundo, fase: 'descanso' } };
+    expect(opcionesDeDescanso(tercera, 'aldea', ALDEA)).toContainEqual({ eleccion: 'techo_todos', precio: 0, alcanzaElOro: true });
+    expect(opcionesDeDescanso(tercera, 'aldea', ALDEA).map(o => o.eleccion)).not.toContain('convencer_nativos');
+    const dormida = descansar(tercera, 'techo_todos', 'aldea', new Dados(1), undefined, ALDEA);
+    expect(dormida.chequeo).toBeUndefined();
+    expect(dormida.eventos).toEqual([]);
+
+    // En otra aldea, nada: hay que empezar de cero.
+    expect(opcionesDeDescanso(tercera, 'aldea', { col: 3, fila: 3 }).map(o => o.eleccion)).toContain('convencer_nativos');
   });
 
   it('solo esa noche: al día siguiente vuelve a tener las mismas dos opciones', () => {

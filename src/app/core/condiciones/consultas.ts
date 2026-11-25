@@ -77,6 +77,11 @@ export function vidaMaxActual(jugador: Jugador, condiciones: readonly Condicion[
   return Math.max(1, jugador.vidaMax + sumaDeAjustes(jugador, 'vidaMax', condiciones));
 }
 
+/** Tripulación máxima ahora: la del barco (40) + sus condiciones (voz de mando: +10). Nunca menos de 1. */
+export function tripulacionMaxActual(jugador: Jugador, condiciones: readonly Condicion[] = CONDICIONES): number {
+  return Math.max(1, jugador.tripulacionMax + sumaDeAjustes(jugador, 'tripulacionMax', condiciones));
+}
+
 /** Seguidores que puede llevar ahora: AJUSTES.maximoSeguidores (3) + sus condiciones (carisma: +1). Nunca menos de 0. */
 export function maximoSeguidoresActual(jugador: Jugador, condiciones: readonly Condicion[] = CONDICIONES): number {
   return Math.max(0, AJUSTES.maximoSeguidores + sumaDeAjustes(jugador, 'maximoSeguidores', condiciones));
