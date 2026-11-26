@@ -1,0 +1,40 @@
+/* Pantalla de pruebas: estilos mínimos, los mismos que la ventana de eventos (encima del mapa). */
+.ventana {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  min-width: 320px;
+  max-height: 85%;
+  overflow: auto;
+  z-index: 4; /* los dados (z-index 5) caen por encima */
+  background: #fff;
+  border: 2px solid #333;
+  padding: 8px 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+.ventana header {
+  position: relative;
+}
+.ventana h2 {
+  margin: 0 0 6px;
+}
+.plegar {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.ventana img {
+  max-width: 100%;
+  max-height: 240px;
+  display: block;
+  margin: 0 auto 6px;
+}
+.desplegar {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4;
+}

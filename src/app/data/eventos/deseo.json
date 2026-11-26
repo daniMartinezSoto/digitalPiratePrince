@@ -24,6 +24,11 @@
           "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "al_azar", "inseparable": true }]
         },
         {
+          "texto": "Deseo de amistad, haciéndole sitio: despides a uno de los tuyos y ganas un seguidor que nunca te abandonará",
+          "hacerSitio": true,
+          "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "al_azar", "inseparable": true }]
+        },
+        {
           "texto": "Deseo de protección. Todo tu grupo se cura del todo, tu tripulación vuelve al máximo y consigues 10 reservas de comida",
           "efectos": [
             { "tipo": "vida", "operacion": "maximo", "destino": "todos" },

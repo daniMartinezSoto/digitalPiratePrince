@@ -28,7 +28,7 @@ import {
 // juega cada uno muchas veces, eligiendo al azar en cada botón (cada opción, cada fila de cada tirada,
 // éxito y fallo en cada chequeo, ganar / huir / perder en cada combate), en distintas situaciones
 // (a bordo, en un puerto o en otro sitio; con mucho oro o sin nada; con la vida llena o con 1; con la
-// mano de mono y el amuleto del destino o sin ellos). Siempre con las mismas semillas: si falla, falla
+// mano de mono, el amuleto del destino y la lira de las sirenas, o sin ellos). Siempre con las mismas semillas: si falla, falla
 // siempre igual.
 //
 // En cada paso comprueba que:
@@ -70,7 +70,7 @@ function estadoEn(s: Situacion, semilla: number): Estado {
       ...estado.jugador,
       oro: s.oro,
       vida: s.vidaUno ? 1 : estado.jugador.vida,
-      inventario: s.objetos ? [{ id: 'mano_de_mono', usosRestantes: 3 }, { id: 'amuleto_del_destino', usosRestantes: 1 }] : [],
+      inventario: s.objetos ? [{ id: 'mano_de_mono', usosRestantes: 3 }, { id: 'amuleto_del_destino', usosRestantes: 1 }, { id: 'lira_de_las_sirenas' }] : [],
       seguidores: [],
     },
     mundo: { ...estado.mundo, fase: 'accion', posicion },

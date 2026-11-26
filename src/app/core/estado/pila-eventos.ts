@@ -81,6 +81,10 @@ export interface MarcoEvento {
   // resultados de la tabla y tiene que elegir uno. Va en el estado para que recargar no sirva de escape.
   eligiendoResultado?: boolean;
 
+  // El jugador ha elegido "hacer sitio" (la opción con este número del paso): ve la lista de seguidores
+  // que puede despedir y "Mejor no".
+  despidiendo?: number;
+
   // true = la primera tirada de este evento se tira sola, sin enseñarla (el 2 del tesoro mágico: "pensabas
   // que era mágico, pero no" → un tesoro normal, sin otra tirada que ver). Se borra al usarla.
   tiradaOculta?: boolean;

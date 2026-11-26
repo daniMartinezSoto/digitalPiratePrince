@@ -7,6 +7,7 @@ import { JuegoStore } from '../../store/juego.store';
 import { nombresDeSeguidores } from '../textos/lineas-del-registro';
 import { describirCambio, type NombresDeSeguidores } from '../textos/textos';
 import { Registro } from './registro';
+import { ResultadoEnVentana } from './resultado-en-ventana';
 
 // JUGAR (pantalla de pruebas): lo que hace cada botón que cambia la partida. Pide la regla al store
 // (store.ejecutar) y apunta en el registro lo que ha pasado. Si la regla da error, lo apunta como
@@ -15,15 +16,28 @@ import { Registro } from './registro';
 // Sprint 10: es también LA PUERTA DE LOS EVENTOS de la pantalla. Si la regla devuelve "eventos",
 // en el mismo paso se meten en la pila del motor (conSusEventos): los programados abren la ventana
 // de eventos y los que aún no existen se apuntan como "pendiente", como antes.
+//
+// 26-nov: "ventana" = además, enseñar lo que ha pasado en la ventana de resultado (las mismas líneas
+// que el registro). "cuando" decide si merece ventana (comer y dormir: solo si pasa algo).
+export interface VentanaDelResultado<R> {
+  id: string;
+  titulo: string;
+  cuando?: (resultado: R) => boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class Jugar {
   private readonly store = inject(JuegoStore);
   private readonly registro = inject(Registro);
+  private readonly resultados = inject(ResultadoEnVentana);
 
   hacer<R extends { estado: Estado }>(
     regla: (estado: Estado, dados: Dados) => R,
     lineas: (resultado: R, nombres: NombresDeSeguidores) => string[],
+    ventana?: VentanaDelResultado<R>,
   ): R | null {
+    // Un botón nuevo cierra el resultado anterior, si seguía abierto.
+    this.resultados.cerrar();
     const antes = this.store.estado();
     const dia = antes?.mundo.dia ?? 0;
     const habiaEvento = !!antes && hayEventoEnCurso(antes);
@@ -35,7 +49,11 @@ export class Jugar {
       const nombres = nombresDeSeguidores(antes, resultado.estado);
       // En el registro, como "pendiente" solo salen los eventos que de verdad no están programados.
       const paraLineas = tieneEventos(resultado) && 'pendientes' in resultado ? { ...resultado, eventos: resultado.pendientes } : resultado;
-      this.registro.apuntar(dia, [...lineas(paraLineas as R, nombres), ...lineasDelEventoNuevo(resultado, habiaEvento, nombres)]);
+      const apuntadas = [...lineas(paraLineas as R, nombres), ...lineasDelEventoNuevo(resultado, habiaEvento, nombres)];
+      this.registro.apuntar(dia, apuntadas);
+      if (ventana && (ventana.cuando?.(resultado) ?? true)) {
+        this.resultados.ensenar({ id: ventana.id, titulo: ventana.titulo, lineas: apuntadas.map(l => l.trim()) });
+      }
       return resultado;
     } catch (error) {
       this.registro.apuntar(dia, [`ERROR: ${error instanceof Error ? error.message : String(error)}`]);

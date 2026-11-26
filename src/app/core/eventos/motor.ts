@@ -14,7 +14,7 @@ import type { Estado } from '../estado/estado';
 import type { Lectura, MarcoEvento, Siguiente } from '../estado/pila-eventos';
 import { resolverEfecto } from '../tablas/rangos/resolver-tabla';
 import type { EfectoDefinicion } from '../tablas/efecto';
-import { grupoLleno } from '../seguidores/consultas';
+import { grupoLleno, seguidoresDespedibles } from '../seguidores/consultas';
 import { EVENTOS } from './cargar-eventos';
 import { ENCUENTROS } from '../encuentros/cargar-encuentros';
 import type { Encuentro } from '../encuentros/encuentro';
@@ -24,6 +24,7 @@ import { sitioActual } from '../mapa/sitio-actual';
 import { esPuerto } from '../turno/lugar';
 import { conCausaDeMuerte } from '../efectos/causa-de-muerte';
 import { recibirAmuletoMaldito } from '../amuleto-maldito/recibir-amuleto-maldito';
+import { desviar } from '../viaje/mover';
 import { CANTIDAD_DEL_EVENTO, PASO_INICIAL, type Evento, type FilaDeEvento, type Opcion, type Paso, type Rama, type TiradaDeEvento } from './evento';
 
 // EL MOTOR DE EVENTOS (Sprint 10, paso 2). Solo reglas: no sabe nada de la pantalla.
@@ -88,8 +89,12 @@ export function eventoEsperaUnCombate(estado: Estado): boolean {
 
 /** Una opción tal como la enseña la pantalla. */
 export interface OpcionVisible {
+  // Vacío en la lista de "hacer sitio": la pantalla escribe "Despedir a {nombre}" o "Mejor no".
   texto: string;
   disponible: boolean;
+  // En la lista de "hacer sitio": a quién despide esta opción (nombre y tipo de seguidor) o "volver".
+  despide?: { nombre: string; tipo: string };
+  volver?: true;
   // Por qué no se puede elegir: ya llevas ese objeto, el grupo está lleno, algo prohíbe nuevos
   // seguidores (hedor nauseabundo), ya estás al máximo, ese evento (de una sola vez) ya ocurrió o no
   // tienes oro suficiente.
@@ -133,7 +138,7 @@ export interface VistaDelEvento {
   resultados?: ResultadoPosible[];
   // paraEncuentro = la tirada es la del encuentro de un combate (para ver contra quién se lucha).
   // boton = el texto del botón escrito en el evento (sin él, la pantalla pone el suyo).
-  tirada?: { dado: string; modificador: number; minimo: number; maximo: number; puedeElegir: boolean; paraEncuentro?: boolean; boton?: string };
+  tirada?: { dado: string; modificador: number; minimo: number; maximo: number; puedeElegir: boolean; paraEncuentro?: boolean; boton?: string; multiplicador?: number };
   chequeo?: { caracteristica: 'fuerza' | 'ingenio'; modificador: number; boton?: string };
   combate?: { enemigos: { enemigo: string; cantidad?: number | string }[]; boton?: string };
   combateNaval?: { barco: string; boton?: string };
@@ -198,8 +203,13 @@ export function vistaDelEvento(estado: Estado, eventos: readonly Evento[] = EVEN
   if (marco.eligiendoResultado) {
     return { ...base, modo: 'elegir_resultado', texto, resultados: resultadosPosibles(paso, eventos) };
   }
+  if (paso.opciones && marco.despidiendo !== undefined) {
+    const despide = seguidoresDespedibles(estado.jugador).map(s => ({ texto: '', disponible: true, despide: { nombre: s.nombre, tipo: s.tipo } }));
+    return { ...base, modo: 'opciones', texto, opciones: [...despide, { texto: '', disponible: true, volver: true as const }] };
+  }
   if (paso.opciones) {
-    return { ...base, modo: 'opciones', texto, opciones: paso.opciones.map(o => opcionVisible(estado, o, eventos, marco.cantidad)) };
+    const opciones = paso.opciones;
+    return { ...base, modo: 'opciones', texto, opciones: indicesVisibles(estado, opciones).map(i => opcionVisible(estado, opciones[i], eventos, marco.cantidad)) };
   }
   if (paso.tirada) {
     const rango = rangoDeTirada(paso.tirada.dado);
@@ -212,8 +222,10 @@ export function vistaDelEvento(estado: Estado, eventos: readonly Evento[] = EVEN
         modificador: modificadorDeTirada(estado, paso.tirada),
         minimo: rango.min,
         maximo: rango.max,
-        puedeElegir: usosDe(estado, OBJETO_ELEGIR_RESULTADO) > 0,
+        puedeElegir: !paso.tirada.sinAmuletoDelDestino && usosDe(estado, OBJETO_ELEGIR_RESULTADO) > 0,
         boton: paso.tirada.boton,
+        // La tirada que fija la cantidad (el soborno): el botón enseña "(1d6×5)" para que no confunda.
+        ...(paso.tirada.guardarCantidad !== undefined && paso.tirada.guardarCantidad > 1 ? { multiplicador: paso.tirada.guardarCantidad } : {}),
       },
     };
   }
@@ -277,11 +289,31 @@ export function lanzarEventos(estado: Estado, ids: readonly string[], dados: Dad
 export function elegirOpcion(estado: Estado, indice: number, dados: Dados, eventos: readonly Evento[] = EVENTOS): ResultadoMotor {
   const t = trabajoEsperando(estado, eventos, 'elegirOpcion');
   const paso = pasoActual(t);
-  const opcion = paso.opciones?.[indice];
+  const marco = cima(t);
   if (!paso.opciones) throw new Error('elegirOpcion: este paso no tiene opciones');
-  if (!opcion) throw new Error(`elegirOpcion: no hay opción ${indice}`);
-  const visible = opcionVisible(t.estado, opcion, eventos, cima(t).cantidad);
+
+  // En la lista de "hacer sitio": despedir a uno (y seguir con la opción) o "Mejor no" (volver).
+  if (marco.despidiendo !== undefined) {
+    const despedibles = seguidoresDespedibles(t.estado.jugador);
+    const opcionDeSitio = paso.opciones[marco.despidiendo];
+    delete marco.despidiendo;
+    if (indice === despedibles.length) return terminar(t, dados);
+    const despedido = despedibles[indice];
+    if (!despedido) throw new Error(`elegirOpcion: no hay opción ${indice}`);
+    const efectos = (opcionDeSitio.efectos ?? []).map(e => (e.tipo === 'ganar_seguidor' ? { ...e, despedir: despedido.id } : e));
+    llegarARama(t, { ...opcionDeSitio, efectos, texto: undefined }, dados);
+    return avanzar(t, dados);
+  }
+
+  const real = indicesVisibles(t.estado, paso.opciones)[indice];
+  const opcion = real === undefined ? undefined : paso.opciones[real];
+  if (!opcion || real === undefined) throw new Error(`elegirOpcion: no hay opción ${indice}`);
+  const visible = opcionVisible(t.estado, opcion, eventos, marco.cantidad);
   if (!visible.disponible) throw new Error(`elegirOpcion: la opción "${opcion.texto}" no se puede elegir (${visible.motivo})`);
+  if (opcion.hacerSitio) {
+    marco.despidiendo = real;
+    return terminar(t, dados);
+  }
 
   llegarARama(t, { ...opcion, texto: undefined }, dados);
   return avanzar(t, dados);
@@ -340,10 +372,12 @@ export function tirarDadosDelEvento(
     // Con el amuleto del destino no: se elige una fila de verdad.
     fila = total < 1 && tirada.siSaleMenosDe1 && opciones.resultadoElegido === undefined
       ? { min: total, max: total, ...tirada.siSaleMenosDe1 }
-      : saltarFilasQueYaTiene(t.estado, tirada.filas, filaDe(tirada.filas, total));
+      : saltarFilasQueYaTiene(t.estado, tirada.filas, conDadoNatural(tirada.filas, filaDe(tirada.filas, total), suma));
     if (elegido !== undefined || intento >= 20 || !llevaAEventoYaOcurrido(t, fila)) break;
   }
 
+  // La tirada que decide la cantidad del evento (el soborno del guardia), a la vista.
+  if (tirada.guardarCantidad !== undefined) marcoActual.cantidad = total * tirada.guardarCantidad;
   const marca = opciones.resultadoElegido !== undefined ? { elegida: true } : opciones.resultadoTrucado !== undefined ? { trucada: true } : {};
   const tiradaLeida = { dados: sacados, modificador: opciones.resultadoElegido !== undefined ? 0 : modificador, total, ...marca };
   llegarARama(t, fila, dados, { tirada: tiradaLeida }, fila.volverATirar ? { tipo: 'repetir' } : undefined);
@@ -355,14 +389,27 @@ function modificadorDeTirada(estado: Estado, tirada: TiradaDeEvento): number {
   return (tirada.modificador ?? 0) + (tirada.idTirada !== undefined ? calcularModificador(estado.jugador, tirada.idTirada) : 0);
 }
 
+/** ¿Lleva este objeto en el inventario o tiene esta condición? ("saltarSiTiene" y "siTiene".) */
+function llevaOTiene(estado: Estado, id: string): boolean {
+  return tieneCondicion(estado.jugador, id) || estado.jugador.inventario.some(o => o.id === id);
+}
+
+/**
+ * Filas con "soloNatural": solo cuentan si el dado, SIN bonificadores, cae en ellas. Si se llega con
+ * bonificadores, cuenta la fila anterior (y así hacia atrás). El paso rocoso (E012): la fama, solo con un 6.
+ */
+function conDadoNatural(filas: readonly FilaDeEvento[], fila: FilaDeEvento, natural: number): FilaDeEvento {
+  let i = filas.indexOf(fila);
+  while (i > 0 && filas[i].soloNatural && (natural < filas[i].min || natural > filas[i].max)) i--;
+  return filas[i];
+}
+
 /**
  * Filas con "saltarSiTiene": si el jugador ya tiene esa condición o ese objeto, cuenta la fila siguiente
  * (y así hasta una que valga). Si no queda ninguna por delante, se busca hacia atrás.
  */
 function saltarFilasQueYaTiene(estado: Estado, filas: readonly FilaDeEvento[], fila: FilaDeEvento): FilaDeEvento {
-  const yaLaTiene = (f: FilaDeEvento): boolean =>
-    f.saltarSiTiene !== undefined &&
-    (tieneCondicion(estado.jugador, f.saltarSiTiene) || estado.jugador.inventario.some(o => o.id === f.saltarSiTiene));
+  const yaLaTiene = (f: FilaDeEvento): boolean => f.saltarSiTiene !== undefined && llevaOTiene(estado, f.saltarSiTiene);
   const inicio = filas.indexOf(fila);
   for (let i = inicio; i < filas.length; i++) if (!yaLaTiene(filas[i])) return filas[i];
   for (let i = inicio - 1; i >= 0; i--) if (!yaLaTiene(filas[i])) return filas[i];
@@ -380,6 +427,7 @@ export function usarAmuletoDelDestino(estado: Estado, dados: Dados, eventos: rea
   const marco = cima(t);
   const tieneTirada = paso.tirada !== undefined || (paso.combate?.encuentro !== undefined && !marco.enemigosDelEncuentro);
   if (!tieneTirada) throw new Error('usarAmuletoDelDestino: este paso no tiene ninguna tirada');
+  if (paso.tirada?.sinAmuletoDelDestino) throw new Error('usarAmuletoDelDestino: en esta tirada no se puede usar');
   if (marco.eligiendoResultado) throw new Error('usarAmuletoDelDestino: el amuleto ya está gastado en esta tirada');
   gastarUso(t, OBJETO_ELEGIR_RESULTADO, dados);
   marco.eligiendoResultado = true;
@@ -650,10 +698,12 @@ function entrarEnPaso(t: Trabajo, marco: MarcoEvento, nombre: string, dados: Dad
   const { cambios, llamarAntes } = aplicarConAmuleto(t, paso, dados, paso.muerte);
   const texto = conCantidad(paso.texto, marco.cantidad);
 
-  if (paso.segun) {
-    // Según dónde estés: se sigue solo por la rama que toque (la que no está escrita = termina).
-    // Se lee el texto del paso y el de la rama, juntos.
-    const rama: Rama = paso.segun[dondeEstas(t.estado)] ?? {};
+  if (paso.segun || paso.siTiene) {
+    // Según dónde estés, o según si llevas algo: se sigue solo por la rama que toque (la que no está
+    // escrita = termina). Se lee el texto del paso y el de la rama, juntos.
+    const rama: Rama = paso.segun
+      ? paso.segun[dondeEstas(t.estado)] ?? {}
+      : (llevaOTiene(t.estado, paso.siTiene!.id) ? paso.siTiene!.si : paso.siTiene!.no) ?? {};
     const deLaRama = aplicarConAmuleto(t, rama, dados, rama.muerte ?? paso.muerte);
     const textos = [texto, conCantidad(rama.texto, marco.cantidad)].filter((x): x is string => x !== undefined);
     marco.lectura = { ...(textos.length > 0 ? { texto: textos.join('\n\n') } : {}), cambios: [...cambios, ...deLaRama.cambios] };
@@ -665,8 +715,9 @@ function entrarEnPaso(t: Trabajo, marco: MarcoEvento, nombre: string, dados: Dad
   // (Un paso que espera al jugador no lleva amuleto: lo impide el revisor.)
   marco.siguiente = esperaAlJugador(paso) ? null : conLlamadas(llamarAntes, siguienteDe(paso));
 
-  // Tirada oculta: se tira ya, sin botón ni dados a la vista, y se llega a la fila que toque.
-  if (marco.tiradaOculta && paso.tirada) {
+  // Tirada oculta (la pide quien salta aquí o la propia tirada con "oculta"): se tira ya, sin botón
+  // ni dados a la vista, y se llega a la fila que toque.
+  if ((marco.tiradaOculta || paso.tirada?.oculta) && paso.tirada) {
     delete marco.tiradaOculta;
     tirarAOcultas(t, paso.tirada, dados);
   }
@@ -674,10 +725,12 @@ function entrarEnPaso(t: Trabajo, marco: MarcoEvento, nombre: string, dados: Dad
 
 /** La tirada oculta: los dados (con los bonificadores) deciden la fila, pero no se enseñan. */
 function tirarAOcultas(t: Trabajo, tirada: TiradaDeEvento, dados: Dados): void {
-  const total = dados.tirar(tirada.dado).total + modificadorDeTirada(t.estado, tirada);
+  const natural = dados.tirar(tirada.dado).total;
+  const total = natural + modificadorDeTirada(t.estado, tirada);
+  if (tirada.guardarCantidad !== undefined) cima(t).cantidad = total * tirada.guardarCantidad;
   const fila: FilaDeEvento = total < 1 && tirada.siSaleMenosDe1
     ? { min: total, max: total, ...tirada.siSaleMenosDe1 }
-    : saltarFilasQueYaTiene(t.estado, tirada.filas, filaDe(tirada.filas, total));
+    : saltarFilasQueYaTiene(t.estado, tirada.filas, conDadoNatural(tirada.filas, filaDe(tirada.filas, total), natural));
   llegarARama(t, fila, dados, {}, fila.volverATirar ? { tipo: 'repetir' } : undefined);
 }
 
@@ -690,14 +743,32 @@ function conLlamadas(eventos: string[], despues: Siguiente): Siguiente {
  * Aplica los efectos de una rama (o de un paso) y, si lleva "amuletoMaldito", da el amuleto (E027):
  * sus dos tiradas. Si sale el deseo, lo devuelve en "llamarAntes" para resolverlo antes de seguir.
  */
-function aplicarConAmuleto(t: Trabajo, rama: Rama, dados: Dados, muerte?: string): { cambios: Cambio[]; llamarAntes: string[] } {
+function aplicarConAmuleto(
+  t: Trabajo,
+  rama: Rama,
+  dados: Dados,
+  muerte?: string,
+  dadosDeLaTirada?: readonly number[],
+): { cambios: Cambio[]; llamarAntes: string[] } {
   const cambios = aplicar(t, rama.efectos, dados, muerte);
-  if (!rama.amuletoMaldito || t.estado.mundo.finPartida) {
-    return { cambios, llamarAntes: [] };
+  // "desviar": moverse en línea recta; lo que salte al llegar se juega antes de seguir.
+  const alLlegar: string[] = [];
+  if (rama.desviar && !t.estado.mundo.finPartida) {
+    const movimiento = desviar(t.estado, rama.desviar.direccion, rama.desviar.pasos, dados);
+    t.estado = movimiento.estado;
+    t.cambios.push(...movimiento.cambios);
+    cambios.push(...movimiento.cambios);
+    alLlegar.push(...movimiento.eventos);
   }
-  const amuleto = recibirAmuletoMaldito(t.estado, dados);
+  if (!rama.amuletoMaldito || t.estado.mundo.finPartida) {
+    return { cambios, llamarAntes: alLlegar };
+  }
+  // Si la rama viene de una tirada de 2 dados (el evento del amuleto), el primero es la bendición y el
+  // segundo la maldición: lo que se ve rodar es lo que sale. Si no, el amuleto tira los suyos.
+  const vistos = dadosDeLaTirada?.length === 2 ? { bendicion: dadosDeLaTirada[0], maldicion: dadosDeLaTirada[1] } : undefined;
+  const amuleto = recibirAmuletoMaldito(t.estado, dados, undefined, undefined, vistos);
   t.estado = amuleto.estado;
-  return { cambios: [...cambios, ...amuleto.cambios], llamarAntes: amuleto.eventos };
+  return { cambios: [...cambios, ...amuleto.cambios], llamarAntes: [...alLlegar, ...amuleto.eventos] };
 }
 
 /** Para los pasos "segun": a bordo de tu barco, en un puerto (o la guarida) o en otro sitio. */
@@ -729,7 +800,17 @@ function llegarARama(
   antes: string[] = [],
 ): void {
   const marco = cima(t);
-  const aplicado = aplicarConAmuleto(t, rama, dados, rama.muerte);
+  // "salvaSi": si llevas un seguidor de esos tipos, te libra de la fila (solo se leen los dos textos).
+  const salva = (rama as FilaDeEvento).salvaSi;
+  const salvador = salva ? t.estado.jugador.seguidores.find(s => salva.seguidores.includes(s.tipo)) : undefined;
+  if (salva && salvador) {
+    const textos = [conCantidad(rama.texto, marco.cantidad), salva.texto.split('{seguidor}').join(salvador.nombre)]
+      .filter((x): x is string => x !== undefined);
+    marco.lectura = { ...extra, texto: textos.join('\n\n'), cambios: [...(extra.cambios ?? [])] };
+    marco.siguiente = conLlamadas(antes, { tipo: 'fin' });
+    return;
+  }
+  const aplicado = aplicarConAmuleto(t, rama, dados, rama.muerte, extra.tirada?.dados);
   const cambios = [...(extra.cambios ?? []), ...aplicado.cambios];
   const texto = conCantidad(rama.texto, marco.cantidad);
   marco.lectura = { ...extra, ...(texto !== undefined ? { texto } : {}), cambios };
@@ -879,6 +960,15 @@ function hayAlgoQueLeer(lectura: Lectura | null): boolean {
     lectura.combate !== undefined ||
     lectura.evitado === true
   );
+}
+
+/**
+ * Qué opciones del paso se enseñan (sus números en el paso). Todas, menos "hacer sitio" cuando no
+ * toca: solo sale con el grupo lleno, sin nada que prohíba nuevos seguidores y alguien despedible.
+ */
+function indicesVisibles(estado: Estado, opciones: readonly Opcion[]): number[] {
+  const tocaHacerSitio = grupoLleno(estado.jugador) && !estaProhibido(estado.jugador, 'nuevos_seguidores') && seguidoresDespedibles(estado.jugador).length > 0;
+  return opciones.flatMap((o, i) => (o.hacerSitio && !tocaHacerSitio ? [] : [i]));
 }
 
 function opcionVisible(estado: Estado, opcionOriginal: Opcion, eventos: readonly Evento[], cantidad: number | undefined): OpcionVisible {

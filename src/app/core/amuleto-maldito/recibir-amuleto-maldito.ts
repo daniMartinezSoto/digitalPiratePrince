@@ -40,6 +40,8 @@ export function recibirAmuletoMaldito(
   dados: Dados,
   catalogos?: CatalogosEfectos,
   amuleto: AmuletoMaldito = AMULETO_MALDITO,
+  // Lo que ya ha salido en dos dados a la vista (el evento del amuleto, E027): se usan en vez de tirar.
+  yaTirados?: { bendicion: number; maldicion: number },
 ): ResultadoAmuleto {
   if (tieneCondicion(estado.jugador, CONDICION_AMULETO_MALDITO)) {
     return {
@@ -50,8 +52,8 @@ export function recibirAmuletoMaldito(
     };
   }
 
-  const tiradaBendicion = dados.tirar(`1d${amuleto.bendiciones.length}`).total;
-  const tiradaMaldicion = dados.tirar(`1d${amuleto.maldiciones.length}`).total;
+  const tiradaBendicion = yaTirados?.bendicion ?? dados.tirar(`1d${amuleto.bendiciones.length}`).total;
+  const tiradaMaldicion = yaTirados?.maldicion ?? dados.tirar(`1d${amuleto.maldiciones.length}`).total;
   const bendicion = amuleto.bendiciones[tiradaBendicion - 1];
   const maldicion = amuleto.maldiciones[tiradaMaldicion - 1];
 

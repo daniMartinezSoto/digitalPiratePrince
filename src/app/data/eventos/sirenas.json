@@ -1,0 +1,116 @@
+{
+  "id": "sirenas",
+  "titulo": "Sirenas",
+  "libro": "E015",
+  "pasos": {
+    "inicio": {
+      "texto": "De pronto, un canto suave y melódico empieza a surgir entre el rumor del oleaje. Tú y tus tripulantes os miráis, cautivados.",
+      "siTiene": {
+        "id": "lira_de_las_sirenas",
+        "si": {
+          "paso": "la_lira"
+        },
+        "no": {
+          "paso": "el_canto"
+        }
+      }
+    },
+    "el_canto": {
+      "tirada": {
+        "dado": "1d6",
+        "boton": "Escuchar el canto",
+        "filas": [
+          {
+            "min": 1,
+            "max": 1,
+            "texto": "Las voces hipnóticas de las sirenas resuenan en tu mente y en la de toda tu tripulación...",
+            "evento": "maldicion"
+          },
+          {
+            "min": 2,
+            "max": 3,
+            "texto": "Parte de tu tripulación empieza a volverse loca: algunos ya trepan por la borda, dispuestos a saltar hacia las sirenas.",
+            "paso": "peligro"
+          },
+          {
+            "min": 4,
+            "max": 4,
+            "texto": "Avisas a tiempo a la tripulación, que se tapa los oídos. Seguís vuestro viaje sin problemas."
+          },
+          {
+            "min": 5,
+            "max": 5,
+            "texto": "La melodía de las sirenas es un canto de protección: tú y los tuyos os recuperáis por completo.",
+            "efectos": [
+              {
+                "tipo": "vida",
+                "operacion": "maximo",
+                "destino": "todos"
+              }
+            ]
+          },
+          {
+            "min": 6,
+            "max": 6,
+            "texto": "Impresionadas por vuestra determinación y vuestro coraje, las sirenas deciden haceros un regalo.",
+            "evento": "tesoro_magico"
+          }
+        ]
+      }
+    },
+    "peligro": {
+      "texto": "¿Qué haces?",
+      "opciones": [
+        {
+          "texto": "¡A toda vela! (−2d6 de tripulación)",
+          "efectos": [
+            {
+              "tipo": "tripulacion",
+              "cantidad": "-2d6"
+            }
+          ]
+        },
+        {
+          "texto": "Intentar protegerlos (combate contra dos sirenas)",
+          "paso": "proteger"
+        }
+      ]
+    },
+    "proteger": {
+      "texto": "Saltas por la borda, espada en mano, y nadas hasta las rocas donde cantan las sirenas para que dejen en paz a tus hombres. El canto se corta de golpe: se vuelven contra ti.",
+      "combate": {
+        "enemigos": [
+          {
+            "enemigo": "sirena",
+            "cantidad": 2
+          }
+        ],
+        "puedeHuir": false,
+        "boton": "Enfrentarte a las sirenas",
+        "victoria": {
+          "texto": "Las sirenas se hunden en el mar y tus hombres vuelven en sí. Antes de regresar al barco, descubres su escondite entre las rocas...",
+          "evento": "escondite"
+        }
+      }
+    },
+    "la_lira": {
+      "texto": "Las sirenas reconocen la lira que llevas contigo y su canto cambia: es una bienvenida. Te ofrecen un regalo.",
+      "opciones": [
+        {
+          "texto": "Que os curen con su canto",
+          "efectos": [
+            {
+              "tipo": "vida",
+              "operacion": "maximo",
+              "destino": "todos"
+            }
+          ]
+        },
+        {
+          "texto": "Que os guíen hasta un cofre",
+          "evento": "cofre"
+        }
+      ]
+    }
+  }
+}

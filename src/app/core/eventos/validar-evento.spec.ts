@@ -140,6 +140,45 @@ describe('validarEvento', () => {
       expect(erroresDe(conFilas([{ min: 1, max: 6, texto: 'a' }], '1d6x'))).toContain('el dado "1d6x" no es válido');
     });
 
+    it('"hacerSitio": solo true y con un ganar_seguidor', () => {
+      const con = (opcion: unknown) => evento({ inicio: { opciones: [opcion] } });
+      expect(erroresDe(con({ texto: 'Sitio', hacerSitio: true, efectos: [{ tipo: 'ganar_seguidor', seguidor: 'nativo' }] }))).toBe('');
+      expect(erroresDe(con({ texto: 'Sitio', hacerSitio: true, efectos: [{ tipo: 'oro', cantidad: 1 }] }))).toContain('"hacerSitio" solo puede ser true');
+    });
+
+    it('"siTiene": un objeto o una condición que existen y al menos una rama', () => {
+      expect(erroresDe(evento({ inicio: { siTiene: { id: 'lira_de_las_sirenas', si: { texto: 'x' } } } }))).toBe('');
+      expect(erroresDe(evento({ inicio: { siTiene: { id: 'escorbuto', no: { texto: 'x' } } } }))).toBe('');
+      expect(erroresDe(evento({ inicio: { siTiene: { id: 'lira_de_mentira', si: { texto: 'x' } } } }))).toContain('no es ningún objeto ni ninguna condición');
+      expect(erroresDe(evento({ inicio: { siTiene: { id: 'lira_de_las_sirenas' } } }))).toContain('"siTiene" debe ser');
+    });
+
+    it('"salvaSi": tipos de seguidor que existen y un texto', () => {
+      const con = (salvaSi: unknown) => evento({ inicio: { tirada: { dado: '1d6', boton: 'Tirar', filas: [{ min: 1, max: 6, texto: 'x', salvaSi }] } } });
+      expect(erroresDe(con({ seguidores: ['navegante'], texto: 'Pero {seguidor}...' }))).toBe('');
+      expect(erroresDe(con({ seguidores: ['grumete'], texto: 'Pero {seguidor}...' }))).toContain('el seguidor "grumete" no existe');
+      expect(erroresDe(con({ seguidores: [], texto: 'x' }))).toContain('"salvaSi" debe ser');
+      expect(erroresDe(con({ seguidores: ['navegante'] }))).toContain('"salvaSi" debe ser');
+    });
+
+    it('"desviar": una dirección del juego y 1 paso o más', () => {
+      const con = (desviar: unknown) => evento({ inicio: { texto: 'x', desviar } });
+      expect(erroresDe(con({ direccion: 'NE', pasos: 3 }))).toBe('');
+      expect(erroresDe(con({ direccion: 'E', pasos: 1 }))).toContain('"desviar" debe ser');
+      expect(erroresDe(con({ direccion: 'N', pasos: 0 }))).toContain('"desviar" debe ser');
+      expect(erroresDe(con({ direccion: 'N', pasos: 1, rapido: true }))).toContain('"desviar" debe ser');
+    });
+
+    it('"soloNatural": solo true', () => {
+      const e = evento({ inicio: { tirada: { dado: '1d6', boton: 'Tirar', filas: [{ min: 1, max: 6, texto: 'x', soloNatural: 1 }] } } });
+      expect(erroresDe(e)).toContain('"soloNatural" solo puede ser true');
+    });
+
+    it('"oculta": solo true', () => {
+      const e = evento({ inicio: { tirada: { dado: '1d6', boton: 'Tirar', oculta: 'sí', filas: [{ min: 1, max: 6, texto: 'x' }] } } });
+      expect(erroresDe(e)).toContain('"oculta" solo puede ser true');
+    });
+
     it('una fila vacía es un error', () => {
       const e = evento({ inicio: { tirada: { dado: '1d6', boton: 'Tirar', filas: [{ min: 1, max: 6 }] } } });
       expect(erroresDe(e)).toContain('fila 1-6: está vacía');

@@ -157,7 +157,8 @@ describe('abordar', () => {
     }
     expect(estado.mundo.combate!.resultado).toBe('victoria');
 
-    const cierre = cerrarCombateNaval(estado, dadosTrucados([4]));
+    // 4 = la comida del botín; 100 = no hay fiesta.
+    const cierre = cerrarCombateNaval(estado, dadosTrucados([4, 100]));
 
     expect(cierre.resultado).toBe('victoria');
     expect(cierre.estado.mundo.combate).toBeNull();
@@ -197,8 +198,8 @@ describe('abordar', () => {
   });
 
   it('abordando, la tirada de tesoro (el fantasma: 50 %): con 50 o menos sale, con 51 no', () => {
-    const conTesoro = cerrarCombateNaval(abordajeTerminado('barco_fantasma', 'victoria'), dadosTrucados([50]));
-    const sinTesoro = cerrarCombateNaval(abordajeTerminado('barco_fantasma', 'victoria'), dadosTrucados([51]));
+    const conTesoro = cerrarCombateNaval(abordajeTerminado('barco_fantasma', 'victoria'), dadosTrucados([50, 100]));
+    const sinTesoro = cerrarCombateNaval(abordajeTerminado('barco_fantasma', 'victoria'), dadosTrucados([51, 100]));
 
     expect(conTesoro.eventos).toEqual(['amuleto_fantasmal', 'tesoro']);
     expect(sinTesoro.eventos).toEqual(['amuleto_fantasmal']);
@@ -211,7 +212,7 @@ describe('abordar', () => {
     const casi = conResistencia(hundido, 1);
     const final = disparar(casi, dadosTrucados([6, 1])).estado;
 
-    const cierre = cerrarCombateNaval(final, dadosTrucados([]));
+    const cierre = cerrarCombateNaval(final, dadosTrucados([100]));
 
     expect(cierre.resumen.forma).toBe('hundido');
     expect(cierre.eventos).toEqual(['amuleto_fantasmal']);

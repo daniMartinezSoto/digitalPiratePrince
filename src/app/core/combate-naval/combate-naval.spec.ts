@@ -178,10 +178,29 @@ describe('cerrarCombateNaval', () => {
   });
 
   it('la chalupa no da nada (salvo una mancha en tu conciencia)', () => {
-    const cierre = cerrarCombateNaval(terminado('chalupa_de_pescadores', 'victoria'), dadosTrucados([]));
+    // 100 = no hay fiesta.
+    const cierre = cerrarCombateNaval(terminado('chalupa_de_pescadores', 'victoria'), dadosTrucados([100]));
 
     expect(cierre.cambios).toEqual([]);
     expect(cierre.eventos).toEqual([]);
+  });
+
+  it('al ganar, un 20 % de que la tripulación lo celebre con una fiesta: con 20 o menos sale, con 21 no', () => {
+    const conFiesta = cerrarCombateNaval(terminado('chalupa_de_pescadores', 'victoria'), dadosTrucados([20]));
+    const sinFiesta = cerrarCombateNaval(terminado('chalupa_de_pescadores', 'victoria'), dadosTrucados([21]));
+
+    expect(conFiesta.eventos).toEqual(['fiesta']);
+    expect(sinFiesta.eventos).toEqual([]);
+  });
+
+  it('la fiesta va detrás de los demás eventos del barco', () => {
+    const fantasma = terminado('barco_fantasma', 'victoria');
+    expect(cerrarCombateNaval(fantasma, dadosTrucados([1])).eventos).toEqual(['amuleto_fantasmal', 'fiesta']);
+  });
+
+  it('huyendo o perdiendo no hay fiesta (ni se tira)', () => {
+    const huida = cerrarCombateNaval(terminado('barco_fantasma', 'huida'), dadosTrucados([]));
+    expect(huida.eventos).toEqual(['dano_en_la_bodega']);
   });
 
   it('si has perdido la partida, ni recompensa ni eventos', () => {

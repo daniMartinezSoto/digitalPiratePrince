@@ -1,0 +1,22 @@
+@if (queHay(); as que) {
+  @if (plegada()) {
+    <button type="button" class="desplegar" (click)="plegada.set(false)">{{ titulo() }} (volver a la ventana)</button>
+  } @else {
+    <section class="ventana" role="dialog" [attr.aria-label]="titulo()">
+      <header>
+        <h2>{{ titulo() }}</h2>
+        <button type="button" class="plegar" (click)="plegada.set(true)" title="Esconder un momento para ver el mapa">Plegar</button>
+      </header>
+      @if (imagen(); as img) {
+        <img [src]="img" [alt]="titulo()" />
+      }
+      @switch (que) {
+        @case ('mercado') { <app-mercado /> }
+        @case ('marineros') { <app-marineros /> }
+        @case ('seguidor') { <app-seguidor-en-espera /> }
+        @case ('dados') { <app-mesa-de-dados /> }
+        @case ('naval') { <app-combate-naval /> }
+      }
+    </section>
+  }
+}

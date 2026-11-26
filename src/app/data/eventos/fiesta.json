@@ -1,0 +1,61 @@
+{
+  "id": "fiesta",
+  "titulo": "Fiesta a bordo",
+  "libro": "E007",
+  "pasos": {
+    "inicio": {
+      "texto": "Tu tripulación organiza una fiesta a bordo en tu honor. La música suena, las risas llenan el aire y el ron corre sin freno.",
+      "tirada": {
+        "dado": "1d6",
+        "boton": "¡Que corra el ron!",
+        "filas": [
+          {
+            "min": 1,
+            "max": 1,
+            "texto": "Un miembro de la tripulación bebe demasiado y causa problemas. Se arma una pelea que deja algunas víctimas.",
+            "efectos": [{ "tipo": "tripulacion", "cantidad": "-1d6" }],
+            "paso": "resaca"
+          },
+          {
+            "min": 2,
+            "max": 2,
+            "texto": "La fiesta se alarga demasiado: mañana nadie estará en condiciones de hacer nada.",
+            "efectos": [{ "tipo": "perder_turnos", "cantidad": 1 }],
+            "paso": "resaca"
+          },
+          {
+            "min": 3,
+            "max": 4,
+            "texto": "La fiesta transcurre sin incidentes, aunque tampoco será recordada.",
+            "paso": "resaca"
+          },
+          {
+            "min": 5,
+            "max": 5,
+            "texto": "La moral de tu tripulación sube y la noticia corre: cuando llegues a puerto, más marineros querrán unirse a ti.",
+            "efectos": [{ "tipo": "poner_condicion", "condicion": "se_corre_la_voz" }],
+            "paso": "resaca"
+          },
+          {
+            "min": 6,
+            "max": 6,
+            "texto": "La fiesta es legendaria. Toda tu tripulación te adora.",
+            "efectos": [{ "tipo": "fama", "cantidad": 1 }],
+            "paso": "resaca"
+          }
+        ]
+      }
+    },
+    "resaca": {
+      "tirada": {
+        "dado": "1d6",
+        "boton": "¿Alguien ha bebido de más?",
+        "oculta": true,
+        "filas": [
+          { "min": 1, "max": 4, "texto": "Al amanecer, cada cual duerme la mona donde puede." },
+          { "min": 5, "max": 6, "texto": "Y tú tampoco te has quedado corto con el ron...", "evento": "borracho" }
+        ]
+      }
+    }
+  }
+}

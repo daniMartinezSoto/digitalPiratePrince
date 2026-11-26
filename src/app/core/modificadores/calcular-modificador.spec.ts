@@ -37,6 +37,23 @@ describe('calcularModificador', () => {
     });
   });
 
+  describe('el paso rocoso (E012)', () => {
+    const seguidorDe = (tipo: string, habilidad: string) =>
+      ({ id: `${tipo}_1`, tipo, nombre: 'X', ataque: 1, resistencia: 8, resistenciaMaxima: 8, habilidades: [habilidad] });
+
+    it('navegante y cartógrafo dan +1 cada uno: con los dos, +2', () => {
+      const base = jugadorCon('el_fuerte');
+      expect(calcularModificador(base, 'rocas')).toBe(0);
+      expect(calcularModificador({ ...base, seguidores: [seguidorDe('navegante', 'navegacion')] }, 'rocas')).toBe(1);
+      expect(calcularModificador({ ...base, seguidores: [seguidorDe('cartografo', 'cartografia')] }, 'rocas')).toBe(1);
+      expect(calcularModificador({ ...base, seguidores: [seguidorDe('navegante', 'navegacion'), seguidorDe('cartografo', 'cartografia')] }, 'rocas')).toBe(2);
+    });
+
+    it('el sobrenombre "el navegante" también da +1', () => {
+      expect(calcularModificador(jugadorCon('el_navegante'), 'rocas')).toBe(1);
+    });
+  });
+
   describe('el nativo', () => {
     const nativo = jugadorCon('el_nativo');
 

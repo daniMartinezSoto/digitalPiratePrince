@@ -5,30 +5,69 @@
   "libro": "E057",
   "pasos": {
     "inicio": {
-      "cantidad": "1d6x5",
-      "texto": "Un guardia se interpone entre tú y tus intereses. Aceptará un soborno de {cantidad} monedas de oro para dejarte en paz.",
+      "texto": "Un guardia se interpone entre tú y tus intereses. Te deja claro que, por un precio, podría mirar hacia otro lado...",
+      "tirada": {
+        "dado": "1d6",
+        "guardarCantidad": 5,
+        "boton": "¿Cuánto pedirá?",
+        "filas": [
+          {
+            "min": 1,
+            "max": 6,
+            "paso": "soborno"
+          }
+        ]
+      }
+    },
+    "soborno": {
+      "texto": "Aceptará un soborno de {cantidad} monedas de oro para dejarte en paz.",
       "opciones": [
         {
           "texto": "Pagar el soborno ({cantidad} monedas de oro)",
-          "requiere": { "oro": "cantidad" },
+          "requiere": {
+            "oro": "cantidad"
+          },
           "paso": "pagado"
         },
-        { "texto": "No pagar y enfrentarte a él", "paso": "pelea" }
+        {
+          "texto": "No pagar y enfrentarte a él",
+          "paso": "pelea"
+        }
       ]
     },
     "pagado": {
       "texto": "El guardia se guarda las {cantidad} monedas y mira hacia otro lado.",
-      "efectos": [{ "tipo": "oro", "cantidad": "-cantidad" }]
+      "efectos": [
+        {
+          "tipo": "oro",
+          "cantidad": "-cantidad"
+        }
+      ]
     },
     "pelea": {
       "texto": "El guardia desenvaina. No hay forma de escabullirse: tendrás que vencerle.",
       "combate": {
         "boton": "Luchar contra el guardia",
-        "enemigos": [{ "enemigo": "guardia", "recompensa": [{ "tipo": "oro", "cantidad": "1d6x2" }] }],
+        "enemigos": [
+          {
+            "enemigo": "guardia",
+            "recompensa": [
+              {
+                "tipo": "oro",
+                "cantidad": "1d6x2"
+              }
+            ]
+          }
+        ],
         "puedeHuir": false,
         "noMortal": true,
-        "victoria": { "texto": "Has vencido al guardia. Te libras de la prisión." },
-        "derrota": { "texto": "El guardia te reduce. Te quedas con 1 punto de vida y te llevan preso.", "evento": "arrestado" }
+        "victoria": {
+          "texto": "Has vencido al guardia. Te libras de la prisión."
+        },
+        "derrota": {
+          "texto": "El guardia te reduce. Te quedas con 1 punto de vida y te llevan preso.",
+          "evento": "arrestado"
+        }
       }
     }
   }

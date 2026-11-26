@@ -237,8 +237,10 @@ describe('la tabla de aldeas', () => {
     expect(estado.jugador.inventario).toEqual([{ id: 'unguento', usosRestantes: 1 }]);
   });
 
-  it('15: un joven guerrero nativo se une', () => {
-    expect(buscarInformacion(estadoCon(), EN_ALDEA, 0, new Dados(SALE[15])).estado.jugador.seguidores.map(s => s.tipo)).toEqual(['nativo']);
+  it('15: un joven guerrero nativo quiere unirse (su evento pregunta y deja hacerle sitio)', () => {
+    const { estado, eventos } = buscarInformacion(estadoCon(), EN_ALDEA, 0, new Dados(SALE[15]));
+    expect(estado.jugador.seguidores).toEqual([]);
+    expect(eventos).toEqual(['joven_guerrero']);
   });
 
   it('18: te confunden con su dios: +1 de fama y audiencia con el jefe (evento pendiente)', () => {

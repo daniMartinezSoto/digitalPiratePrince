@@ -8,7 +8,7 @@
       "tirada": {
         "dado": "2d6",
         "idTirada": "tesoro",
-        "boton": "¿Qué habrá dentro?",
+        "boton": "¿Qué será?",
         "siSaleMenosDe1": {
           "texto": "Tu mala suerte no falla: al meter la mano, algo hace clic...",
           "evento": "trampa"

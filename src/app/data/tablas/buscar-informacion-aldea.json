@@ -18,7 +18,7 @@
         { "tipo": "ganar_objeto", "objeto": "unguento" }
       ]
     },
-    { "min": 15, "max": 15, "texto": "Un joven guerrero quiere ver mundo y se une a ti.", "efectos": [{ "tipo": "ganar_seguidor", "seguidor": "nativo" }] },
+    { "min": 15, "max": 15, "texto": "Un joven guerrero quiere ver mundo y te pide unirse a ti.", "evento": "joven_guerrero" },
     { "min": 16, "max": 17, "texto": "Se te concede una audiencia con el jefe de la aldea.", "evento": "audiencia_jefe_aldea" },
     { "min": 18, "max": 18, "texto": "¡Te confunden con su dios!", "efectos": [{ "tipo": "fama", "cantidad": 1 }], "evento": "audiencia_jefe_aldea" }
   ]

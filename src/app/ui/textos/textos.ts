@@ -310,7 +310,10 @@ export function describirCambio(cambio: Cambio, nombres: NombresDeSeguidores = {
       return `Vendes: ${nombreDeObjeto(cambio.objeto)}`;
     case 'condicion_puesta': {
       const turnos = cambio.turnos === undefined ? '' : ` (${cambio.turnos} turnos)`;
-      const partes = cambio.partes?.length ? ` [${cambio.partes.map(nombreDeCondicion).join(' + ')}]` : '';
+      // Las partes (el amuleto maldito), con lo que hace cada una: "Carisma (Puedes llevar 1 seguidor más.)".
+      const partes = cambio.partes?.length
+        ? ` [${cambio.partes.map(p => `${nombreDeCondicion(p)} (${CONDICIONES.find(c => c.id === p)?.descripcion ?? ''})`).join(' + ')}]`
+        : '';
       return `Ahora tienes: ${nombreDeCondicion(cambio.condicion)}${turnos}${partes}`;
     }
     case 'condicion_quitada':

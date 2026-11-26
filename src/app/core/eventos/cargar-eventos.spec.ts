@@ -25,15 +25,17 @@ describe('cargar eventos', () => {
 
   // No es un error (salen como "pendiente"), pero así se ve qué falta por escribir.
   it('los eventos a los que se salta y aún no existen son los esperados', () => {
-    expect(eventosQueFaltan(EVENTOS)).toEqual(['arrestado', 'mapa_misterioso']);
+    expect(eventosQueFaltan(EVENTOS)).toEqual(['arrestado', 'escondite', 'fugitivo', 'mapa_misterioso', 'pandemia', 'perdidos', 'tierra', 'traicion']);
   });
 
   describe('el deseo (E041)', () => {
     const deseo = obtenerEvento('deseo');
     const opciones = deseo.pasos['inicio'].opciones!;
 
-    it('tiene sus 9 opciones', () => {
-      expect(opciones).toHaveLength(9);
+    it('tiene sus 9 opciones (y la de hacer sitio para la amistad, que solo sale con el grupo lleno)', () => {
+      expect(opciones).toHaveLength(10);
+      expect(opciones[8].hacerSitio).toBe(true);
+      expect(opciones[8].efectos).toEqual(opciones[7].efectos);
     });
 
     it('el ídolo antediluviano no se puede pedir si ya lo tienes', () => {
@@ -46,7 +48,7 @@ describe('cargar eventos', () => {
     });
 
     it('la protección cura a todo el grupo (decidido por el autor)', () => {
-      expect(opciones[8].efectos).toContainEqual({ tipo: 'vida', operacion: 'maximo', destino: 'todos' });
+      expect(opciones[9].efectos).toContainEqual({ tipo: 'vida', operacion: 'maximo', destino: 'todos' });
     });
 
     it('la vitalidad sube la vida máxima pero no cura (como el libro)', () => {

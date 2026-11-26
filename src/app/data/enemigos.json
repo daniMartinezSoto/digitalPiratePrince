@@ -7,7 +7,7 @@
   { "id": "pescador", "nombre": "Pescador", "categoria": "humano", "ataque": 1, "resistencia": 5, "libro": "E008" },
   { "id": "capitan_del_galeon", "nombre": "Capitán del galeón", "categoria": "humano", "ataque": 3, "resistencia": 10, "libro": "E008" },
   { "id": "soldado_del_galeon", "nombre": "Soldado del galeón", "categoria": "humano", "ataque": 2, "resistencia": 6, "libro": "E008" },
-  { "id": "sirena", "nombre": "Sirena", "categoria": "criatura", "ataque": 2, "resistencia": 8, "libro": "E015" },
+  { "id": "sirena", "nombre": "Sirena", "categoria": "criatura", "ataque": 2, "resistencia": 6, "libro": "E015" },
   { "id": "guardia_de_la_carcel", "nombre": "Guardia de la cárcel", "categoria": "humano", "ataque": 3, "resistencia": 6, "libro": "E023" },
   { "id": "guardian_isla_misteriosa", "nombre": "Guardián de la isla misteriosa", "categoria": "criatura", "ataque": 3, "resistencia": 14, "habilidades": ["curarse"], "libro": "E025" },
   { "id": "tentaculo", "nombre": "Tentáculo", "categoria": "criatura", "ataque": 4, "resistencia": 3, "libro": "E026" },

@@ -5,11 +5,9 @@
         <button type="button" (click)="empezarElDia()">Empezar el día</button>
       }
       @case ('accion') {
-        @switch (estado.mundo.accionEnCurso?.tipo) {
-          @case ('mercado') { <app-mercado /> }
-          @case ('marineros') { <app-marineros /> }
-          @case ('seguidor') { <app-seguidor-en-espera /> }
-          @case ('dados') { <app-mesa-de-dados /> }
+        <!-- Las acciones a medias (mercado, marineros, seguidor, dados) se resuelven en la ventana del mapa. -->
+        @switch (estado.mundo.accionEnCurso ? 'a_medias' : 'libre') {
+          @case ('a_medias') { <p class="fin">Tienes algo a medias: resuélvelo en la ventana del mapa.</p> }
           @default {
             @if (eleccionPrevia() === 'sobornos') {
               @if (sobornos(); as s) {

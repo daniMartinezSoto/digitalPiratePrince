@@ -10,7 +10,7 @@ export type Lugar = (typeof LUGARES)[number];
 
 // Rasgo de la casilla (el icono del mapa) que importa a las acciones. Lo dirá el mapa (Sprint 9).
 //   naufragio: se puede investigar (una vez).   ruinas: se pueden registrar (una vez).
-// Irán llegando más (barco, abundancia...) cuando haga falta.
+// Irán llegando más (barco...) cuando haga falta.
 export const RASGOS = ['naufragio', 'ruinas'] as const;
 export type Rasgo = (typeof RASGOS)[number];
 

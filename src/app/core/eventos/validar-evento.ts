@@ -6,6 +6,8 @@ import { validarPedidosDeEnemigos } from '../catalogos/validar-barco';
 import { ENCUENTROS } from '../encuentros/cargar-encuentros';
 import { rangoDeTirada } from '../dados/tirada';
 import { validarEfecto } from '../tablas/rangos/validar-tabla';
+import { DIRECCIONES } from '../mapa/hexagonos';
+import { TIPOS_SEGUIDOR } from '../catalogos/cargar-seguidores';
 import { CANTIDAD_DEL_EVENTO, PASO_INICIAL, REQUISITOS, type Evento } from './evento';
 
 // REVISOR DE EVENTOS (Sprint 10, paso 1). Revisa lo que se escribe en data/eventos/ y devuelve
@@ -28,16 +30,16 @@ const FORMATO_ID = /^[a-z][a-z0-9_]*$/;
 const FORMATO_LIBRO = /^E\d{3}$/;
 
 const CAMPOS_EVENTO = ['id', 'titulo', 'imagen', 'unaVez', 'pasos', 'libro', 'muerte'];
-const CAMPOS_RAMA = ['texto', 'efectos', 'amuletoMaldito', 'paso', 'evento', 'tiradaOculta', 'llamar', 'muerte', 'pausa'];
+const CAMPOS_RAMA = ['texto', 'efectos', 'amuletoMaldito', 'desviar', 'paso', 'evento', 'tiradaOculta', 'llamar', 'muerte', 'pausa'];
 // Las formas de seguir que llevan dentro sus propias salidas ("segun" no espera al jugador, pero
 // también lleva dentro por dónde se sigue).
-const SALIDAS_CON_ELECCION = ['opciones', 'tirada', 'chequeo', 'combate', 'combateNaval', 'segun'];
+const SALIDAS_CON_ELECCION = ['opciones', 'tirada', 'chequeo', 'combate', 'combateNaval', 'segun', 'siTiene'];
 const CAMPOS_PASO = [...CAMPOS_RAMA, ...SALIDAS_CON_ELECCION, 'cantidad'];
 const LUGARES_DE_SEGUN = ['barco', 'puerto', 'otro'];
 const MARCA_DE_CANTIDAD = `{${CANTIDAD_DEL_EVENTO}}`;
-const CAMPOS_OPCION = ['texto', 'requiere', 'efectos', 'paso', 'evento', 'llamar', 'muerte', 'pausa'];
-const CAMPOS_TIRADA = ['dado', 'boton', 'modificador', 'idTirada', 'siSaleMenosDe1', 'filas'];
-const CAMPOS_FILA = ['min', 'max', 'volverATirar', 'saltarSiTiene', ...CAMPOS_RAMA];
+const CAMPOS_OPCION = ['texto', 'requiere', 'hacerSitio', 'efectos', 'paso', 'evento', 'llamar', 'muerte', 'pausa'];
+const CAMPOS_TIRADA = ['dado', 'boton', 'modificador', 'idTirada', 'siSaleMenosDe1', 'guardarCantidad', 'oculta', 'sinAmuletoDelDestino', 'filas'];
+const CAMPOS_FILA = ['min', 'max', 'volverATirar', 'saltarSiTiene', 'salvaSi', 'soloNatural', ...CAMPOS_RAMA];
 const CAMPOS_CHEQUEO = ['caracteristica', 'boton', 'modificador', 'exito', 'fallo'];
 const CAMPOS_COMBATE = ['enemigos', 'encuentro', 'boton', 'botonDelEncuentro', 'puedeHuir', 'noMortal', 'sorpresa', 'victoria', 'huida', 'derrota'];
 const CAMPOS_COMBATE_NAVAL = ['barco', 'boton', 'victoria', 'huida'];
@@ -97,7 +99,9 @@ export function validarEvento(evento: Evento): string[] {
     errores.push(`${nombre}: no tiene el paso "${PASO_INICIAL}" (todo evento empieza por ahí).`);
   }
 
-  const tieneCantidad = Object.values(pasos).some(p => esObjeto(p) && p['cantidad'] !== undefined);
+  const tieneCantidad = Object.values(pasos).some(
+    p => esObjeto(p) && (p['cantidad'] !== undefined || (esObjeto(p['tirada']) && p['tirada']['guardarCantidad'] !== undefined)),
+  );
   const contexto: Contexto = { idEvento: String(e['id']), nombresDePasos: new Set(Object.keys(pasos)), tieneCantidad };
   if (!tieneCantidad && JSON.stringify(pasos).includes(MARCA_DE_CANTIDAD)) {
     errores.push(`${nombre}: algún texto usa ${MARCA_DE_CANTIDAD}, pero ningún paso tira la cantidad (falta "cantidad" en algún paso).`);
@@ -197,6 +201,7 @@ function validarPaso(paso: unknown, donde: string, contexto: Contexto): string[]
   if (paso['combate'] !== undefined) errores.push(...validarCombate(paso['combate'], `${donde}, combate`, contexto));
   if (paso['combateNaval'] !== undefined) errores.push(...validarCombateNaval(paso['combateNaval'], `${donde}, combate naval`, contexto));
   if (paso['segun'] !== undefined) errores.push(...validarSegun(paso['segun'], `${donde}, según dónde estés`, contexto));
+  if (paso['siTiene'] !== undefined) errores.push(...validarSiTiene(paso['siTiene'], `${donde}, si tiene`, contexto));
 
   if (paso['cantidad'] !== undefined) {
     try {
@@ -206,6 +211,21 @@ function validarPaso(paso: unknown, donde: string, contexto: Contexto): string[]
     }
   }
 
+  return errores;
+}
+
+/** "siTiene": un objeto o una condición que existen, y la rama "si", la "no" o las dos. */
+function validarSiTiene(siTiene: unknown, donde: string, contexto: Contexto): string[] {
+  if (!esObjeto(siTiene) || typeof siTiene['id'] !== 'string' || (siTiene['si'] === undefined && siTiene['no'] === undefined)) {
+    return [`${donde}: "siTiene" debe ser { "id": un objeto o una condición, "si": rama, "no": rama } (al menos una de las dos).`];
+  }
+  const errores: string[] = [...camposQueSobran(siTiene, ['id', 'si', 'no'], donde)];
+  const id = siTiene['id'];
+  if (!OBJETOS.some(o => o.id === id) && !CONDICIONES.some(c => c.id === id)) {
+    errores.push(`${donde}: "${id}" no es ningún objeto ni ninguna condición.`);
+  }
+  errores.push(...validarSalida(siTiene['si'], `${donde}, si`, contexto, false));
+  errores.push(...validarSalida(siTiene['no'], `${donde}, no`, contexto, false));
   return errores;
 }
 
@@ -229,6 +249,16 @@ function validarRama(rama: Objeto, donde: string, contexto: Contexto, conCampos:
 
   if (rama['tiradaOculta'] !== undefined && (rama['tiradaOculta'] !== true || rama['evento'] === undefined)) {
     errores.push(`${donde}: "tiradaOculta" solo puede ser true y solo sirve con "evento" (la tirada de ese evento se tira sola).`);
+  }
+  if (rama['desviar'] !== undefined) {
+    const desviar = rama['desviar'];
+    const bien = esObjeto(desviar)
+      && (DIRECCIONES as readonly unknown[]).includes(desviar['direccion'])
+      && Number.isInteger(desviar['pasos']) && (desviar['pasos'] as number) >= 1
+      && Object.keys(desviar).every(k => k === 'direccion' || k === 'pasos');
+    if (!bien) {
+      errores.push(`${donde}: "desviar" debe ser { "direccion": una de ${DIRECCIONES.join(', ')}, "pasos": 1 o más }.`);
+    }
   }
   if (rama['pausa'] !== undefined && (rama['pausa'] !== true || rama['paso'] === undefined)) {
     errores.push(`${donde}: "pausa" solo puede ser true y solo sirve con "paso" (para parar en "Continuar" antes del paso siguiente).`);
@@ -303,6 +333,13 @@ function validarOpciones(opciones: unknown, donde: string, contexto: Contexto): 
     if (opcion['requiere'] !== undefined) {
       errores.push(...validarRequisitos(opcion['requiere'], dondeOpcion, contexto));
     }
+    if (opcion['hacerSitio'] !== undefined) {
+      const efectos = Array.isArray(opcion['efectos']) ? opcion['efectos'] : [];
+      const ganar = efectos.filter(e => esObjeto(e) && e['tipo'] === 'ganar_seguidor');
+      if (opcion['hacerSitio'] !== true || ganar.length !== 1) {
+        errores.push(`${dondeOpcion}: "hacerSitio" solo puede ser true y la opción tiene que llevar un "ganar_seguidor" (uno solo).`);
+      }
+    }
   });
   return errores;
 }
@@ -350,6 +387,15 @@ function validarTirada(tirada: unknown, donde: string, contexto: Contexto): stri
   if (tirada['modificador'] !== undefined && !Number.isInteger(tirada['modificador'])) {
     errores.push(`${donde}: el modificador debe ser un número entero.`);
   }
+  if (tirada['guardarCantidad'] !== undefined && !(Number.isInteger(tirada['guardarCantidad']) && (tirada['guardarCantidad'] as number) >= 1)) {
+    errores.push(`${donde}: "guardarCantidad" es el número por el que se multiplica el total (1 o más).`);
+  }
+  if (tirada['sinAmuletoDelDestino'] !== undefined && tirada['sinAmuletoDelDestino'] !== true) {
+    errores.push(`${donde}: "sinAmuletoDelDestino" solo puede ser true.`);
+  }
+  if (tirada['oculta'] !== undefined && tirada['oculta'] !== true) {
+    errores.push(`${donde}: "oculta" solo puede ser true (la tirada se tira sola, sin enseñarla).`);
+  }
   if (tirada['idTirada'] !== undefined && !(IDS_TIRADA as readonly unknown[]).includes(tirada['idTirada'])) {
     errores.push(`${donde}: "idTirada" debe ser uno de los nombres de tirada (core/modificadores/id-tirada.ts).`);
   }
@@ -383,7 +429,25 @@ function validarTirada(tirada: unknown, donde: string, contexto: Contexto): stri
     } else {
       buenas.push({ min: fila['min'] as number, max: fila['max'] as number });
     }
-    if (fila['texto'] === undefined && fila['efectos'] === undefined && fila['paso'] === undefined && fila['evento'] === undefined && fila['llamar'] === undefined && fila['volverATirar'] === undefined) {
+    if (fila['soloNatural'] !== undefined && fila['soloNatural'] !== true) {
+      errores.push(`${dondeFila}: "soloNatural" solo puede ser true (la fila solo cuenta con el dado sin bonificadores).`);
+    }
+    if (fila['salvaSi'] !== undefined) {
+      const salva = fila['salvaSi'];
+      const tipos = esObjeto(salva) ? salva['seguidores'] : undefined;
+      const bien = esObjeto(salva)
+        && Array.isArray(tipos) && tipos.length > 0
+        && esTexto(salva['texto'])
+        && Object.keys(salva).every(k => k === 'seguidores' || k === 'texto');
+      if (!bien) {
+        errores.push(`${dondeFila}: "salvaSi" debe ser { "seguidores": [tipos de seguidor], "texto": "Pero {seguidor}..." }.`);
+      } else {
+        for (const tipo of tipos as unknown[]) {
+          if (!TIPOS_SEGUIDOR.some(s => s.id === tipo)) errores.push(`${dondeFila}: "salvaSi": el seguidor "${String(tipo)}" no existe.`);
+        }
+      }
+    }
+    if (fila['texto'] === undefined && fila['efectos'] === undefined && fila['desviar'] === undefined && fila['paso'] === undefined && fila['evento'] === undefined && fila['llamar'] === undefined && fila['volverATirar'] === undefined) {
       errores.push(`${dondeFila}: está vacía (necesita al menos texto, efectos o por dónde se sigue).`);
     }
     if (fila['volverATirar'] !== undefined) {

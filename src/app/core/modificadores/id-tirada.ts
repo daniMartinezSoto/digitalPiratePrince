@@ -20,6 +20,7 @@ export const IDS_TIRADA = [
   'huida_naval', // huir de un combate naval (1d6, con 3-6 huyes)
   'tesoro', // la tirada del tesoro (E036): muy mala suerte, −3
   'tesoro_magico', // la tirada del tesoro mágico (E037): muy mala suerte, −3
+  'rocas', // el paso rocoso (E012): navegante y cartógrafo, +1 cada uno (decidido por el autor el 26-nov)
 ] as const;
 
 export type IdTirada = (typeof IDS_TIRADA)[number];

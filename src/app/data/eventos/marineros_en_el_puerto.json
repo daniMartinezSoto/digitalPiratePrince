@@ -1,0 +1,10 @@
+{
+  "id": "marineros_en_el_puerto",
+  "titulo": "Se corre la voz",
+  "pasos": {
+    "inicio": {
+      "texto": "En el puerto todos hablan de tu fiesta: algunos marineros piden unirse a tu tripulación.",
+      "efectos": [{ "tipo": "tripulacion", "cantidad": "2d6" }]
+    }
+  }
+}

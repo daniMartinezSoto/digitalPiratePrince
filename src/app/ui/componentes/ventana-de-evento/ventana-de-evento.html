@@ -50,13 +50,13 @@
                 }
                 @case ('opciones') {
                   @for (opcion of v.opciones; track $index) {
-                    <button type="button" [disabled]="!opcion.disponible" (click)="elegir($index, opcion.texto)">
-                      {{ opcion.texto }}@if (opcion.motivo) { ({{ textoDeMotivo[opcion.motivo] }}) }
+                    <button type="button" [disabled]="!opcion.disponible" (click)="elegir($index, textoDeOpcion(opcion))">
+                      {{ textoDeOpcion(opcion) }}@if (opcion.motivo) { ({{ textoDeMotivo[opcion.motivo] }}) }
                     </button>
                   }
                 }
                 @case ('tirada') {
-                  <button type="button" (click)="tirar()">{{ v.tirada!.boton ?? (v.tirada!.paraEncuentro ? '¿Contra quién luchas?' : 'Tirar') }} ({{ v.tirada!.dado }}@if (v.tirada!.modificador !== 0) { {{ v.tirada!.modificador > 0 ? '+' : '' }}{{ v.tirada!.modificador }} })</button>
+                  <button type="button" (click)="tirar()">{{ v.tirada!.boton ?? (v.tirada!.paraEncuentro ? '¿Contra quién luchas?' : 'Tirar') }} ({{ v.tirada!.dado }}@if (v.tirada!.multiplicador) {×{{ v.tirada!.multiplicador }}}@if (v.tirada!.modificador !== 0) { {{ v.tirada!.modificador > 0 ? '+' : '' }}{{ v.tirada!.modificador }} })</button>
                   @if (v.tirada!.puedeElegir) {
                     <button type="button" (click)="usarAmuleto()">Usar el amuleto del destino (se gasta y eliges el resultado)</button>
                   }

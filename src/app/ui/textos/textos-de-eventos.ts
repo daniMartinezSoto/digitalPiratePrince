@@ -2,12 +2,19 @@ import type { Lectura } from '../../core/estado/pila-eventos';
 import { ENEMIGOS } from '../../core/catalogos/cargar-enemigos';
 import type { OpcionVisible, ResultadoPosible, VistaDelEvento } from '../../core/eventos/motor';
 import { RECURSOS, type EfectoDefinicion, type TipoRecurso } from '../../core/tablas/efecto';
-import { describirCambio, NOMBRE_DE_RECURSO, nombreDeEvento, nombreDeObjeto, type NombresDeSeguidores } from './textos';
+import { describirCambio, NOMBRE_DE_RECURSO, nombreDeEvento, nombreDeObjeto, nombreDeTipoDeSeguidor, type NombresDeSeguidores } from './textos';
 
 // TEXTOS DE LOS EVENTOS (pantalla de pruebas, Sprint 10): lo que se lee en la ventana de eventos y
 // lo que se apunta en el registro. Solo traducen lo que devuelve el motor a frases.
 
 /** Por qué una opción sale desactivada. */
+/** Lo que pone el botón de una opción. En la lista de "hacer sitio": "Despedir a Bruno (Forzudo)" o "Mejor no". */
+export function textoDeOpcion(opcion: OpcionVisible): string {
+  if (opcion.despide) return `Despedir a ${opcion.despide.nombre} (${nombreDeTipoDeSeguidor(opcion.despide.tipo)})`;
+  if (opcion.volver) return 'Mejor no';
+  return opcion.texto;
+}
+
 export const TEXTO_DE_MOTIVO_DE_OPCION: Record<NonNullable<OpcionVisible['motivo']>, string> = {
   ya_lo_tienes: 'Ya lo tienes',
   grupo_lleno: 'Tu grupo está lleno',

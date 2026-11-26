@@ -2,6 +2,7 @@ import type { IdTirada } from '../modificadores/id-tirada';
 import type { Caracteristica } from '../chequeos/chequeo';
 import type { EnemigoPedido, OpcionesDeCombate } from '../combate/combate';
 import type { EfectoDefinicion } from '../tablas/efecto';
+import type { Direccion } from '../mapa/hexagonos';
 
 // FORMATO DE UN EVENTO (Sprint 10, paso 1). Cada evento vive en su propio archivo,
 // data/eventos/<id>.json, y se carga en core/eventos/cargar-eventos.ts.
@@ -58,6 +59,13 @@ export interface Rama {
   // (recibirAmuletoMaldito). Si ya llevas uno, no pasa nada. Si sale el deseo, se resuelve antes de seguir.
   amuletoMaldito?: boolean;
 
+  // Mueve al jugador (con el barco, si va a bordo) en línea recta, después de los efectos (E011, las
+  // velas dañadas: { "direccion": "NE", "pasos": 3 }). Usa desviar (core/viaje/mover.ts): a bordo solo
+  // por agua y a pie solo por tierra; se para antes de lo que no valga o del borde. Lo que salte al
+  // llegar (una condición que termina, una marca del mapa) se juega antes de seguir. "Al azar" = una
+  // tirada de 1d6 con una fila por dirección (libro: 1 SE · 2 S · 3 NE · 4 SO · 5 NO · 6 N).
+  desviar?: { direccion: Direccion; pasos: number };
+
   // Continuar en este paso del mismo evento.
   paso?: string;
 
@@ -89,6 +97,12 @@ export interface Paso extends Rama {
   combateNaval?: CombateNavalDeEvento;
   segun?: SegunDondeEstes;
 
+  // Según si LLEVAS algo (un objeto del inventario o una condición, como "saltarSiTiene"): se sigue solo
+  // por "si" o por "no" (la que no está escrita = termina). Las sirenas (E015, decidido por el autor el
+  // 26-nov): con la lira de las sirenas, te ofrecen curarte o llevarte hasta un cofre.
+  //   "siTiene": { "id": "lira_de_las_sirenas", "si": { "paso": "la_lira" }, "no": { "paso": "el_canto" } }
+  siTiene?: { id: string; si?: Rama; no?: Rama };
+
   // Se tira al entrar en el paso y se guarda mientras dure el evento (ver arriba).
   cantidad?: string;
 }
@@ -113,6 +127,12 @@ export interface Opcion {
 
   // Condiciones para poder elegirla. Si no se cumplen, el botón sale desactivado con el motivo.
   requiere?: Requisitos;
+
+  // true = "Hacerle sitio despidiendo a alguien" (decidido por el autor el 26-nov). Solo sale con el
+  // grupo lleno y alguien a quien se pueda despedir (los inseparables no). Al elegirla, el jugador ve
+  // sus seguidores ("Despedir a Bruno") y "Mejor no" (vuelve a las opciones). Al despedir a uno, se
+  // aplican los efectos con ese "despedir" en el ganar_seguidor (lleva uno, y solo uno) y se sigue.
+  hacerSitio?: boolean;
 
   efectos?: EfectoDefinicion[];
   paso?: string;
@@ -163,6 +183,19 @@ export interface TiradaDeEvento {
   // cuenta la primera fila. El tesoro con muy mala suerte: { "evento": "trampa" } (E029).
   siSaleMenosDe1?: Rama;
 
+  // La tirada decide la CANTIDAD del evento, a la vista: el total por este número se guarda como
+  // {cantidad} (el soborno del guardia: "1d6" con 5 = 5 a 30 monedas). Así se ve rodar el dado.
+  guardarCantidad?: number;
+
+  // true = se tira sola al llegar a este paso, sin botón ni dados a la vista: se ve directamente lo que
+  // toca (la fiesta, E007: después, 1d6 y con 5-6 aparece el borracho; decidido por el autor el 26-nov).
+  // El "boton" se escribe igual (lo pide el revisor y lo usa la pantalla de pruebas si hiciera falta).
+  oculta?: boolean;
+
+  // true = aquí no se puede usar el amuleto del destino (elegir el resultado). El amuleto maldito
+  // (E027): sus dos dados son la bendición y la maldición; elegir un total no tiene sentido (26-nov).
+  sinAmuletoDelDestino?: boolean;
+
   // Las filas, como en las tablas: sin huecos ni solapes y cubriendo lo que saca el dado.
   // Si el resultado se sale (con bonificadores), cuenta la primera o la última fila.
   filas: FilaDeEvento[];
@@ -180,6 +213,19 @@ export interface FilaDeEvento extends Rama {
   // siguiente (y así hasta una que valga; si es la última, a la anterior). La maldición (E022): si ya
   // tienes el maleficio del pirata y sale el 1, cuenta el 2. El tesoro mágico: el ídolo y la lira, uno solo.
   saltarSiTiene?: string;
+
+  // Un seguidor te libra de esta fila (E011, decidido por el autor el 26-nov: siempre, y si valen
+  // varios, el primero de tu grupo). Si llevas uno de estos tipos, se lee el texto de la fila (el
+  // problema que venía) y después el de "salvaSi", con {seguidor} cambiado por su nombre; y ahí se
+  // termina: nada de los efectos, el movimiento ni por dónde seguía la fila.
+  //   "salvaSi": { "seguidores": ["navegante", "cartografo"],
+  //                "texto": "Pero {seguidor} mira las estrellas... {seguidor} te ha librado de «¡Perdidos!»." }
+  salvaSi?: { seguidores: string[]; texto: string };
+
+  // true = esta fila solo cuenta si el DADO, sin bonificadores, cae en ella; si se llega con ellos,
+  // cuenta la fila anterior. El paso rocoso (E012, decidido por el autor el 26-nov): la fama, solo con
+  // un 6 natural; un 5 con +1 cuenta como 5.
+  soloNatural?: boolean;
 }
 
 /** Chequeo: 1d6 (+ modificador) ≤ la característica actual. */

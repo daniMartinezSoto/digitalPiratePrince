@@ -46,9 +46,9 @@
     "id": "el_navegante",
     "nombre": "El navegante",
     "nombreFemenino": "La navegante",
-    "descripcion": "Puede desplazarse 2 hexágonos por mar.",
+    "descripcion": "Puede desplazarse 2 hexágonos por mar. +1 al cruzar un paso rocoso.",
     "ajustes": {},
-    "modificadores": {}
+    "modificadores": { "rocas": 1 }
   },
   {
     "id": "el_superviviente",

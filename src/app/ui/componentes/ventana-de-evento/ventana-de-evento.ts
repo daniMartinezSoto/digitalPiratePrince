@@ -19,7 +19,7 @@ import { Jugar } from '../../servicios/jugar';
 import { MesaDeTiradas } from '../../servicios/mesa-de-tiradas';
 import { TrampasDeEventos } from '../../servicios/trampas-de-eventos';
 import { nombresDeSeguidores } from '../../textos/lineas-del-registro';
-import { etiquetaDeResultado, lecturasDeLaVista, lineasDeEvento, lineasDeLectura, NOMBRE_DE_CARACTERISTICA, TEXTO_DE_MOTIVO_DE_OPCION } from '../../textos/textos-de-eventos';
+import { etiquetaDeResultado, lecturasDeLaVista, lineasDeEvento, lineasDeLectura, NOMBRE_DE_CARACTERISTICA, TEXTO_DE_MOTIVO_DE_OPCION, textoDeOpcion } from '../../textos/textos-de-eventos';
 import { textoDeMuerte } from '../../textos/textos';
 import type { Lectura } from '../../../core/estado/pila-eventos';
 
@@ -73,6 +73,7 @@ export class VentanaDeEvento {
   protected readonly imagenVertical = signal(false);
 
   protected readonly textoDeMotivo = TEXTO_DE_MOTIVO_DE_OPCION;
+  protected readonly textoDeOpcion = textoDeOpcion;
 
   constructor() {
     // Cuando ya no hay evento, la próxima ventana sale desplegada.

@@ -5,7 +5,19 @@
   "pasos": {
     "inicio": {
       "texto": "Has conseguido un amuleto aparentemente inofensivo. Cuando lo coges, un fulgor misterioso empieza a brillar en su interior. Ya no puedes quitártelo: te dará una bendición y una maldición.",
-      "amuletoMaldito": true
+      "tirada": {
+        "dado": "2d6",
+        "boton": "Mirar el fulgor del amuleto",
+        "sinAmuletoDelDestino": true,
+        "filas": [
+          {
+            "min": 2,
+            "max": 12,
+            "texto": "El fulgor se apaga y el amuleto revela su poder.",
+            "amuletoMaldito": true
+          }
+        ]
+      }
     }
   }
 }

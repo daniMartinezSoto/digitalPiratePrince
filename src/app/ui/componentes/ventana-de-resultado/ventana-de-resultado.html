@@ -1,0 +1,14 @@
+@if (resultado(); as r) {
+  <section class="ventana" role="status" [attr.aria-label]="r.titulo" title="Se va sola (clic para quitarla ya)"
+    (click)="cerrar()" (mouseenter)="retener()" (mouseleave)="soltar()">
+    <h2>{{ r.titulo }}</h2>
+    @if (imagen(); as img) {
+      <img [src]="img" [alt]="r.titulo" />
+    }
+    <ul class="lectura">
+      @for (linea of r.lineas; track $index) {
+        <li>{{ linea }}</li>
+      }
+    </ul>
+  </section>
+}

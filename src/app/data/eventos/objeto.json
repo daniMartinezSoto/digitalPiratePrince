@@ -1,0 +1,243 @@
+{
+  "id": "objeto",
+  "titulo": "Objeto flotante no identificado",
+  "libro": "E014",
+  "pasos": {
+    "inicio": {
+      "texto": "Algo flota a lo lejos, meciéndose entre las olas. Desde aquí es imposible saber qué es.",
+      "opciones": [
+        {
+          "texto": "Acercarse a investigar",
+          "paso": "investigar"
+        },
+        {
+          "texto": "Seguir tu rumbo"
+        }
+      ]
+    },
+    "investigar": {
+      "tirada": {
+        "dado": "2d6",
+        "boton": "¿Qué será?",
+        "filas": [
+          {
+            "min": 2,
+            "max": 3,
+            "texto": "Es un barril misterioso. Pensando que puede llevar víveres o algo de valor, lo subís a bordo... pero a tus torpes marineros se les cae de golpe sobre la cubierta. ¡Era un barril de pólvora!",
+            "efectos": [
+              {
+                "tipo": "tripulacion",
+                "cantidad": "-2d6"
+              }
+            ]
+          },
+          {
+            "min": 4,
+            "max": 6,
+            "texto": "Es un cuerpo flotando en el agua. Parece que lleva encima algo de valor, así que lo subís a bordo.",
+            "paso": "cuerpo"
+          },
+          {
+            "min": 7,
+            "max": 7,
+            "texto": "Un bote a punto de hundirse, con unos cuantos piratas que os piden ayuda a gritos. Los subís a bordo y se unen a tu tripulación.",
+            "efectos": [
+              {
+                "tipo": "tripulacion",
+                "cantidad": "1d6"
+              }
+            ]
+          },
+          {
+            "min": 8,
+            "max": 9,
+            "texto": "Es una caja flotante. La subís a bordo y la abrís.",
+            "paso": "caja"
+          },
+          {
+            "min": 10,
+            "max": 10,
+            "texto": "Es un frasco de cristal bien tapado... con un mapa dentro.",
+            "evento": "mapa_misterioso"
+          },
+          {
+            "min": 11,
+            "max": 12,
+            "texto": "Sobre un tablón, una persona agotada os pide ayuda. Le salvas la vida y, desde hoy, está en deuda contigo.",
+            "paso": "naufrago"
+          }
+        ]
+      }
+    },
+    "cuerpo": {
+      "tirada": {
+        "dado": "1d6",
+        "boton": "Registrar el cuerpo",
+        "filas": [
+          {
+            "min": 1,
+            "max": 1,
+            "texto": "El cadáver no lleva nada de valor.",
+            "paso": "contagio"
+          },
+          {
+            "min": 2,
+            "max": 2,
+            "texto": "Lleva una pequeña bolsa con algunas monedas de oro.",
+            "efectos": [
+              {
+                "tipo": "oro",
+                "cantidad": 20
+              }
+            ],
+            "paso": "contagio"
+          },
+          {
+            "min": 3,
+            "max": 3,
+            "texto": "Lleva una bolsa bien gorda de monedas de oro.",
+            "efectos": [
+              {
+                "tipo": "oro",
+                "cantidad": 40
+              }
+            ],
+            "paso": "contagio"
+          },
+          {
+            "min": 4,
+            "max": 4,
+            "texto": "Su mano agarra con fuerza un trozo de papel...",
+            "llamar": "mapa_misterioso",
+            "paso": "contagio"
+          },
+          {
+            "min": 5,
+            "max": 5,
+            "texto": "En su bolsa lleva algo de valor.",
+            "llamar": "tesoro",
+            "paso": "contagio"
+          },
+          {
+            "min": 6,
+            "max": 6,
+            "texto": "Del cuello le cuelga un extraño amuleto.",
+            "llamar": "amuleto_maldito",
+            "paso": "contagio"
+          }
+        ]
+      }
+    },
+    "contagio": {
+      "tirada": {
+        "dado": "1d6",
+        "boton": "¿Estaría enfermo?",
+        "oculta": true,
+        "filas": [
+          {
+            "min": 1,
+            "max": 2,
+            "texto": "Al día siguiente, algunos de los que tocaron el cadáver amanecen con fiebre...",
+            "evento": "pandemia"
+          },
+          {
+            "min": 3,
+            "max": 6,
+            "texto": "Devolvéis el cuerpo al mar con una breve oración."
+          }
+        ]
+      }
+    },
+    "caja": {
+      "tirada": {
+        "dado": "1d6",
+        "boton": "Abrir la caja",
+        "filas": [
+          {
+            "min": 1,
+            "max": 1,
+            "texto": "Dentro solo hay documentos mojados e ilegibles."
+          },
+          {
+            "min": 2,
+            "max": 2,
+            "texto": "Dentro de la caja... hay otra caja.",
+            "volverATirar": true
+          },
+          {
+            "min": 3,
+            "max": 3,
+            "texto": "Está llena de víveres: fruta y botellas de agua potable.",
+            "efectos": [
+              {
+                "tipo": "comida",
+                "cantidad": 10
+              }
+            ]
+          },
+          {
+            "min": 4,
+            "max": 4,
+            "texto": "Dentro hay un cofrecito lleno de monedas.",
+            "efectos": [
+              {
+                "tipo": "oro",
+                "cantidad": 50
+              }
+            ]
+          },
+          {
+            "min": 5,
+            "max": 5,
+            "texto": "Dentro hay algo de valor.",
+            "evento": "tesoro"
+          },
+          {
+            "min": 6,
+            "max": 6,
+            "texto": "¡Es tu día de suerte! Dentro hay algo muy especial...",
+            "evento": "tesoro_magico"
+          }
+        ]
+      }
+    },
+    "naufrago": {
+      "texto": "Podría acompañarte como seguidor, para siempre. O, si no tienes sitio o no lo quieres a tu lado, trabajar como uno más de tu tripulación.",
+      "opciones": [
+        {
+          "texto": "Que te acompañe como seguidor",
+          "requiere": {
+            "puedeGanarSeguidor": true
+          },
+          "efectos": [
+            {
+              "tipo": "ganar_seguidor",
+              "seguidor": "al_azar",
+              "inseparable": true
+            }
+          ]
+        },
+        {
+          "texto": "Hacerle sitio despidiendo a alguien",
+          "hacerSitio": true,
+          "efectos": [
+            {
+              "tipo": "ganar_seguidor",
+              "seguidor": "al_azar",
+              "inseparable": true
+            }
+          ]
+        },
+        {
+          "texto": "Que se una a la tripulación",
+          "efectos": [
+            {
+              "tipo": "tripulacion",
+              "cantidad": 1
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

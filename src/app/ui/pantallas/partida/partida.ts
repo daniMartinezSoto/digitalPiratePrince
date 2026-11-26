@@ -11,7 +11,8 @@ import { RegistroDeLaPartida } from '../../componentes/registro/registro';
 import { Trampas } from '../../componentes/trampas/trampas';
 import { Combate } from '../../componentes/combate/combate';
 import { CombateDePrueba } from '../../componentes/combate-de-prueba/combate-de-prueba';
-import { CombateNaval } from '../../componentes/combate-naval/combate-naval';
+import { VentanaDeAccion } from '../../componentes/ventana-de-accion/ventana-de-accion';
+import { VentanaDeResultado } from '../../componentes/ventana-de-resultado/ventana-de-resultado';
 import { Objetos } from '../../componentes/objetos/objetos';
 import { NOMBRE_DE_FASE, textoDeFin, textoDeMuerte } from '../../textos/textos';
 import { progresoDePuertos } from '../../../core/viaje/puertos-principales';
@@ -42,7 +43,7 @@ const TEXTO_DE_AVISO: Record<AvisoDeGuardado, string> = {
 // terminado, lo dice y ofrece empezar otra. Todo lo que cambia la partida se pide al store.
 @Component({
   selector: 'app-pantalla-partida',
-  imports: [HojaPersonaje, DondeEstas, PanelDelDia, RegistroDeLaPartida, Trampas, Combate, CombateDePrueba, CombateNaval, Objetos, MapaDelJuego, DadosEnElMapa, VentanaDeEvento, VentanaDeCombate],
+  imports: [HojaPersonaje, DondeEstas, PanelDelDia, RegistroDeLaPartida, Trampas, Combate, CombateDePrueba, VentanaDeAccion, VentanaDeResultado, Objetos, MapaDelJuego, DadosEnElMapa, VentanaDeEvento, VentanaDeCombate],
   host: { '[class.panel-plegado]': 'panelPlegado()' },
   templateUrl: './partida.html',
   styleUrl: './partida.css',

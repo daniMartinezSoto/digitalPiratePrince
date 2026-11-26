@@ -47,14 +47,14 @@
           {
             "min": 5,
             "max": 5,
-            "texto": "Un amuleto de aspecto inofensivo... hasta que un fulgor misterioso empieza a brillar en su interior.",
+            "texto": "Un amuleto de aspecto inofensivo...",
             "efectos": [
               {
                 "tipo": "fama",
                 "cantidad": 1
               }
             ],
-            "amuletoMaldito": true
+            "evento": "amuleto_maldito"
           },
           {
             "min": 6,

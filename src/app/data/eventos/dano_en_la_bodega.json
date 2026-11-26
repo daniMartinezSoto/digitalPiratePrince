@@ -1,0 +1,68 @@
+{
+  "id": "dano_en_la_bodega",
+  "titulo": "Daño en la bodega",
+  "libro": "E006",
+  "pasos": {
+    "inicio": {
+      "texto": "Una tormenta feroz, un combate naval o un accidente imprevisto ha causado daños en la bodega de tu barco.",
+      "tirada": {
+        "dado": "1d6",
+        "boton": "Revisar los daños",
+        "filas": [
+          {
+            "min": 1,
+            "max": 1,
+            "texto": "La bodega de los alimentos se está inundando. Pierdes tripulantes intentando achicar agua y toda tu comida se echa a perder.",
+            "efectos": [
+              { "tipo": "tripulacion", "cantidad": "-2d6" },
+              { "tipo": "comida", "operacion": "todo" }
+            ]
+          },
+          {
+            "min": 2,
+            "max": 2,
+            "texto": "Daños graves en varias bodegas.",
+            "efectos": [{ "tipo": "tripulacion", "cantidad": "-3d6" }]
+          },
+          {
+            "min": 3,
+            "max": 3,
+            "texto": "Daños moderados.",
+            "efectos": [{ "tipo": "tripulacion", "cantidad": "-2d6" }]
+          },
+          {
+            "min": 4,
+            "max": 4,
+            "texto": "Daños leves.",
+            "efectos": [{ "tipo": "tripulacion", "cantidad": "-1d6" }]
+          },
+          {
+            "min": 5,
+            "max": 5,
+            "texto": "Los daños son menores, pero tenéis que invertir un día en reparar la bodega antes de continuar.",
+            "efectos": [
+              { "tipo": "tripulacion", "cantidad": -2 },
+              { "tipo": "perder_turnos", "cantidad": 1 }
+            ]
+          },
+          {
+            "min": 6,
+            "max": 6,
+            "texto": "Daños insignificantes.",
+            "efectos": [{ "tipo": "tripulacion", "cantidad": -2 }],
+            "paso": "inspeccion"
+          }
+        ]
+      }
+    },
+    "inspeccion": {
+      "texto": "Aprovechas para inspeccionar las bodegas y los camarotes.",
+      "chequeo": {
+        "caracteristica": "ingenio",
+        "boton": "Inspeccionar",
+        "exito": { "texto": "Entre los barriles descubres algo... o a alguien.", "evento": "polizon" },
+        "fallo": { "texto": "No encuentras nada fuera de lo normal." }
+      }
+    }
+  }
+}

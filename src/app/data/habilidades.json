@@ -45,8 +45,9 @@
   {
     "id": "navegacion",
     "nombre": "Navegación",
-    "descripcion": "Puedes avanzar 2 hexágonos al viajar por mar.",
-    "tipo": "pasiva"
+    "descripcion": "Puedes avanzar 2 hexágonos al viajar por mar. +1 al cruzar un paso rocoso.",
+    "tipo": "pasiva",
+    "modificadores": { "rocas": 1 }
   },
   {
     "id": "manos_largas",
@@ -77,7 +78,8 @@
   {
     "id": "cartografia",
     "nombre": "Cartografía",
-    "descripcion": "Sabe leer los mapas misteriosos: con él ves qué te espera en el destino de cada mapa (sin él, solo ves la X). Nueva acción, Dibujar mapa: por 30 monedas de oro te dibuja un mapa misterioso. +1 cuando estás perdido en la niebla.",
-    "tipo": "activa"
+    "descripcion": "Sabe leer los mapas misteriosos: con él ves qué te espera en el destino de cada mapa (sin él, solo ves la X). Nueva acción, Dibujar mapa: por 30 monedas de oro te dibuja un mapa misterioso. +1 cuando estás perdido en la niebla y al cruzar un paso rocoso.",
+    "tipo": "activa",
+    "modificadores": { "rocas": 1 }
   }
 ]

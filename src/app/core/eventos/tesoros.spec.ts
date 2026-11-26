@@ -12,6 +12,7 @@ import { crearPartida } from '../partida/crear-partida';
 import { crearPersonaje } from '../personaje/crear-personaje';
 import { continuarEvento, lanzarEventos, tirarDadosDelEvento, vistaDelEvento } from './motor';
 import sobrenombres from '../../data/personaje/sobrenombres.json';
+import { AMULETO_MALDITO } from '../amuleto-maldito/cargar-amuleto-maldito';
 
 // Sprint 12, bloque 1 (tesoros): cofre (E021), tesoro (E036), tesoro mágico (E037), trampa (E029),
 // maldición (E022) y amuleto maldito (E027), con los eventos reales de data/eventos/ y el motor.
@@ -108,10 +109,23 @@ describe('el tesoro mágico (E037)', () => {
     expect(motivoParaNoSoltar(pocos, 0)).toBeUndefined();
   });
 
-  it('el 5 da el amuleto maldito y el punto de fama de objeto mágico', () => {
+  it('el 5 da el punto de fama de objeto mágico y lleva al amuleto maldito', () => {
     const r = tirar('tesoro_magico', 5);
-    expect(r.estado.jugador.condiciones.map(c => c.id)).toContain('amuleto_maldito');
-    expect(r.estado.jugador.fama).toBeGreaterThanOrEqual(1);
+    expect(r.estado.jugador.fama).toBe(1);
+    expect(vistaDelEvento(continuarEvento(r.estado, new Dados(1)).estado)!.titulo).toBe('Amuleto maldito');
+  });
+});
+
+describe('el amuleto maldito (E027)', () => {
+  it('se tiran 2d6 a la vista: el primer dado es la bendición y el segundo la maldición', () => {
+    const dados = new Dados(4);
+    const salido = lanzarEventos(estadoCon(), ['amuleto_maldito'], dados).estado;
+    expect(vistaDelEvento(salido)!.tirada).toMatchObject({ dado: '2d6' });
+    const r = tirarDadosDelEvento(salido, dados);
+    const [b, m] = vistaDelEvento(r.estado)!.lectura!.tirada!.dados;
+    const amuleto = r.estado.jugador.condiciones.find(c => c.id === 'amuleto_maldito')!;
+    const esperadas = [AMULETO_MALDITO.bendiciones[b - 1], AMULETO_MALDITO.maldiciones[m - 1]].flatMap(x => (x.condicion ? [x.condicion] : []));
+    expect(amuleto.partes).toEqual(esperadas);
   });
 });
 

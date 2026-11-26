@@ -1,0 +1,9 @@
+{
+  "id": "escorbuto_curado",
+  "titulo": "Por fin, tierra",
+  "pasos": {
+    "inicio": {
+      "texto": "Al tocar tierra os abastecéis de fruta y comida fresca: la tripulación se recupera del escorbuto."
+    }
+  }
+}

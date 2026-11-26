@@ -22,7 +22,7 @@ describe('cargar condiciones', () => {
 
   it('el escorbuto tira en su tabla cada turno y se quita al tocar tierra', () => {
     expect(obtenerCondicion('escorbuto').cadaTurno).toEqual({ tabla: 'escorbuto' });
-    expect(obtenerCondicion('escorbuto').alLlegar).toEqual({ lugar: 'tierra' });
+    expect(obtenerCondicion('escorbuto').alLlegar).toEqual({ lugar: 'tierra', evento: 'escorbuto_curado' });
   });
 
   it('las pistas sobre la criatura dan +1 en la tabla de el mal', () => {

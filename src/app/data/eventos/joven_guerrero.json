@@ -1,0 +1,42 @@
+{
+  "id": "joven_guerrero",
+  "titulo": "Un joven guerrero",
+  "pasos": {
+    "inicio": {
+      "texto": "Un joven guerrero de la aldea se planta ante ti. Quiere ver mundo, y está dispuesto a seguirte allá donde vayas.",
+      "opciones": [
+        {
+          "texto": "Que te acompañe como seguidor",
+          "requiere": {
+            "puedeGanarSeguidor": true
+          },
+          "efectos": [
+            {
+              "tipo": "ganar_seguidor",
+              "seguidor": "nativo"
+            }
+          ]
+        },
+        {
+          "texto": "Hacerle sitio despidiendo a alguien",
+          "hacerSitio": true,
+          "efectos": [
+            {
+              "tipo": "ganar_seguidor",
+              "seguidor": "nativo"
+            }
+          ]
+        },
+        {
+          "texto": "Que se una a la tripulación",
+          "efectos": [
+            {
+              "tipo": "tripulacion",
+              "cantidad": 1
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

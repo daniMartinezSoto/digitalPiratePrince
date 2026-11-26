@@ -32,7 +32,7 @@
     "descripcion": "La falta de alimentos frescos enferma a la tripulación. Cada turno sin tocar tierra pierdes tripulantes.",
     "categoria": "enfermedad",
     "cadaTurno": { "tabla": "escorbuto" },
-    "alLlegar": { "lugar": "tierra" }
+    "alLlegar": { "lugar": "tierra", "evento": "escorbuto_curado" }
   },
   {
     "id": "hambre",
@@ -211,5 +211,12 @@
     "descripcion": "Con esa pinta, los seguidores te cobran 10 monedas de oro menos al contratarlos.",
     "categoria": "otra",
     "ajustes": { "precioSeguidores": -10 }
+  },
+  {
+    "id": "se_corre_la_voz",
+    "nombre": "Se corre la voz",
+    "descripcion": "Tu fiesta a bordo fue sonada. Al llegar a un puerto, 2d6 marineros querrán unirse a tu tripulación.",
+    "categoria": "otra",
+    "alLlegar": { "lugar": "puerto", "evento": "marineros_en_el_puerto" }
   }
 ]

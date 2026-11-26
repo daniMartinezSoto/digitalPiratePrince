@@ -1,0 +1,30 @@
+/* Pantalla de pruebas: estilos mínimos, los de la ventana de eventos (encima del mapa y de las demás ventanas). */
+.ventana {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50%;
+  min-width: 300px;
+  max-height: 85%;
+  overflow: auto;
+  z-index: 4; /* va después en la página que las otras ventanas: queda encima; los dados (5), por encima */
+  background: #fff;
+  border: 2px solid #333;
+  padding: 8px 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+}
+.ventana h2 {
+  margin: 0 0 6px;
+}
+.ventana img {
+  max-width: 100%;
+  max-height: 240px;
+  display: block;
+  margin: 0 auto 6px;
+}
+.lectura {
+  margin: 4px 0 8px;
+  padding-left: 18px;
+}

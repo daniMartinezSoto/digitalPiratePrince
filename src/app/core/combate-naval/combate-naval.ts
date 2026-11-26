@@ -30,11 +30,17 @@ import { resolverEfecto } from '../tablas/rangos/resolver-tabla';
 // Orden de los dados (importa para la reproducibilidad): al empezar, el daño del barco si es con
 // dados ("1d6"); en cada duelo, primero tu dado y después el suyo (y otra pareja por cada empate);
 // al huir, un dado; al abordar, los del combate normal (cantidades y parejas); al cerrar, la
-// recompensa y, si abordaste, el botín y después la tirada de tesoro (un número del 1 al 100).
+// recompensa y, si abordaste, el botín y después la tirada de tesoro (un número del 1 al 100); al ganar, por último,
+// la tirada de la fiesta (otro número del 1 al 100).
 
 /** Id del evento del tesoro (E036) y del daño en la bodega (E006): pendientes hasta que existan. */
 export const EVENTO_TESORO = 'tesoro';
 export const EVENTO_DANO_EN_LA_BODEGA = 'dano_en_la_bodega';
+
+/** Al ganar un combate naval, la tripulación puede celebrarlo con una fiesta en tu honor (E007). */
+export const EVENTO_FIESTA = 'fiesta';
+/** Porcentaje de esa fiesta (regla nueva del autor, 26-nov: 20 %). */
+export const PROBABILIDAD_FIESTA = 20;
 
 /** Huir sale bien con este número o más en 1d6 (decidido por el autor: 3-6). */
 export const DADO_PARA_HUIR = 3;
@@ -360,6 +366,9 @@ export function cerrarCombateNaval(estado: Estado, dados: Dados, barcos: readonl
       const probabilidadTesoro = forma === 'abordado' ? (barco.botinAbordaje?.probabilidadTesoro ?? 0) : 0;
       if (probabilidadTesoro > 0 && dados.entero(1, 100) <= probabilidadTesoro) {
         eventos.push(EVENTO_TESORO);
+      }
+      if (dados.entero(1, 100) <= PROBABILIDAD_FIESTA) {
+        eventos.push(EVENTO_FIESTA);
       }
     } else if (resultado === 'huida') {
       eventos.push(EVENTO_DANO_EN_LA_BODEGA);

@@ -1,0 +1,123 @@
+{
+  "id": "polizon",
+  "titulo": "¡Polizón!",
+  "libro": "E016",
+  "pasos": {
+    "inicio": {
+      "texto": "La tripulación murmura con recelo: se rumorea que hay un polizón a bordo.",
+      "tirada": {
+        "dado": "1d6",
+        "boton": "Registrar el barco",
+        "filas": [
+          {
+            "min": 1,
+            "max": 1,
+            "texto": "Son dos, y al verse acorralados sacan los cuchillos.",
+            "paso": "pelea"
+          },
+          {
+            "min": 2,
+            "max": 2,
+            "texto": "El polizón es un hombre enfermo que huía de una cuarentena en otro barco...",
+            "evento": "pandemia"
+          },
+          {
+            "min": 3,
+            "max": 3,
+            "texto": "El polizón es un loco. Al verse descubierto, se abre paso a cuchilladas por la cubierta, te hiere y se tira por la borda.",
+            "efectos": [
+              {
+                "tipo": "tripulacion",
+                "cantidad": "-1d6"
+              },
+              {
+                "tipo": "vida",
+                "cantidad": -1
+              }
+            ]
+          },
+          {
+            "min": 4,
+            "max": 4,
+            "texto": "El polizón es solo un náufrago desesperado. Le das una oportunidad y se une a tu tripulación.",
+            "efectos": [
+              {
+                "tipo": "tripulacion",
+                "cantidad": 1
+              }
+            ]
+          },
+          {
+            "min": 5,
+            "max": 5,
+            "texto": "El polizón es un indígena hábil y fuerte. Como disculpa por colarse en tu barco, te entrega algo de valor... y se ofrece a quedarse contigo.",
+            "llamar": "tesoro",
+            "paso": "nativo"
+          },
+          {
+            "min": 6,
+            "max": 6,
+            "texto": "El polizón es un fugitivo que huye de la ley. Quizá podría resultarte útil...",
+            "evento": "fugitivo"
+          }
+        ]
+      }
+    },
+    "pelea": {
+      "combate": {
+        "enemigos": [
+          {
+            "enemigo": "pirata",
+            "cantidad": 2,
+            "recompensa": [
+              {
+                "tipo": "oro",
+                "cantidad": "1d6x2"
+              }
+            ]
+          }
+        ],
+        "boton": "Defenderte",
+        "victoria": {
+          "texto": "Los dos polizones yacen en la cubierta. Registras sus cosas."
+        }
+      }
+    },
+    "nativo": {
+      "texto": "¿Qué haces con él?",
+      "opciones": [
+        {
+          "texto": "Que te acompañe como seguidor",
+          "requiere": {
+            "puedeGanarSeguidor": true
+          },
+          "efectos": [
+            {
+              "tipo": "ganar_seguidor",
+              "seguidor": "nativo"
+            }
+          ]
+        },
+        {
+          "texto": "Hacerle sitio despidiendo a alguien",
+          "hacerSitio": true,
+          "efectos": [
+            {
+              "tipo": "ganar_seguidor",
+              "seguidor": "nativo"
+            }
+          ]
+        },
+        {
+          "texto": "Que se una a la tripulación",
+          "efectos": [
+            {
+              "tipo": "tripulacion",
+              "cantidad": 1
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

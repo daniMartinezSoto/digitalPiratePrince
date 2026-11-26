@@ -77,7 +77,9 @@
           (embarqueElegido)="embarcarODesembarcar($event)"
         />
         <app-ventana-de-evento />
+        <app-ventana-de-accion />
         <app-ventana-de-combate />
+        <app-ventana-de-resultado />
         <app-dados-en-el-mapa />
       </div>
       <p class="opciones-del-mapa">
@@ -111,7 +113,7 @@
           }
           <button type="button" (click)="nuevaPartida()">Nueva partida</button>
         } @else if (estado.mundo.combateNaval) {
-          <app-combate-naval />
+          <p class="fin">Hay un combate naval en curso: lucha en la ventana del mapa.</p>
         } @else if (estado.mundo.combate) {
           <p class="fin">Hay un combate en curso: lucha en la ventana del mapa.</p>
         } @else if (hayEvento()) {

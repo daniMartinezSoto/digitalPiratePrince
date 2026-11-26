@@ -5,6 +5,8 @@ import type { Jugador } from '../estado/jugador';
 import { guardarPartida } from '../guardado/guardar-partida';
 import { leerPartida } from '../guardado/leer-partida';
 import { crearPartida } from '../partida/crear-partida';
+import { DIRECCIONES } from '../mapa/hexagonos';
+import { desviar } from '../viaje/mover';
 import type { Evento } from './evento';
 import {
   cerrarCombateDelEvento,
@@ -28,6 +30,22 @@ import { validarEventos } from './validar-evento';
 
 const EVENTOS_DE_PRUEBA = [
   { id: 'sencillo', titulo: 'Sencillo', pasos: { inicio: { texto: 'Hola', efectos: [{ tipo: 'oro', cantidad: 10 }] } } },
+  {
+    // Como la fiesta (E007): una tirada a la vista y, después, otra que se tira sola.
+    id: 'oculta',
+    titulo: 'Oculta',
+    pasos: {
+      inicio: { texto: 'Brindis', tirada: { dado: '1d6', boton: 'Brindar', filas: [{ min: 1, max: 6, texto: 'Salud', paso: 'resaca' }] } },
+      resaca: {
+        tirada: {
+          dado: '1d6',
+          boton: '¿Resaca?',
+          oculta: true,
+          filas: [{ min: 1, max: 4, texto: 'Sin resaca' }, { min: 5, max: 6, texto: 'Te duele la cabeza', efectos: [{ tipo: 'oro', cantidad: -1 }] }],
+        },
+      },
+    },
+  },
   {
     id: 'elegir',
     titulo: 'Elegir',
@@ -220,6 +238,43 @@ describe('motor de eventos', () => {
   });
 
   describe('tiradas', () => {
+    it('"soloNatural": la fila solo cuenta con el dado sin bonificadores; si no, la anterior', () => {
+      const evento = {
+        id: 'natural',
+        titulo: 'Natural',
+        pasos: {
+          inicio: {
+            tirada: {
+              dado: '1d6', boton: 'Tirar', modificador: 1,
+              filas: [{ min: 1, max: 4, texto: 'Bajo' }, { min: 5, max: 5, texto: 'Cinco' }, { min: 6, max: 6, texto: 'Seis', soloNatural: true }],
+            },
+          },
+        },
+      } as unknown as Evento;
+      const tirarCon = (dado: number) =>
+        vistaDelEvento(tirarDadosDelEvento(lanzarEventos(estadoCon(), ['natural'], new Dados(1), [evento]).estado, dadosTrucados([dado]), {}, [evento]).estado, [evento])!.texto;
+
+      expect(tirarCon(5)).toBe('Cinco'); // 5 + 1 = 6, pero el dado no es un 6
+      expect(tirarCon(6)).toBe('Seis'); // 6 + 1 = 7 → la última fila, y el dado sí es un 6
+      expect(tirarCon(4)).toBe('Cinco'); // 4 + 1 = 5: la fila 5 no pide nada
+    });
+
+    it('"oculta": se tira sola al llegar al paso, sin botón, con los mismos dados', () => {
+      const oro = estadoCon().jugador.oro;
+
+      const conResaca = dadosTrucados([3, 6]);
+      const r = tirar(lanzar(estadoCon(), ['oculta']), conResaca);
+      expect(conResaca.restantes()).toBe(0);
+      expect(vista(r)!.modo).toBe('continuar');
+      expect(r.estado.jugador.oro).toBe(oro - 1);
+
+      const sinResaca = dadosTrucados([3, 2]);
+      const s = tirar(lanzar(estadoCon(), ['oculta']), sinResaca);
+      expect(sinResaca.restantes()).toBe(0);
+      expect(vista(s)!.modo).toBe('continuar');
+      expect(s.estado.jugador.oro).toBe(oro);
+    });
+
     it('enseña el botón de tirar con el dado', () => {
       const r = lanzar(estadoCon(), ['tirada']);
       expect(vista(r)).toMatchObject({ modo: 'tirada', texto: 'Tira el dado', tirada: { dado: '1d6', modificador: 0, minimo: 1, maximo: 6, puedeElegir: false } });
@@ -348,6 +403,88 @@ describe('motor de eventos', () => {
       const r = hacerChequeo(lanzar(estadoCon(), ['chequeo']).estado, dadosTrucados([]), { dadoTrucado: 6 }, EVENTOS_DE_PRUEBA);
       expect(vista(r)!.lectura!.chequeo).toMatchObject({ dado: 6, superado: false });
       expect(() => hacerChequeo(lanzar(estadoCon(), ['chequeo']).estado, dadosTrucados([]), { dadoTrucado: 7 }, EVENTOS_DE_PRUEBA)).toThrow(/del 1 al 6/);
+    });
+  });
+
+  describe('siTiene (según si llevas algo)', () => {
+    const evento = {
+      id: 'lira',
+      titulo: 'Lira',
+      pasos: {
+        inicio: { texto: 'Un canto', siTiene: { id: 'lira_de_las_sirenas', si: { texto: 'Te reconocen', paso: 'regalo' }, no: { texto: 'No te conocen' } } },
+        regalo: { texto: 'Un regalo', efectos: [{ tipo: 'oro', cantidad: 7 }] },
+      },
+    } as unknown as Evento;
+    const jugar = (estado: Estado) => lanzarEventos(estado, ['lira'], new Dados(1), [evento]);
+
+    it('si lo llevas, sigue por "si" (y se leen los textos juntos)', () => {
+      const estado = estadoCon({ inventario: [{ id: 'lira_de_las_sirenas' }] });
+      const r = jugar(estado);
+      expect(r.estado.jugador.oro).toBe(estado.jugador.oro + 7);
+    });
+
+    it('si no, por "no"', () => {
+      const estado = estadoCon();
+      const r = jugar(estado);
+      expect(r.estado.jugador.oro).toBe(estado.jugador.oro);
+      expect(vistaDelEvento(r.estado, [evento])!.texto).toBe('Un canto\n\nNo te conocen');
+    });
+  });
+
+  describe('salvaSi (un seguidor te libra de la fila)', () => {
+    const evento = {
+      id: 'brujula',
+      titulo: 'Brújula',
+      pasos: {
+        inicio: {
+          tirada: {
+            dado: '1d6', boton: 'Mirar',
+            filas: [{
+              min: 1, max: 6, texto: 'La brújula se ha vuelto loca.', efectos: [{ tipo: 'oro', cantidad: -5 }], evento: 'sencillo',
+              salvaSi: { seguidores: ['navegante', 'cartografo'], texto: 'Pero {seguidor} os devuelve al rumbo. {seguidor} te ha librado.' },
+            }],
+          },
+        },
+      },
+    } as unknown as Evento;
+    const conSeguidor = (tipo: string) =>
+      estadoCon({ seguidores: [{ id: `${tipo}_1`, tipo, nombre: 'Tomás', ataque: 1, resistencia: 8, resistenciaMaxima: 8, habilidades: [] }] });
+    const tirarBrujula = (estado: Estado) => tirarDadosDelEvento(lanzarEventos(estado, ['brujula'], new Dados(1), [evento, ...EVENTOS_DE_PRUEBA]).estado, dadosTrucados([3]), {}, [evento, ...EVENTOS_DE_PRUEBA]);
+
+    it('con uno de esos seguidores: se lee el problema y cómo te libra, por su nombre, y nada más', () => {
+      const estado = conSeguidor('cartografo');
+      const r = tirarBrujula(estado);
+      const lectura = vistaDelEvento(r.estado, [evento, ...EVENTOS_DE_PRUEBA])!;
+
+      expect(lectura.texto).toBe('La brújula se ha vuelto loca.\n\nPero Tomás os devuelve al rumbo. Tomás te ha librado.');
+      expect(r.estado.jugador.oro).toBe(estado.jugador.oro);
+      expect(r.pendientes).toEqual([]);
+      expect(continuarEvento(r.estado, new Dados(1), [evento, ...EVENTOS_DE_PRUEBA]).terminado).toBe(true);
+    });
+
+    it('sin él (o con otro tipo), la fila de siempre', () => {
+      const estado = conSeguidor('forzudo');
+      const r = tirarBrujula(estado);
+
+      expect(vistaDelEvento(r.estado, [evento, ...EVENTOS_DE_PRUEBA])!.texto).toBe('La brújula se ha vuelto loca.');
+      expect(r.estado.jugador.oro).toBe(estado.jugador.oro - 5);
+    });
+  });
+
+  describe('desviar (moverse desde un evento)', () => {
+    it('mueve igual que desviar() en línea recta, después de los efectos', () => {
+      const estado = estadoCon();
+      let alguienSeMueve = false;
+      for (const direccion of DIRECCIONES) {
+        const evento = { id: 'deriva', titulo: 'Deriva', pasos: { inicio: { texto: 'El viento', efectos: [{ tipo: 'oro', cantidad: 1 }], desviar: { direccion, pasos: 3 } } } } as unknown as Evento;
+        const r = lanzarEventos(estado, ['deriva'], new Dados(1), [evento]);
+        const esperado = desviar(estado, direccion, 3, new Dados(1)).estado.mundo.posicion;
+
+        expect(r.estado.mundo.posicion).toEqual(esperado);
+        expect(r.estado.jugador.oro).toBe(estado.jugador.oro + 1);
+        if (esperado.col !== estado.mundo.posicion.col || esperado.fila !== estado.mundo.posicion.fila) alguienSeMueve = true;
+      }
+      expect(alguienSeMueve).toBe(true);
     });
   });
 

@@ -47,10 +47,6 @@ import {
 } from '../../textos/textos';
 import { sitioActual } from '../../../core/mapa/sitio-actual';
 import type { Coordenada } from '../../../core/mapa/mapa';
-import { Marineros } from '../marineros/marineros';
-import { Mercado } from '../mercado/mercado';
-import { MesaDeDados } from '../mesa-de-dados/mesa-de-dados';
-import { SeguidorEnEspera } from '../seguidor-en-espera/seguidor-en-espera';
 import { ACCIONES_CON_DADOS, MesaDeTiradas } from '../../servicios/mesa-de-tiradas';
 
 type AccionDeUnClic = (estado: Estado, sitio: Sitio, dados: Dados) => ResultadoAccion;
@@ -80,7 +76,6 @@ type EleccionPrevia = 'pulso' | 'sobornos' | null;
 // el servicio Jugar (store.ejecutar + registro).
 @Component({
   selector: 'app-panel-del-dia',
-  imports: [Mercado, Marineros, SeguidorEnEspera, MesaDeDados],
   templateUrl: './panel-del-dia.html',
   styleUrl: './panel-del-dia.css',
 })
@@ -187,7 +182,8 @@ export class PanelDelDia {
   }
 
   protected empezarElDia(): void {
-    this.jugar.hacer((e, d) => iniciarTurno(e, d), lineasDeAmanecer);
+    // El amanecer solo sale en ventana si actúa alguna condición (el escorbuto, el mal a bordo...).
+    this.jugar.hacer((e, d) => iniciarTurno(e, d), lineasDeAmanecer, { id: 'amanecer', titulo: 'Amanece', cuando: r => r.parte.length > 0 });
   }
 
   protected accion(id: IdAccion): void {
@@ -195,7 +191,7 @@ export class PanelDelDia {
     const nombre = NOMBRE_DE_ACCION[id];
     const deUnClic = ACCIONES_DE_UN_CLIC[id];
     if (deUnClic) {
-      const resultado = this.jugar.hacer((e, d) => deUnClic(e, sitio, d), (r, n) => lineasDeAccion(nombre, r, n));
+      const resultado = this.jugar.hacer((e, d) => deUnClic(e, sitio, d), (r, n) => lineasDeAccion(nombre, r, n), { id, titulo: nombre });
       // las tiradas públicas se enseñan con dados encima del mapa
       if (resultado?.tirada && ACCIONES_CON_DADOS.has(id)) this.mesa.ensenar(resultado.tirada);
       return;
@@ -243,26 +239,35 @@ export class PanelDelDia {
     const sitio = this.sitio()!;
     this.eleccionPrevia.set(null);
     const titulo = sobornos > 0 ? `Buscar información (${sobornos} soborno(s))` : 'Buscar información';
-    this.jugar.hacer((e, d) => buscarInformacion(e, sitio, sobornos, d), (r, n) => lineasDeBuscarInformacion(titulo, r, n));
+    this.jugar.hacer((e, d) => buscarInformacion(e, sitio, sobornos, d), (r, n) => lineasDeBuscarInformacion(titulo, r, n), { id: 'buscar_informacion', titulo: 'Buscar información' });
   }
 
   protected pulso(apuesta: Apuesta): void {
     const sitio = this.sitio()!;
     this.eleccionPrevia.set(null);
-    this.jugar.hacer((e, d) => echarUnPulso(e, sitio, apuesta, d), lineasDePulso);
+    this.jugar.hacer((e, d) => echarUnPulso(e, sitio, apuesta, d), lineasDePulso, { id: 'echar_un_pulso', titulo: 'Echar un pulso' });
   }
 
   protected comer(eleccion: EleccionDeComida): void {
     const lugar = this.sitio()!.lugar;
     const terreno = this.terrenoAlRaso();
-    this.jugar.hacer((e, d) => comer(e, eleccion, lugar, d, undefined, terreno), (r, n) => lineasDeComida(NOMBRE_DE_COMIDA[eleccion], r, n));
+    this.jugar.hacer((e, d) => comer(e, eleccion, lugar, d, undefined, terreno), (r, n) => lineasDeComida(NOMBRE_DE_COMIDA[eleccion], r, n), {
+      id: 'comer',
+      titulo: 'Comida',
+      // Solo si pasa algo: hambre, la tirada de muerte o algo más que gastar comida u oro (un seguidor que se va).
+      cuando: r => !r.haComido || r.tiradaDeMuerte !== undefined || r.cambios.some(c => !(c.tipo === 'recurso' && (c.recurso === 'comida' || c.recurso === 'oro'))),
+    });
   }
 
   protected dormir(eleccion: EleccionDeDescanso): void {
     const { lugar, hex } = this.sitio()!;
     const terreno = this.terrenoAlRaso();
-    this.jugar.hacer((e, d) => descansar(e, eleccion, lugar, d, undefined, hex, terreno), (r, n) =>
-      lineasDeDescanso(NOMBRE_DE_DESCANSO[eleccion], r, n),
-    );
+    this.jugar.hacer((e, d) => descansar(e, eleccion, lugar, d, undefined, hex, terreno), (r, n) => lineasDeDescanso(NOMBRE_DE_DESCANSO[eleccion], r, n), {
+      id: 'dormir',
+      titulo: 'Descanso',
+      // Solo si pasa algo: duermes genial, el chequeo de la aldea o algo más que pagar la cama.
+      // (Un evento nocturno ya sale en su propia ventana.)
+      cuando: r => r.haDormidoGenial === true || !!r.chequeo || !!r.echado || !!r.amigoDeLaAldea || r.cambios.some(c => !(c.tipo === 'recurso' && c.recurso === 'oro')),
+    });
   }
 }

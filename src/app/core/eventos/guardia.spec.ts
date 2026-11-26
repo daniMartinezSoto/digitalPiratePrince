@@ -1,8 +1,7 @@
 import { Dados } from '../dados/dados';
-import { dadosTrucados } from '../dados/dados-trucados';
 import type { Estado } from '../estado/estado';
 import { crearPartida } from '../partida/crear-partida';
-import { cerrarCombateDelEvento, continuarEvento, elegirOpcion, empezarCombateDelEvento, lanzarEventos, vistaDelEvento } from './motor';
+import { cerrarCombateDelEvento, continuarEvento, elegirOpcion, empezarCombateDelEvento, lanzarEventos, tirarDadosDelEvento, vistaDelEvento } from './motor';
 
 // El guardia (E057), paso 7b: el primer evento con CANTIDAD (el soborno, 1d6x5, se tira cada vez que
 // sale) y con un combate del que no se puede huir y en el que no se muere (decidido por el autor el 22-nov).
@@ -16,8 +15,12 @@ function estadoCon(oro: number): Estado {
   };
 }
 
-/** Sale el guardia y el dado del soborno saca "dado" (el soborno es dado × 5). */
-const lanzado = (dado: number, oro = 50) => lanzarEventos(estadoCon(oro), ['guardia'], dadosTrucados([dado])).estado;
+/** Sale el guardia y el dado del soborno (a la vista, decidido por el autor el 26-nov) saca "dado": el soborno es dado × 5. */
+function lanzado(dado: number, oro = 50): Estado {
+  const dados = new Dados(1);
+  const salido = lanzarEventos(estadoCon(oro), ['guardia'], dados).estado;
+  return tirarDadosDelEvento(salido, dados, { resultadoTrucado: dado }).estado;
+}
 
 /** Termina el combate en curso como haya acabado ("victoria" o "derrota", con 1 PV). */
 function acabarElCombate(estado: Estado, resultado: 'victoria' | 'derrota'): Estado {
@@ -38,6 +41,12 @@ function enCombate(): Estado {
 }
 
 describe('el guardia (E057)', () => {
+  it('primero se tira a la vista cuánto pide (1d6 × 5)', () => {
+    const vista = vistaDelEvento(lanzarEventos(estadoCon(50), ['guardia'], new Dados(1)).estado)!;
+    expect(vista.modo).toBe('tirada');
+    expect(vista.tirada).toMatchObject({ dado: '1d6', boton: '¿Cuánto pedirá?', multiplicador: 5 });
+  });
+
   it('pide un soborno de 1d6×5: el precio sale en el texto y en el botón', () => {
     const vista = vistaDelEvento(lanzado(3))!;
 
